@@ -295,3 +295,49 @@ Validation accuracy 94.08% at epoch 20. Same training trajectory as the ordinary
 ### 2026-09-18T10:31:38.090198+00:00 - garment_wide SWA
 
 Validation accuracy 93.97% at epoch 25. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/garment_wide_swa.json`.
+
+## 2026-09-18T10:33:32.807238+00:00 — garment_p2
+
+Hypothesis: Matched to accuracy_p2_clean except auxiliary conditional garment cross-entropy weight 0.5. Compare global accuracy and Shirt precision/recall on validation; retain control if no gain.
+
+Measured validation accuracy: 94.05%; checkpoint epoch 10; 529,858 parameters; 72,329,664 dense MACs/image; 67.9s training/validation wall time. Configuration and every epoch: `results/garment_p2.json`. Test set not evaluated in this run.
+
+### 2026-09-18T10:33:32.807238+00:00 - garment_p2 EMA
+
+Validation accuracy 93.95% at epoch 11. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/garment_p2_ema.json`.
+
+### 2026-09-18T10:33:32.807238+00:00 - garment_p2 SWA
+
+Validation accuracy 93.80% at epoch 29. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/garment_p2_swa.json`.
+
+## 2026-09-18T10:34:48.848052+00:00 — focal_wide
+
+Hypothesis: Matched to accuracy_wide_clean except gamma-one focal loss. Downweight easy training examples without using validation or test labels as training targets; assess all classes to detect regressions.
+
+Measured validation accuracy: 94.07%; checkpoint epoch 20; 1,297,746 parameters; 77,222,784 dense MACs/image; 73.5s training/validation wall time. Configuration and every epoch: `results/focal_wide.json`. Test set not evaluated in this run.
+
+### 2026-09-18T10:34:48.848052+00:00 - focal_wide EMA
+
+Validation accuracy 94.08% at epoch 20. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/focal_wide_ema.json`.
+
+### 2026-09-18T10:34:48.848052+00:00 - focal_wide SWA
+
+Validation accuracy 93.90% at epoch 26. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/focal_wide_swa.json`.
+
+## 2026-09-18T10:35:55.556835+00:00 — focal_p2
+
+Hypothesis: Matched to accuracy_p2_clean except gamma-one focal loss. Test whether harder-example emphasis transfers to finer patches; select checkpoints using unchanged global validation accuracy and CE.
+
+Measured validation accuracy: 93.82%; checkpoint epoch 10; 529,858 parameters; 72,329,664 dense MACs/image; 64.3s training/validation wall time. Configuration and every epoch: `results/focal_p2.json`. Test set not evaluated in this run.
+
+### 2026-09-18T10:35:55.556835+00:00 - focal_p2 EMA
+
+Validation accuracy 93.78% at epoch 12. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/focal_p2_ema.json`.
+
+### 2026-09-18T10:35:55.556835+00:00 - focal_p2 SWA
+
+Validation accuracy 93.70% at epoch 25. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/focal_p2_swa.json`.
+
+## 2026-09-18T10:36:42.903406+00:00 - Garment refinement and scoring-rule selection
+
+Validation: 5717 -> 5717/6000 correct; Shirt F1 0.859589 -> 0.859589. Dense MACs/image 3,183,978,880 -> 3,183,978,880. Searched 583 recorded recipes; accuracy ranks first, with lower MACs/parameters breaking ties. Both validation halves and Shirt F1 were guarded. No new test evaluation was used for this selection. Evidence: `results/garment_recipe.json`, `results/garment_candidates.csv`.
