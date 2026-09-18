@@ -42,6 +42,10 @@ NVFP4 used real packed W4A4 channel matrices and a profiled SM120 FP4 kernel. On
 
 Branches `feature/01-baseline` through `feature/15-accuracy-integration` preserve the initial sequence and accuracy-first extension. Follow-up branches are `feature/16-garment-discrimination`, `feature/17-nvfp4-benchmark`, `feature/18-spatial-readout`, `feature/19-confidence-cascade`, and `feature/20-followup-integration`. Each branch remains available after merging into `main`.
 
+The validation-only follow-up on `feature/21-image-processing` tested mild gamma, intensity-gain and half-pixel centering changes. None beat the original cascade's 95.35% validation accuracy. `feature/22-awq` tested real native torchao AWQ W4A16: validation accuracy was 95.1833%, versus 95.2333% for plain INT4 and 95.35% for original/channel-BF16 controls. On the same 1,024 validation inputs, eager median latency was 880.64 ms for AWQ, 853.94 ms for plain INT4, 249.92 ms for original and 231.89 ms for channel-BF16. This backend's padding to input multiples of 1,024 is costly for small Mixer matrices. AWQ stored tensors occupy 7,331,088 bytes versus 8,830,224 original and 5,422,224 channel-BF16 bytes, including layout/scaling overhead. No candidate was adopted; test accuracy remains the previously measured **94.42%**. These are shared-device, backend-specific results. Integration and the executed notebook are retained on `feature/23-processing-awq-integration`.
+
+Reproduce these optional experiments with `python3 image_processing_experiment.py` and `.venv/bin/python benchmark_awq.py`; the latter uses the same pinned torchao environment described below. Evidence: `results/image_processing.json` and `results/awq_benchmark.json`. AWQ calibration uses training images only, and both experiments hold the selected inference recipe fixed.
+
 See [JOURNAL.md](JOURNAL.md) for dated experiment notes. Results are recorded only after a run finishes. Submission marks and bonus ranking depend on instructor assessment.
 
 ## Run an experiment
