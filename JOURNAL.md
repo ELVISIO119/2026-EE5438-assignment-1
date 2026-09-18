@@ -815,3 +815,15 @@ Validation accuracy 94.02% at epoch 2. Same training trajectory as the ordinary 
 ### 2026-09-18T16:00:13.911245+00:00 - loss_weighted SWA
 
 Validation accuracy 93.97% at epoch 26. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/loss_weighted_swa.json`.
+
+## 2026-09-18 - Automated configuration search
+
+The user requested scripted search to reduce manual iteration. Branch `feature/48-latent-config-search` adds an eleven-dimensional bounded search over routing thresholds, ensemble weights and temperatures. It reuses the existing five checkpoints and executor; no new training, neural latent representation, outside data or optimizer package is involved. Implementation and budget were committed in `b14ef6d` before execution.
+
+Sixteen generations of 256 proposals completed: 4,096 candidates in 10.37 seconds of vectorized cached scoring, with 2.31 seconds for the seven prediction caches. Timing excludes process startup, actual routed finalist evaluation, latency checks and packaging. Cache identities bind checkpoint/code/split/environment hashes; generation checkpoints include the RNG state. The synthetic executor comparison checks probabilities, routing costs and class metrics. 209 proposals passed cached accuracy, Shirt F1, both-half, parameter and compute guards. Five diverse actual finalists all passed the paired latency guard.
+
+Candidate 4072 was selected by validation correct count then average MACs: 5,720/6,000 versus 5,718; halves [2,857, 2,863] versus [2,856, 2,862]; unchanged Shirt F1 0.859829; 287,488,267 versus 324,844,050 average validation MACs. Same-session median latency changes from 39.52 to 35.35 ms and 35.56 to 32.02 ms on first/last 1,024 validation images. These are shared-GPU development measurements, not independent confirmation.
+
+The endpoint was committed in `4d9b07e` before new test access. Frozen test evaluation (`70069ec`) gives 9,455/10,000 correct (94.55%) versus 9,449, with 301,330,871 average MACs versus 339,421,241 (11.2% lower). Ten old errors are fixed and four new errors appear. Stored parameters (3,164,836) and worst-case MACs (3,319,207,680) are unchanged. No configuration was adjusted from this result. Validation and public test have been repeatedly observed; the gain does not establish statistical significance or the class bonus.
+
+Branch `feature/49-latent-search-integration` adds the executed notebook section, full candidate evidence and submission verification for the frozen endpoint. Section A remains a typed study guide requiring replacement with the student's genuine handwritten scan before Canvas submission.

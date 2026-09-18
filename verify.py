@@ -69,7 +69,7 @@ def checkpoints():
     from hybrid_experiment import model_names,predict,self_check
     self_check()
     result['hybrid_recipes']={}
-    for prefix,goal in (('hybrid','balanced'),('hybrid','accuracy'),('batched','balanced'),('class_routes','balanced'),('adaptive','balanced')):
+    for prefix,goal in (('hybrid','balanced'),('hybrid','accuracy'),('batched','balanced'),('class_routes','balanced'),('adaptive','balanced'),('latent','balanced')):
         recipe=json.loads((OUT/f'{prefix}_{goal}_recipe.json').read_text())
         assert set(recipe['checkpoint_hashes'])==model_names(recipe)
         assert all(digest(n)==h for n,h in recipe['checkpoint_hashes'].items())
@@ -112,7 +112,7 @@ def submission():
     recipe=json.loads((OUT/'final_recipe.json').read_text())
     for component in recipe['components']:
         assert digest(component['name'])==component['sha256']
-    for prefix in ('hybrid','batched','class_routes','adaptive'):
+    for prefix in ('hybrid','batched','class_routes','adaptive','latent'):
         hybrid=json.loads((OUT/f'{prefix}_test_metrics.json').read_text())
         predictions=np.load(OUT/f'{prefix}_test_predictions.npz')
         assert np.array_equal(predictions['labels'],labels)

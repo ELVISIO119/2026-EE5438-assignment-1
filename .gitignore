@@ -1,4 +1,5 @@
 data/
+results/validation_cache/
 *.pt
 *.pth
 __pycache__/
