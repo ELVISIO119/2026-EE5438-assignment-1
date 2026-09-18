@@ -11,7 +11,7 @@ from train import OUT,SEED,load_data
 from evaluation import load_model,probabilities,probability_metrics,digest,calibrate
 
 
-def select(accuracy_first=False):
+def select(accuracy_first=False,exclude_prefixes=()):
     if accuracy_first:
         for path in Path('configs').glob('accuracy_*.json'):
             cfg=json.loads(path.read_text())
@@ -19,6 +19,8 @@ def select(accuracy_first=False):
             assert result.get('complete'), f"Finish {cfg['name']} before accuracy-first selection."
     rows=[]
     for path in sorted(OUT.glob('*.json')):
+        if path.stem.startswith(exclude_prefixes):
+            continue
         result=json.loads(path.read_text())
         if 'parameters' in result and 'val_accuracy' in result and result.get('complete'):
             rows.append(dict(name=path.stem,parameters=result['parameters'],macs=result['macs'],

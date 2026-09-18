@@ -9,7 +9,7 @@ import torchvision
 from sklearn.metrics import classification_report,confusion_matrix
 from torchvision.datasets import FashionMNIST
 from train import OUT,DEVICE
-from evaluation import load_model,probabilities,probability_metrics,digest,calibrate
+from evaluation import load_model,probabilities,probability_metrics,digest,recipe_probabilities
 
 
 def evaluate_final():
@@ -19,15 +19,9 @@ def evaluate_final():
     data=FashionMNIST('data',train=False,download=True)
     x=data.data.unsqueeze(1).float().div(255).to(DEVICE)
     y=data.targets
-    predictions=[]
-    for component in recipe['components']:
-        model=load_model(component['name'])
-        predictions.append(calibrate(probabilities(model,x,component['views']),component.get('temperature',1.)))
-        del model
-    weights=torch.tensor([c.get('weight',1.) for c in recipe['components']])
-    assert torch.isfinite(weights).all() and (weights>0).all()
-    weights=weights/weights.sum()
-    probs=(torch.stack(predictions)*weights[:,None,None]).sum(0)
+    if recipe.get('cascade'):
+        assert digest(recipe['cascade']['name'])==recipe['cascade']['sha256']
+    probs,execution=recipe_probabilities(recipe,x)
     pred=probs.argmax(1)
     report=classification_report(y,pred,target_names=data.classes,output_dict=True,zero_division=0)
     scores=probability_metrics(probs,y)
@@ -39,7 +33,7 @@ def evaluate_final():
     result=dict(**scores,macro_precision=report['macro avg']['precision'],macro_recall=report['macro avg']['recall'],
                 macro_f1=report['macro avg']['f1-score'],weighted_f1=report['weighted avg']['f1-score'],
                 accuracy_ci95_wilson=[center-half,center+half],classification_report=report,
-                confusion_matrix=confusion_matrix(y,pred).tolist(),parameters=recipe['parameters'],macs=recipe['macs'],
+                confusion_matrix=confusion_matrix(y,pred).tolist(),parameters=recipe['parameters'],macs=execution['macs_per_image'],execution=execution,
                 recipe=recipe['name'],recipe_frozen_at=recipe['frozen_at'],evaluated_at=datetime.now(timezone.utc).isoformat(),
                 baseline=probability_metrics(base_probs,y),
                 baseline_classification_report=classification_report(y,base_probs.argmax(1),target_names=data.classes,output_dict=True,zero_division=0),

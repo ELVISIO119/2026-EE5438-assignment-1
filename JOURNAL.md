@@ -409,3 +409,7 @@ Validation accuracy 93.43% at epoch 26. Same training trajectory as the ordinary
 ## 2026-09-18T10:47:58.530022+00:00 - Spatial refinement and scoring-rule selection
 
 Validation: 5717 -> 5717/6000 correct; Shirt F1 0.859589 -> 0.859589. Dense MACs/image 3,183,978,880 -> 3,183,978,880. Searched 583 recorded recipes; accuracy ranks first, with lower MACs/parameters breaking ties. Both validation halves and Shirt F1 were guarded. No new test evaluation was used for this selection. Evidence: `results/spatial_recipe.json`, `results/spatial_candidates.csv`.
+
+## 2026-09-18T10:48:16.184783+00:00 - Confidence-gated inference
+
+Tested 43 validation recipes. Selected 5721/6000 correct, Shirt F1 0.861063, 2945 early exits, 1,698,398,697 validation-average MACs and 3,261,201,664 worst-case MACs/image. Recomputed the actual routed pipeline before freezing; no test labels were loaded. The gate uses only model confidence and predicted non-garment class, and shares existing weights.

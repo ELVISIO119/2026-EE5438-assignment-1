@@ -1,0 +1,57 @@
+{
+  "environment": {
+    "torch": "2.10.0+cu128",
+    "device": "NVIDIA GeForce RTX 5090"
+  },
+  "examples": 1024,
+  "timing": {
+    "full": {
+      "median_ms": 388.7223741039634,
+      "iqr_ms": 0.007982365787029266,
+      "samples_seconds": [
+        0.3885955885052681,
+        0.3888777792453766,
+        0.3887302875518799,
+        0.3887217678129673,
+        0.38872298039495945,
+        0.38872004859149456
+      ],
+      "number_per_run": 1,
+      "images_per_second": 2634.2708015210164,
+      "execution": {
+        "examples": 1024,
+        "early_exit": 0,
+        "full_ensemble": 1024,
+        "macs_per_image": 3183978880,
+        "worst_case_macs": 3183978880
+      }
+    },
+    "cascade": {
+      "median_ms": 235.8987033367157,
+      "iqr_ms": 0.21003186702728271,
+      "samples_seconds": [
+        0.23583989217877388,
+        0.23581700399518013,
+        0.2360278833657503,
+        0.2358550000935793,
+        0.23638922907412052,
+        0.23606503196060658,
+        0.23610032349824905,
+        0.2358987033367157,
+        0.23588968999683857
+      ],
+      "number_per_run": 1,
+      "images_per_second": 4340.84624254322,
+      "execution": {
+        "examples": 1024,
+        "early_exit": 494,
+        "full_ensemble": 530,
+        "macs_per_image": 1725180602.75,
+        "worst_case_macs": 3261201664
+      }
+    }
+  },
+  "method": "Native torch.utils.benchmark.Timer CUDA synchronization; same GPU-resident validation inputs, all original-precision models preloaded; includes views, routing, aggregation and CPU output, excludes load/compile. Shared GPU, descriptive measurement.",
+  "speedup": 1.6478359931852238,
+  "completed_at": "2026-09-18T10:49:11.641077+00:00"
+}

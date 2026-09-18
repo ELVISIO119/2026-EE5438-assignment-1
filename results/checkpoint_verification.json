@@ -1,5 +1,5 @@
 {
-  "verified_at": "2026-09-18T10:21:01.382849+00:00",
+  "verified_at": "2026-09-18T10:49:28.136679+00:00",
   "checks": [
     {
       "name": "accuracy_muon_refine",
@@ -140,6 +140,90 @@
       "parameters": 109386,
       "macs": 109184,
       "sha256": "cb9fc6e06da50b705c29a4538d83332f3c42a83800ef1717a8ae3be51748d5e1"
+    },
+    {
+      "name": "focal_p2",
+      "accuracy": 0.9381666666666667,
+      "parameters": 529858,
+      "macs": 72329664,
+      "sha256": "b21c66c95326fe7feaa51d17f915188d9777ccae5c6c8a75b30b4656d9bf7de6"
+    },
+    {
+      "name": "focal_p2_ema",
+      "accuracy": 0.9378333333333333,
+      "parameters": 529858,
+      "macs": 72329664,
+      "sha256": "988bf2a70a2eb7a1f20fa278beb62af16e8ca7bb3636783e73f8cbbe2c3c8ece"
+    },
+    {
+      "name": "focal_p2_swa",
+      "accuracy": 0.937,
+      "parameters": 529858,
+      "macs": 72329664,
+      "sha256": "03f7b457d2fb8176c77b109dd5075f8f5d66a8fa46949af0b8a4486963533be7"
+    },
+    {
+      "name": "focal_wide",
+      "accuracy": 0.9406666666666667,
+      "parameters": 1297746,
+      "macs": 77222784,
+      "sha256": "07c5f4dced80a109fcb674527d250405de1ec3e454cacc6708e1256481c6ac97"
+    },
+    {
+      "name": "focal_wide_ema",
+      "accuracy": 0.9408333333333333,
+      "parameters": 1297746,
+      "macs": 77222784,
+      "sha256": "a19ae3199866f103b732d3dfe212571a738026bec386b706b807c24d237f4681"
+    },
+    {
+      "name": "focal_wide_swa",
+      "accuracy": 0.939,
+      "parameters": 1297746,
+      "macs": 77222784,
+      "sha256": "bf966587d6568dfb27c35440755297fa7c34927651af201a0963bb130e785245"
+    },
+    {
+      "name": "garment_p2",
+      "accuracy": 0.9405,
+      "parameters": 529858,
+      "macs": 72329664,
+      "sha256": "f0607d9b49d6d4e92ef2a651d7207f9fa4e6c099142186c6a2ba36d6ba9846af"
+    },
+    {
+      "name": "garment_p2_ema",
+      "accuracy": 0.9395,
+      "parameters": 529858,
+      "macs": 72329664,
+      "sha256": "8c197d32510a8de07a25b2aa3367c72cee525802a5530ba9b8e76bc35abe9827"
+    },
+    {
+      "name": "garment_p2_swa",
+      "accuracy": 0.938,
+      "parameters": 529858,
+      "macs": 72329664,
+      "sha256": "634a0a83eeaece6757eb1a8669db034e30c8a6d80ca89af6391cdae35b93ed6a"
+    },
+    {
+      "name": "garment_wide",
+      "accuracy": 0.9405,
+      "parameters": 1297746,
+      "macs": 77222784,
+      "sha256": "c2aea5a4c9b2ffdf932871db9f7fb8a6968c6295e910a4e16360040cfe04a535"
+    },
+    {
+      "name": "garment_wide_ema",
+      "accuracy": 0.9408333333333333,
+      "parameters": 1297746,
+      "macs": 77222784,
+      "sha256": "95f8bb5a7fc5c9a61be0eb2be8b9a270672a15b6040b172a7d15037ffd1a8293"
+    },
+    {
+      "name": "garment_wide_swa",
+      "accuracy": 0.9396666666666667,
+      "parameters": 1297746,
+      "macs": 77222784,
+      "sha256": "98d82e86aecd00e865dbafd176ed62ce48326330215685c38ece7be6cb50aa73"
     },
     {
       "name": "mixer_adamw",
@@ -289,6 +373,90 @@
       "sha256": "a95549d278fd8e55184bd8c64cc5b8e9fba20dc3cf9bce5202d5b23b7b224f1e"
     },
     {
+      "name": "spatial_p2",
+      "accuracy": 0.9371666666666667,
+      "parameters": 717058,
+      "macs": 72516864,
+      "sha256": "9d58c59c954db6d1e76deceab4e1bb4aad9cf354f467a4fab70238ef7e95aaa8"
+    },
+    {
+      "name": "spatial_p2_ema",
+      "accuracy": 0.9378333333333333,
+      "parameters": 717058,
+      "macs": 72516864,
+      "sha256": "84ce42244eb9ab38fe637ec09a83176936586f238d6efce9a59f22baf6f36816"
+    },
+    {
+      "name": "spatial_p2_swa",
+      "accuracy": 0.9371666666666667,
+      "parameters": 717058,
+      "macs": 72516864,
+      "sha256": "b9f2f803a20205f18f13172100e158aefa50d1b5a585f2926b3acaf53603663d"
+    },
+    {
+      "name": "spatial_pruned",
+      "accuracy": 0.9366666666666666,
+      "parameters": 441392,
+      "macs": 24247552,
+      "sha256": "61ccde6ab67e7459ae199339d1b783b5b2cae8e1a9b745077a17b96c12c21aa1"
+    },
+    {
+      "name": "spatial_pruned_ema",
+      "accuracy": 0.9361666666666667,
+      "parameters": 441392,
+      "macs": 24247552,
+      "sha256": "11ad359fb474e90668dcf6a15dfcd92c68991bf5588fbbd391b696d6bb8dcf84"
+    },
+    {
+      "name": "spatial_pruned_garment",
+      "accuracy": 0.9366666666666666,
+      "parameters": 441392,
+      "macs": 24247552,
+      "sha256": "29684544e76730b1eaf7fbbcaa7d7e8267d462341e8a516dacccf8326ae38eb6"
+    },
+    {
+      "name": "spatial_pruned_garment_ema",
+      "accuracy": 0.9361666666666667,
+      "parameters": 441392,
+      "macs": 24247552,
+      "sha256": "2afc3738266b013f66e814e8b3cb35994c026463e7baea73e861a759c70e48ce"
+    },
+    {
+      "name": "spatial_pruned_garment_swa",
+      "accuracy": 0.9343333333333333,
+      "parameters": 441392,
+      "macs": 24247552,
+      "sha256": "e0ac5f5dbf33be0f6d68380004faf093ba8026fa6d331699dce90df787c55bd5"
+    },
+    {
+      "name": "spatial_pruned_swa",
+      "accuracy": 0.9336666666666666,
+      "parameters": 441392,
+      "macs": 24247552,
+      "sha256": "fb146f289997c312561646d7e1127925cbb9d8b489ce52e9a4fc62d18f789219"
+    },
+    {
+      "name": "spatial_wide",
+      "accuracy": 0.9388333333333333,
+      "parameters": 1389906,
+      "macs": 77314944,
+      "sha256": "4b9c22e08aa5c95320d25f1c6f326e0eced721fc590d48c9609359de00adbd21"
+    },
+    {
+      "name": "spatial_wide_ema",
+      "accuracy": 0.9393333333333334,
+      "parameters": 1389906,
+      "macs": 77314944,
+      "sha256": "0ff8a4c580e561ea5c99f68d9603119d27e6a2a13c32742ebefbdeae19e2b4b9"
+    },
+    {
+      "name": "spatial_wide_swa",
+      "accuracy": 0.9371666666666667,
+      "parameters": 1389906,
+      "macs": 77314944,
+      "sha256": "60641e67496fd5a50fa2049f40e5cc12095f1a808d894ba1328f6f322395aca5"
+    },
+    {
       "name": "student_control",
       "accuracy": 0.9231666666666667,
       "parameters": 90525,
@@ -303,13 +471,13 @@
       "sha256": "1350e2e4e8bf3fbb571fea6fd4e611908cf4c7e725967c51b702d04f75361443"
     }
   ],
-  "check_count": 43,
+  "check_count": 67,
   "frozen_recipe": {
-    "correct": 5717,
+    "correct": 5721,
     "examples": 6000,
-    "accuracy": 0.9528333333333333,
-    "loss": 0.15295259654521942,
+    "accuracy": 0.9535,
+    "loss": 0.15823839604854584,
     "parameters": 2207556,
-    "macs": 3183978880
+    "macs": 1698398697.0666666
   }
 }

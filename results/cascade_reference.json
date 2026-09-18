@@ -1,0 +1,63 @@
+{
+  "recipe": {
+    "components": [
+      {
+        "name": "accuracy_wide_clean_swa",
+        "views": 10,
+        "temperature": 1.5,
+        "weight": 0.325,
+        "sha256": "0aa9d82bef91689cc3b4b76c97b385153e325887adf376d641f082358aabea0f"
+      },
+      {
+        "name": "accuracy_p2_clean_swa",
+        "views": 30,
+        "temperature": 1.25,
+        "weight": 0.325,
+        "sha256": "31e66eb705618c067df9d65c5a5cb991addbb4f567a7c5dbab408f87859d6227"
+      },
+      {
+        "name": "mixer_pruned_75",
+        "views": 10,
+        "temperature": 1.0,
+        "weight": 0.35,
+        "sha256": "c0b7eafe5070b3985442bfdf729ab2955c7340a172dc5b817150cc02771d5f53"
+      }
+    ],
+    "parameters": 2207556,
+    "macs": 3183978880,
+    "correct": 5717,
+    "examples": 6000,
+    "accuracy": 0.9528333333333333,
+    "loss": 0.15295259654521942,
+    "shirt_precision": 0.8838028169014085,
+    "shirt_recall": 0.8366666666666667,
+    "shirt_f1": 0.8595890410958904,
+    "macro_f1": 0.9526467414697372,
+    "validation_half_correct": [
+      2853,
+      2864
+    ],
+    "name": "0.3250*accuracy_wide_clean_swa:10:T1.5 + 0.3250*accuracy_p2_clean_swa:30:T1.25 + 0.3500*mixer_pruned_75:10:T1.0",
+    "frozen_at": "2026-09-18T10:47:58.530022+00:00",
+    "seed": 58561440,
+    "candidates": 583,
+    "selection_split": "validation_only",
+    "objective": "accuracy_then_cost",
+    "rule": "Maximize validation correct count, then minimize MACs, parameters, NLL; neither validation half correct count nor Shirt F1 may fall below the frozen reference.",
+    "benchmark_status": "Exploratory continuation: garment hypothesis informed by previous public test errors; fitting/selection uses training/validation only."
+  },
+  "validation": {
+    "correct": 5717,
+    "examples": 6000,
+    "accuracy": 0.9528333333333333,
+    "loss": 0.15295259654521942,
+    "shirt_precision": 0.8838028169014085,
+    "shirt_recall": 0.8366666666666667,
+    "shirt_f1": 0.8595890410958904,
+    "macro_f1": 0.9526467414697372,
+    "validation_half_correct": [
+      2853,
+      2864
+    ]
+  }
+}
