@@ -1,5 +1,11 @@
 # Experiment journal
 
+## 2026-09-19 — Recover the earlier efficient baseline (feature/36-legacy-baseline)
+
+Imported the earlier same-student `mixer_p4_clean_finetune` and `mixer_p4_muon` checkpoints as `legacy_clean` and `legacy_muon`. The source folder was read-only. Only state-dictionary names changed; all 6,000 validation logits matched the original model class exactly. Training split, seed and normalization match the current project. Each model has 478,640 parameters and 29,003,008 dense MACs per view. Their equal-weight 10-view ensemble reproduces 5,695/6,000 validation correct (94.9167%), 957,280 parameters and 580,060,160 MACs/image. Its 94.16% test score is a historical record, not a new test evaluation or an unobserved benchmark.
+
+Source hashes, original configurations and import checks are in `results/legacy_import.json` and the two checkpoint records. Imported models are earlier training on the same assignment data, not external pretraining. They remain separately named so provenance is not rewritten into the newer experiment history.
+
 ## 2026-09-19 — MoE and loss integration (feature/35-moe-loss-integration)
 
 Re-evaluated all 115 saved checkpoints and the unchanged frozen cascade successfully. The portable notebook executed with 13 figures, adding expert occupancy/latency and class-recall comparisons. The two-file ZIP passed execution, archive, metric and credential-history checks. The prior archive is retained as `archives/Assign01_Cai_Haochen_58561440_before_moe_loss.zip`. The final recipe remains byte-for-byte equivalent as parsed JSON to both experiment reference snapshots, including its original freeze timestamp. Section A remains a typed study guide that must be replaced by the student's genuine handwritten scan; no Canvas upload was performed. Shared-trunk experts were tested; independently bootstrap-trained bagging and garment-only experts were not represented as completed experiments.
