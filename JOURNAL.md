@@ -95,3 +95,17 @@ Measured validation accuracy: 93.68%; checkpoint epoch 86; 478,640 parameters; 2
 Hypothesis: Change only hidden-matrix optimization relative to mixer_adamw, retaining matched epochs, seed, architecture and regularization. Patch embedding, head, normalization and bias stay on AdamW. Measure actual time rather than transferring an LLM efficiency claim.
 
 Measured validation accuracy: 93.88%; checkpoint epoch 82; 478,640 parameters; 29,003,008 dense MACs/image; 346.4s training/validation wall time. Configuration and every epoch: `results/mixer_muon.json`. Test set not evaluated.
+
+## 2026-09-18T08:20:18.694771+00:00 — mixer_average
+
+Hypothesis: Fine-tune the validation-selected AdamW Mixer on clean training images, comparing ordinary weights, batchwise EMA and late-epoch SWA on exactly the same optimization trajectory. Clean fine-tuning itself changes the recipe; averaging effects use the within-run control.
+
+Measured validation accuracy: 93.88%; checkpoint epoch 4; 478,640 parameters; 29,003,008 dense MACs/image; 50.2s training/validation wall time. Configuration and every epoch: `results/mixer_average.json`. Test set not evaluated.
+
+### 2026-09-18T08:20:18.694771+00:00 - mixer_average EMA
+
+Validation accuracy 94.02% at epoch 4. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/mixer_average_ema.json`.
+
+### 2026-09-18T08:20:18.694771+00:00 - mixer_average SWA
+
+Validation accuracy 93.67% at epoch 26. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/mixer_average_swa.json`.
