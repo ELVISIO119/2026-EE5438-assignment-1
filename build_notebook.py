@@ -26,6 +26,7 @@ def build():
     files=[ROOT/name for name in ('models.py','train.py','baseline.py','sharpness.py','prune.py',
                                   'evaluation.py','select_final.py','evaluate_final.py','garment_experiment.py',
                                   'cascade_experiment.py','benchmark_cascade.py','benchmark_nvfp4.py',
+                                  'image_processing_experiment.py','benchmark_awq.py',
                                   'SOURCES.md','requirements.txt')]
     files+=list((ROOT/'configs').glob('*.json'))+list(OUT.glob('*.json'))+list(OUT.glob('*.csv'))
     files += [OUT/f'{name}.pt' for name in sorted({'baseline_sgd_sigmoid'}|{c['name'] for c in recipe['components']})]
@@ -314,6 +315,28 @@ print('Recorded cascade speedup:',speed['speedup'])
 print('Actual current test routing:',test['execution'])
 ''')
     md('''Quantization reduces some byte storage, not logical parameter count or mathematical dense FLOPs. The all-BF16 byte column is a storage comparison, not the original FP32 checkpoint size; scale/layout overhead can make partial NVFP4 storage exceed an all-BF16 model for small shapes. Compilation changes floating-point arithmetic slightly: the original compiled path loses one validation-correct example, so it is not described as lossless. The frozen submitted path uses eager original-precision inference. Cascade timing uses 1,024 validation images and the same preloaded weights in both paths; NVFP4 timing uses batches of 128. Do not directly compare these different batch totals. All timings exclude load/compile time and are descriptive measurements on a shared device.''')
+    md('''## 7. Input processing and activation-aware weight quantization
+
+    These are recorded validation-only follow-ups with the selected cascade held fixed. Five mild input changes were compared with the original input: gamma 0.95/1.05, intensity gain 0.95/1.05, and center-of-intensity alignment bounded to half a pixel. Processing precedes the existing geometric TTA. None improved accuracy or Shirt F1, so none was adopted. These are input preprocessing operations; temperature scaling and the confidence gate operate on classifier outputs. One shared temperature preserves a single classifier's argmax, although component-specific temperatures can affect ensemble decisions and confidence thresholds.
+
+    Native torchao AWQ uses activation statistics from 100 training images (ten per class), 20 scale candidates and group-32 INT4 channel weights with BF16 activations. Both plain INT4 and a channel-BF16 control use the same layer subset. The native observers capture activations before autocast; saved observations are cast to the actual BF16 GEMM input dtype before the offline search. Token mixing, embeddings, normalization and heads retain original precision. No validation images calibrate weights, and no new test evaluation selects a candidate.
+
+    The table below reports **recorded eager measurements**, not a new timing run. All paths use the same 1,024 validation images, three warmups and seven synchronized timing repetitions. Loading and calibration are excluded. The real packed INT4 kernel is verified by the profiler. This particular backend pads input widths to multiples of 1,024, creating substantial overhead for the small channel matrices. It is not representative of every AWQ backend, larger model or compiled implementation. Logical parameters and mathematical dense FLOPs do not decrease.
+    ''')
+    code('''processing=json.loads(Path('results/image_processing.json').read_text())
+display(pd.DataFrame(processing['candidates'])[['name','correct','accuracy','shirt_recall','shirt_f1']])
+awq=json.loads(Path('results/awq_benchmark.json').read_text())
+assert processing['complete'] and awq['complete']
+assert not processing['eligible_improvements']
+awq_rows=[{'mode':mode,'validation_accuracy_%':100*row['accuracy'],
+           'Shirt_F1':row['shirt_f1'],'milliseconds_per_1024_images':awq['timing'][mode]['median_ms'],
+           'stored_tensor_bytes':sum(m['storage_bytes'][mode] for m in awq['members'])}
+          for mode,row in awq['validation'].items()]
+display(pd.DataFrame(awq_rows).round(4))
+print('Packed INT4 operations:',awq['packed_profiler_operations'])
+print('Final model unchanged: input-processing and AWQ candidates were not adopted.')
+''')
+    md('''AWQ obtains 5,711/6,000 correct versus 5,721 for the original cascade, and is approximately 3.52 times slower in this eager backend. Its 7,331,088 stored tensor bytes improve on the original FP32 storage but exceed the 5,422,224-byte channel-BF16 control after padding and scales. Plain INT4 also outperforms AWQ in this particular calibration trial; activation-aware scaling is not guaranteed to improve classification accuracy. The channel-BF16 control matches original validation metrics and is faster here, but remains a benchmark control rather than a separately promoted submission recipe. The final model and previously measured 94.42% test accuracy remain unchanged.''')
     md('## References\n\n'+(ROOT/'SOURCES.md').read_text().split('\n',1)[1])
     notebook=nbf.v4.new_notebook(cells=cells,metadata={'kernelspec':{'name':'python3','display_name':'Python 3','language':'python'},'language_info':{'name':'python','version':platform_version()}})
     target=ROOT/'submission'/'Assign01_Cai_Haochen_58561440.ipynb'

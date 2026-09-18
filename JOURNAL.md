@@ -1,5 +1,9 @@
 # Experiment journal
 
+## 2026-09-18 — Processing/AWQ integration (feature/23-processing-awq-integration)
+
+Included both complete negative-result comparisons and their executable scripts in the portable notebook. Default Run All still evaluates the unchanged frozen submission weights; it does not require torchao or recalibrate quantized weights. The freshly executed notebook reproduces 94.42% test accuracy and passes the submission check (all code cells executed, seven figures, valid two-file ZIP, no credential patterns). This is a consistency rerun, not a new test-driven model-selection round. The previous ZIP is preserved locally in `archives/Assign01_Cai_Haochen_58561440_before_awq.zip`. Section A remains a typed study guide requiring replacement with the student's genuine handwritten scan.
+
 ## 2026-09-18 — Native AWQ deployment comparison (feature/22-awq)
 
 Calibrated native torchao 0.16.0 AWQ on 100 training images, ten per class, with 20 activation-aware scale candidates and group-32 tile-packed INT4 channel weights. Other layers retain their original precision; activations use BF16. The observer initially captured pre-autocast FP32 LayerNorm output, causing a dtype mismatch in the native offline scale search. Casting the stored observations to the actual BF16 GEMM input dtype fixed calibration without changing the library or using validation images.
