@@ -1,0 +1,495 @@
+{
+  "started_at": "2026-09-18T10:40:37.431104+00:00",
+  "recipe": {
+    "name": "0.3250*accuracy_wide_clean_swa:10:T1.5 + 0.3250*accuracy_p2_clean_swa:30:T1.25 + 0.3500*mixer_pruned_75:10:T1.0",
+    "components": [
+      {
+        "name": "accuracy_wide_clean_swa",
+        "views": 10,
+        "temperature": 1.5,
+        "weight": 0.325,
+        "sha256": "0aa9d82bef91689cc3b4b76c97b385153e325887adf376d641f082358aabea0f"
+      },
+      {
+        "name": "accuracy_p2_clean_swa",
+        "views": 30,
+        "temperature": 1.25,
+        "weight": 0.325,
+        "sha256": "31e66eb705618c067df9d65c5a5cb991addbb4f567a7c5dbab408f87859d6227"
+      },
+      {
+        "name": "mixer_pruned_75",
+        "views": 10,
+        "temperature": 1.0,
+        "weight": 0.35,
+        "sha256": "c0b7eafe5070b3985442bfdf729ab2955c7340a172dc5b817150cc02771d5f53"
+      }
+    ],
+    "parameters": 2207556,
+    "macs": 3183978880,
+    "correct": 5717,
+    "examples": 6000,
+    "accuracy": 0.9528333333333333,
+    "loss": 0.15295259654521942,
+    "validation_half_correct": [
+      2853,
+      2864
+    ],
+    "frozen_at": "2026-09-18T10:20:30.592091+00:00",
+    "seed": 58561440,
+    "candidates": 506,
+    "selection_split": "validation_only",
+    "objective": "accuracy_first",
+    "rule": "Maximize validation correct count; tie-break only by validation NLL; no compute penalty.",
+    "search": "Models within 3.5 percentage points of best raw validation; 1/2/4/10/18/30/50 views; raw equal pairs/triples from top ten distinct checkpoints; calibrated prefixes and bounded greedy combinations can use every eligible checkpoint.",
+    "view_definition": "1: identity; 2: identity + horizontal flip; 4: those plus left/right one-pixel shifts; 10: center/cardinal shifts with flips; 18: all 3x3 offsets with flips; 30: ten views at affine-grid scales 1/0.96/1.04; 50: all 5x5 offsets with flips. Shifts are zero-padded.",
+    "benchmark_status": "Exploratory continuation on a previously evaluated public benchmark; selection code uses validation only, not a new blinded test.",
+    "calibration": "Greedy/prefix pool selects per-model post-view probability temperature from [0.75,1,1.25,1.5,2] by validation NLL. Raw individual/pair/triple candidates remain eligible.",
+    "cost_note": "Sum stored parameters across members; MACs include every model/view. Dense FLOPs approximately twice MACs."
+  },
+  "environment": {
+    "python": "3.12.11",
+    "torch": "2.10.0+cu128",
+    "torchao": "0.16.0",
+    "cuda": "12.8",
+    "device": "NVIDIA GeForce RTX 5090",
+    "capability": [
+      12,
+      0
+    ],
+    "gpu_status": "30411 MiB, 5 %, 41"
+  },
+  "members": [
+    {
+      "name": "accuracy_wide_clean_swa",
+      "views": 10,
+      "quantized_linear_layers": [
+        "net.blocks.0.channel.0",
+        "net.blocks.0.channel.3",
+        "net.blocks.1.channel.0",
+        "net.blocks.1.channel.3",
+        "net.blocks.2.channel.0",
+        "net.blocks.2.channel.3",
+        "net.blocks.3.channel.0",
+        "net.blocks.3.channel.3",
+        "net.blocks.4.channel.0",
+        "net.blocks.4.channel.3",
+        "net.blocks.5.channel.0",
+        "net.blocks.5.channel.3",
+        "net.blocks.6.channel.0",
+        "net.blocks.6.channel.3",
+        "net.blocks.7.channel.0",
+        "net.blocks.7.channel.3"
+      ],
+      "reference_storage_bytes": 5190984,
+      "all_bf16_parameter_bytes": 2595492,
+      "nvfp4_storage_bytes": 1139080
+    },
+    {
+      "name": "accuracy_p2_clean_swa",
+      "views": 30,
+      "quantized_linear_layers": [
+        "net.blocks.0.channel.0",
+        "net.blocks.0.channel.3",
+        "net.blocks.1.channel.0",
+        "net.blocks.1.channel.3",
+        "net.blocks.2.channel.0",
+        "net.blocks.2.channel.3",
+        "net.blocks.3.channel.0",
+        "net.blocks.3.channel.3",
+        "net.blocks.4.channel.0",
+        "net.blocks.4.channel.3",
+        "net.blocks.5.channel.0",
+        "net.blocks.5.channel.3"
+      ],
+      "reference_storage_bytes": 2119432,
+      "all_bf16_parameter_bytes": 1059716,
+      "nvfp4_storage_bytes": 1363384
+    },
+    {
+      "name": "mixer_pruned_75",
+      "views": 10,
+      "quantized_linear_layers": [
+        "net.blocks.0.channel.0",
+        "net.blocks.0.channel.3",
+        "net.blocks.1.channel.0",
+        "net.blocks.1.channel.3",
+        "net.blocks.2.channel.0",
+        "net.blocks.2.channel.3",
+        "net.blocks.3.channel.0",
+        "net.blocks.3.channel.3",
+        "net.blocks.4.channel.0",
+        "net.blocks.4.channel.3",
+        "net.blocks.5.channel.0",
+        "net.blocks.5.channel.3"
+      ],
+      "reference_storage_bytes": 1519808,
+      "all_bf16_parameter_bytes": 759904,
+      "nvfp4_storage_bytes": 505328
+    }
+  ],
+  "timing": {
+    "reference": {
+      "single_view_batch128": [
+        {
+          "median_ms": 1.0129157453775406,
+          "min_ms": 1.0077077895402908,
+          "max_ms": 1.024516299366951,
+          "samples_ms": [
+            1.024516299366951,
+            1.0201949626207352,
+            1.0077077895402908,
+            1.0106544941663742,
+            1.0099541395902634,
+            1.0129157453775406,
+            1.0141357779502869,
+            1.0089445859193802,
+            1.0079648345708847,
+            1.0140947997570038,
+            1.0129958391189575
+          ]
+        },
+        {
+          "median_ms": 1.0975264012813568,
+          "min_ms": 1.0949857532978058,
+          "max_ms": 1.1072084307670593,
+          "samples_ms": [
+            1.1006668210029602,
+            1.0976660996675491,
+            1.0960884392261505,
+            1.100197434425354,
+            1.0950956493616104,
+            1.1072084307670593,
+            1.0971277952194214,
+            1.0949857532978058,
+            1.0975264012813568,
+            1.0960660874843597,
+            1.099156215786934
+          ]
+        },
+        {
+          "median_ms": 0.7518623024225235,
+          "min_ms": 0.7430631667375565,
+          "max_ms": 0.7555428892374039,
+          "samples_ms": [
+            0.7502231746912003,
+            0.7531847804784775,
+            0.7548443973064423,
+            0.7518045604228973,
+            0.7555428892374039,
+            0.7468163967132568,
+            0.7518623024225235,
+            0.7527768611907959,
+            0.7539540529251099,
+            0.7430631667375565,
+            0.7505137473344803
+          ]
+        }
+      ],
+      "full_recipe_batch128": {
+        "median_ms": 49.946172162890434,
+        "min_ms": 49.91799220442772,
+        "max_ms": 50.279151648283005,
+        "samples_ms": [
+          50.0049889087677,
+          49.96893182396889,
+          49.946172162890434,
+          50.279151648283005,
+          49.939438700675964,
+          49.93300326168537,
+          49.91799220442772
+        ],
+        "images_per_second": 2562.7589554320816
+      }
+    },
+    "nvfp4": {
+      "single_view_batch128": [
+        {
+          "median_ms": 2.403944730758667,
+          "min_ms": 2.3778732866048813,
+          "max_ms": 2.449735999107361,
+          "samples_ms": [
+            2.4205539375543594,
+            2.408241853117943,
+            2.449735999107361,
+            2.4082213640213013,
+            2.4106036871671677,
+            2.3860540241003036,
+            2.403944730758667,
+            2.3833010345697403,
+            2.388162538409233,
+            2.3778732866048813,
+            2.3840032517910004
+          ]
+        },
+        {
+          "median_ms": 1.820901408791542,
+          "min_ms": 1.808512955904007,
+          "max_ms": 1.8654502928256989,
+          "samples_ms": [
+            1.8558800220489502,
+            1.859772950410843,
+            1.8269196152687073,
+            1.8654502928256989,
+            1.808512955904007,
+            1.8140897154808044,
+            1.8105730414390564,
+            1.8122605979442596,
+            1.825159415602684,
+            1.820901408791542,
+            1.820579171180725
+          ]
+        },
+        {
+          "median_ms": 1.828160136938095,
+          "min_ms": 1.8158312886953354,
+          "max_ms": 1.863451674580574,
+          "samples_ms": [
+            1.863451674580574,
+            1.8325094133615494,
+            1.828160136938095,
+            1.8255002796649933,
+            1.829812303185463,
+            1.8315929919481277,
+            1.8258318305015564,
+            1.8574520945549011,
+            1.8158312886953354,
+            1.819239929318428,
+            1.8249601125717163
+          ]
+        }
+      ],
+      "full_recipe_batch128": {
+        "median_ms": 97.6291075348854,
+        "min_ms": 97.45293855667114,
+        "max_ms": 98.3290746808052,
+        "samples_ms": [
+          97.6291075348854,
+          98.3290746808052,
+          97.73853048682213,
+          97.91983105242252,
+          97.56997786462307,
+          97.47392870485783,
+          97.45293855667114
+        ],
+        "images_per_second": 1311.0844012812704
+      }
+    },
+    "reference_compiled": {
+      "single_view_batch128": [
+        {
+          "median_ms": 0.728856772184372,
+          "min_ms": 0.7215719670057297,
+          "max_ms": 0.7401034235954285,
+          "samples_ms": [
+            0.7386226207017899,
+            0.7401034235954285,
+            0.7289238274097443,
+            0.7282029837369919,
+            0.7220543920993805,
+            0.728074461221695,
+            0.725284218788147,
+            0.7325522601604462,
+            0.728856772184372,
+            0.7215719670057297,
+            0.7299315184354782
+          ]
+        },
+        {
+          "median_ms": 0.5926415324211121,
+          "min_ms": 0.5888026207685471,
+          "max_ms": 0.6047636270523071,
+          "samples_ms": [
+            0.6047636270523071,
+            0.596882775425911,
+            0.5953814834356308,
+            0.5919951945543289,
+            0.5953852087259293,
+            0.5938224494457245,
+            0.5893241614103317,
+            0.5888026207685471,
+            0.5926415324211121,
+            0.5889032036066055,
+            0.5896836519241333
+          ]
+        },
+        {
+          "median_ms": 0.45031122863292694,
+          "min_ms": 0.4399549216032028,
+          "max_ms": 0.47055259346961975,
+          "samples_ms": [
+            0.47055259346961975,
+            0.4566628485918045,
+            0.45194104313850403,
+            0.4518721252679825,
+            0.45031122863292694,
+            0.44885091483592987,
+            0.45587122440338135,
+            0.44754333794116974,
+            0.44388510286808014,
+            0.4464834928512573,
+            0.4399549216032028
+          ]
+        }
+      ],
+      "full_recipe_batch128": {
+        "median_ms": 27.848176658153534,
+        "min_ms": 27.842385694384575,
+        "max_ms": 27.90088579058647,
+        "samples_ms": [
+          27.873985469341278,
+          27.842385694384575,
+          27.866926044225693,
+          27.84627676010132,
+          27.84656547009945,
+          27.90088579058647,
+          27.848176658153534
+        ],
+        "images_per_second": 4596.351192799672
+      }
+    },
+    "nvfp4_compiled": {
+      "single_view_batch128": [
+        {
+          "median_ms": 1.3803783804178238,
+          "min_ms": 1.3641193509101868,
+          "max_ms": 1.4193281531333923,
+          "samples_ms": [
+            1.4155171811580658,
+            1.4131385833024979,
+            1.3794079422950745,
+            1.4193281531333923,
+            1.3764090836048126,
+            1.382734626531601,
+            1.3973601162433624,
+            1.3645477592945099,
+            1.3803783804178238,
+            1.366427168250084,
+            1.3641193509101868
+          ]
+        },
+        {
+          "median_ms": 0.938165932893753,
+          "min_ms": 0.9210128337144852,
+          "max_ms": 0.9657945483922958,
+          "samples_ms": [
+            0.9657945483922958,
+            0.9597763419151306,
+            0.9581372141838074,
+            0.9524840861558914,
+            0.938165932893753,
+            0.941174104809761,
+            0.9304843842983246,
+            0.926116481423378,
+            0.9329561144113541,
+            0.9241551160812378,
+            0.9210128337144852
+          ]
+        },
+        {
+          "median_ms": 0.9356532245874405,
+          "min_ms": 0.9273756295442581,
+          "max_ms": 0.9880736470222473,
+          "samples_ms": [
+            0.9651258587837219,
+            0.9880736470222473,
+            0.9519625455141068,
+            0.9273756295442581,
+            0.942206010222435,
+            0.9401943534612656,
+            0.9299255907535553,
+            0.9308159351348877,
+            0.9356532245874405,
+            0.9285062551498413,
+            0.9298156946897507
+          ]
+        }
+      ],
+      "full_recipe_batch128": {
+        "median_ms": 51.86899192631245,
+        "min_ms": 51.35448835790157,
+        "max_ms": 54.81497943401337,
+        "samples_ms": [
+          52.45102569460869,
+          52.56262421607971,
+          54.81497943401337,
+          51.75022967159748,
+          51.74160189926624,
+          51.86899192631245,
+          51.35448835790157
+        ],
+        "images_per_second": 2467.7556907572616
+      }
+    }
+  },
+  "validation": {
+    "reference": {
+      "correct": 5717,
+      "examples": 6000,
+      "accuracy": 0.9528333333333333,
+      "loss": 0.15295259654521942,
+      "shirt_precision": 0.8838028169014085,
+      "shirt_recall": 0.8366666666666667,
+      "shirt_f1": 0.8595890410958904,
+      "macro_f1": 0.9526467414697372,
+      "validation_half_correct": [
+        2853,
+        2864
+      ]
+    },
+    "nvfp4": {
+      "correct": 5694,
+      "examples": 6000,
+      "accuracy": 0.949,
+      "loss": 0.15367965400218964,
+      "shirt_precision": 0.8765432098765432,
+      "shirt_recall": 0.8283333333333334,
+      "shirt_f1": 0.8517566409597258,
+      "macro_f1": 0.9488132778623048,
+      "validation_half_correct": [
+        2841,
+        2853
+      ]
+    },
+    "reference_compiled": {
+      "correct": 5716,
+      "examples": 6000,
+      "accuracy": 0.9526666666666667,
+      "loss": 0.15294088423252106,
+      "shirt_precision": 0.8851590106007067,
+      "shirt_recall": 0.835,
+      "shirt_f1": 0.8593481989708405,
+      "macro_f1": 0.9524695533029703,
+      "validation_half_correct": [
+        2853,
+        2863
+      ]
+    },
+    "nvfp4_compiled": {
+      "correct": 5693,
+      "examples": 6000,
+      "accuracy": 0.9488333333333333,
+      "loss": 0.1540650874376297,
+      "shirt_precision": 0.8734622144112478,
+      "shirt_recall": 0.8283333333333334,
+      "shirt_f1": 0.8502994011976048,
+      "macro_f1": 0.9486567572226396,
+      "validation_half_correct": [
+        2840,
+        2853
+      ]
+    }
+  },
+  "method": "Channel hidden Linear layers use packed NVFP4 weights and dynamically quantized NVFP4 activations, block size 16 and FP8 block scales. Other layers remain original precision; reference uses original CUDA BF16 autocast.",
+  "limitations": "Shared GPU; observed latency is descriptive. Dense mathematical MACs/FLOPs and logical parameter counts do not decrease with quantization. Input images are already resident on GPU; end-to-end timing includes view construction, all model calls, probability calibration/aggregation and output copy to CPU, excludes dataset loading, checkpoint loading and compilation.",
+  "fp4_profiler_operations": [
+    "ao::triton_quantize_nvfp4",
+    "aten::_scaled_mm",
+    "cutlass3x_sm120_bstensorop_s16864gemm_block_scaled_ue4m3xe2m1_ue4m3xe2m1_f32_bf16_bf16_128x128x256_1x1x1_0_tnn_align32_o_vs16_bias_bf16_relu",
+    "quantize_nvfp4_triton_kernel"
+  ],
+  "speedup_eager": 0.5115909939568317,
+  "speedup_compiled": 0.5368945033232182,
+  "completed_at": "2026-09-18T10:41:56.574114+00:00",
+  "complete": true
+}
