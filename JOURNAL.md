@@ -1,5 +1,13 @@
 # Experiment journal
 
+## 2026-09-18 — Native AWQ deployment comparison (feature/22-awq)
+
+Calibrated native torchao 0.16.0 AWQ on 100 training images, ten per class, with 20 activation-aware scale candidates and group-32 tile-packed INT4 channel weights. Other layers retain their original precision; activations use BF16. The observer initially captured pre-autocast FP32 LayerNorm output, causing a dtype mismatch in the native offline scale search. Casting the stored observations to the actual BF16 GEMM input dtype fixed calibration without changing the library or using validation images.
+
+On the complete 6,000-image validation split, original and channel-BF16 controls both obtain 5,721 correct (95.35%); plain INT4 obtains 5,714 (95.2333%); AWQ obtains 5,711 (95.1833%). Median eager cascade time on the same 1,024 validation images: original 249.925 ms, channel-BF16 231.895 ms, plain INT4 853.942 ms, AWQ 880.644 ms. Each has three warmups and seven synchronized measurements, excluding loading/calibration. These are shared-device measurements and do not compare compiled kernels or other AWQ backends.
+
+Actual stored tensor bytes, including quantization padding and metadata: original 8,830,224; channel-BF16 5,422,224; AWQ 7,331,088. This INT4 backend pads input widths to multiples of 1,024; tested channel widths are only 96–384. The profiler confirms `aten::_weight_int4pack_mm` and the native INT4 tinygemm kernel. This is a real packed-weight execution result, not fake quantization, but it gives no deployment advantage here. Logical parameters and mathematical dense FLOPs remain unchanged. No new test evaluation or recipe selection followed these negative results. Evidence: `results/awq_benchmark.json`.
+
 ## 2026-09-18 — Input processing follow-up (feature/21-image-processing)
 
 Compared six prespecified pipelines using the same frozen cascade and all 6,000 validation images. Original: 5,721 correct (95.35%); gamma 0.95: 5,713; gamma 1.05: 5,716; intensity gain 0.95: 5,702; intensity gain 1.05: 5,689; center-of-intensity alignment bounded to half a pixel: 5,631. Neither validation accuracy nor Shirt F1 improved. All transformations precede the existing geometric TTA; the intensity-gain trials are multiplicative brightness/contrast adjustments with a fixed zero background. No candidate was adopted and no test labels were accessed. Evidence and actual timestamps: `results/image_processing.json`. The executable includes a direction/blank-image check for the alignment operation.
