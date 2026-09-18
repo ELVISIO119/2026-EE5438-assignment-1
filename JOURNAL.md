@@ -267,3 +267,11 @@ Validation accuracy 94.03% at epoch 26. Same training trajectory as the ordinary
 ## 2026-09-18T10:20:30.592091+00:00 - Freeze final recipe
 
 Selected `0.3250*accuracy_wide_clean_swa:10:T1.5 + 0.3250*accuracy_p2_clean_swa:30:T1.25 + 0.3500*mixer_pruned_75:10:T1.0` from 506 validation-only candidates: 5717/6000 correct (95.28%). Total stored parameters 2,207,556; dense MACs/image 3,183,978,880, including all members and views. Checkpoint hashes and the selection rule are in `results/final_recipe.json`. No test labels were loaded by selection.
+
+## 2026-09-18T10:21:19.570613+00:00 - Frozen accuracy-first test evaluation
+
+The frozen classifier correctly classified 9,439 of 10,000 test images (94.39%), with macro F1 0.943753 and negative log-likelihood 0.165926. Evidence: `results/final_test_metrics.json`. The recipe was frozen before this evaluation; no subsequent model, view, temperature or weight changes were made from test feedback.
+
+Six additional training recipes, expanded inference views and complementary calibrated predictions produced the selected result. Larger models alone did not consistently improve validation accuracy, and the pruned checkpoint remained useful for complementary predictions despite having no compute advantage in the selection objective. These combined changes are not isolated causal ablations. The result improves on the initial 94.04% delivery by 35 correctly classified images, but does not establish statistical significance or guarantee the highest class ranking. The public benchmark had already been evaluated during development, so this remains exploratory evidence rather than an independently blinded test.
+
+Delivery checks reloaded all 43 checkpoints and recomputed the frozen validation ensemble. The portable notebook executed successfully with six figures; the ZIP and saved prediction metrics passed verification. The included Section A PDF remains a typed study guide and must be replaced with the student's genuine handwritten scan before Canvas submission.

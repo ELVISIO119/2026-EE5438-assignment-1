@@ -162,8 +162,7 @@ plt.tight_layout(); plt.show()
 fig,axes=plt.subplots(1,2,figsize=(12,4))
 for ax,cost in zip(axes,['parameters','macs']):
     ax.scatter(pareto[cost],100*pareto.val_accuracy,c=pareto.pareto.astype(int),cmap='coolwarm',s=38)
-    for _,row in pareto[pareto.pareto].iterrows():
-        ax.annotate(row['name'],(row[cost],100*row.val_accuracy),fontsize=7,xytext=(4,4),textcoords='offset points')
+    ax.set_title('Red: Pareto frontier (names in table below)')
     ax.set_xscale('log'); ax.set_xlabel(cost); ax.set_ylabel('Validation accuracy (%)'); ax.grid(alpha=.2)
 plt.tight_layout(); plt.show()
 display(pareto[pareto.pareto].sort_values('macs'))
@@ -209,11 +208,11 @@ ax.set_title('Frozen classifier: test confusion matrix'); plt.tight_layout(); pl
 predictions=np.load('results/final_test_predictions.npz')
 labels=predictions['labels']; predicted=predictions['probabilities'].argmax(1)
 errors=np.flatnonzero(predicted!=labels)[:12]
-fig,axes=plt.subplots(2,6,figsize=(14,5))
+fig,axes=plt.subplots(2,6,figsize=(14,6.5),layout='constrained')
 for ax,idx in zip(axes.flat,errors):
     ax.imshow(test_data.data[idx],cmap='gray'); ax.axis('off')
     ax.set_title(f'True: {test_data.classes[labels[idx]]}\\nPred: {test_data.classes[predicted[idx]]}',fontsize=8)
-plt.suptitle('First 12 errors in test-index order (not cherry-picked)'); plt.tight_layout(); plt.show()
+fig.suptitle('First 12 errors in test-index order (not cherry-picked)'); plt.show()
 ''')
     md(f"The lowest class F1 is **{weakest}: {class_metrics[weakest]['f1-score']:.4f}**. The largest directed confusions are "
        +'; '.join(f'**{true} -> {pred}: {count} images**' for count,true,pred in confusions)
