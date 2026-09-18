@@ -33,6 +33,27 @@ def checkpoints():
         print('Verified checkpoint:',path.stem,measured['accuracy'],flush=True)
         del model
     result=dict(verified_at=datetime.now(timezone.utc).isoformat(),checks=checks,check_count=len(checks))
+    recipe_path=OUT/'final_recipe.json'
+    if recipe_path.exists():
+        recipe=json.loads(recipe_path.read_text())
+        components=recipe['components']
+        weights=np.asarray([c.get('weight',1.) for c in components],dtype=float)
+        assert np.isfinite(weights).all() and (weights>0).all()
+        weights/=weights.sum()
+        total=None; params=macs=0
+        for component,weight in zip(components,weights):
+            assert digest(component['name'])==component['sha256']
+            model=load_model(component['name'])
+            probs=probabilities(model,vx,component['views'])*weight
+            total=probs if total is None else total+probs
+            count,cost=model_cost(model)
+            params+=count; macs+=cost*component['views']
+            del model
+        measured=probability_metrics(total,vy)
+        assert measured['correct']==recipe['correct'],(measured,recipe['correct'])
+        assert (params,macs)==(recipe['parameters'],recipe['macs'])
+        result['frozen_recipe']=dict(**measured,parameters=params,macs=macs)
+        print('Verified frozen ensemble:',measured,flush=True)
     (OUT/'checkpoint_verification.json').write_text(json.dumps(result,indent=2))
 
 
