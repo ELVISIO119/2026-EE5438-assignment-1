@@ -55,9 +55,11 @@ class MLPMixer(nn.Module):
         hidden=cfg.get('channel_hidden',2*width)
         self.blocks=nn.Sequential(*[MixerBlock(tokens,width,hidden,cfg['dropout']) for _ in range(cfg['depth'])])
         self.norm=nn.LayerNorm(width)
-        self.head=nn.Linear(width,10)
+        self.spatial_head=cfg.get('spatial_head',False)
+        self.head=nn.Linear(tokens*width if self.spatial_head else width,10)
 
     def forward(self,x):
         n=len(x); p=self.patch; side=28//p
         x=x.reshape(n,1,side,p,side,p).permute(0,2,4,1,3,5).reshape(n,side*side,p*p)
-        return self.head(self.norm(self.blocks(self.embed(x))).mean(1))
+        x=self.norm(self.blocks(self.embed(x)))
+        return self.head(x.flatten(1) if self.spatial_head else x.mean(1))

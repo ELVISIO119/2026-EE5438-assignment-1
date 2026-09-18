@@ -100,6 +100,19 @@ def training_loss(logits, targets, cfg):
         loss=loss-weight*(targets[:,group]*F.log_softmax(logits[:,group],dim=1)).sum(1).mean()
     return loss
 
+def load_initial_state(model, initial):
+    assert abs(initial['mean']-model.mean)<1e-7 and abs(initial['std']-model.std)<1e-7
+    state=dict(initial['state_dict'])
+    if getattr(model.net,'spatial_head',False):
+        old=state['net.head.weight']
+        target=model.net.head.weight
+        if old.shape!=target.shape:
+            assert old.shape[1]==model.net.embed.out_features
+            tokens=target.shape[1]//old.shape[1]
+            # A repeated 1/tokens head exactly implements mean pooling in real arithmetic.
+            state['net.head.weight']=old.repeat(1,tokens)/tokens
+    model.load_state_dict(state)
+
 def run(cfg):
     OUT.mkdir(exist_ok=True)
     seed_all()
@@ -107,8 +120,7 @@ def run(cfg):
     model = Model(cfg,mean,std).to(DEVICE)
     if cfg.get('init'):
         initial=torch.load(OUT/f"{cfg['init']}.pt",map_location=DEVICE,weights_only=True)
-        assert abs(initial['mean']-mean)<1e-7 and abs(initial['std']-std)<1e-7
-        model.load_state_dict(initial['state_dict'])
+        load_initial_state(model,initial)
         del initial
     params,macs = model_cost(model)
     teacher=None

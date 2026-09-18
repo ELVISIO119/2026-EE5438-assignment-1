@@ -22,7 +22,8 @@ def details(probs, labels):
                 validation_half_correct=[int((pred[s]==labels[s]).sum()) for s in (slice(0,3000),slice(3000,None))])
 
 
-def run():
+def run(spatial=False):
+    prefix='spatial' if spatial else 'garment'
     reference=json.loads((OUT/'final_recipe.json').read_text())
     x,y,vx,vy,_,_=load_data()
     del x,y
@@ -49,12 +50,13 @@ def run():
     baseline,base_probs=score(reference['components'])
     assert baseline['correct']==reference['correct'], 'Frozen baseline validation changed.'
     print('Reference validation:',{k:v for k,v in baseline.items() if k!='components'},flush=True)
-    (OUT/'garment_reference.json').write_text(json.dumps(dict(recipe=reference,validation=baseline,
+    (OUT/f'{prefix}_reference.json').write_text(json.dumps(dict(recipe=reference,validation=baseline,
         confusion_matrix=confusion_matrix(vy,base_probs.argmax(1)).tolist(),
         report=classification_report(vy,base_probs.argmax(1),output_dict=True,zero_division=0)),indent=2))
     # Exact class counts before any new training objective is allowed to affect selection.
     trials=[]
-    for stem in ('garment_wide','garment_p2','focal_wide','focal_p2'):
+    stems=('spatial_wide','spatial_p2','spatial_pruned','spatial_pruned_garment') if spatial else ('garment_wide','garment_p2','focal_wide','focal_p2')
+    for stem in stems:
         for suffix in ('','_ema','_swa'):
             name=stem+suffix
             assert json.loads((OUT/f'{name}.json').read_text())['complete']
@@ -84,16 +86,20 @@ def run():
                   selection_split='validation_only',objective='accuracy_then_cost',
                   rule='Maximize validation correct count, then minimize MACs, parameters, NLL; neither validation half correct count nor Shirt F1 may fall below the frozen reference.',
                   benchmark_status='Exploratory continuation: garment hypothesis informed by previous public test errors; fitting/selection uses training/validation only.')
-    (OUT/'garment_recipe.json').write_text(json.dumps(chosen,indent=2))
-    pd.DataFrame([{**{k:v for k,v in r.items() if k!='components'},'components':json.dumps(r['components'])} for r in rows]).to_csv(OUT/'garment_candidates.csv',index=False)
+    (OUT/f'{prefix}_recipe.json').write_text(json.dumps(chosen,indent=2))
+    pd.DataFrame([{**{k:v for k,v in r.items() if k!='components'},'components':json.dumps(r['components'])} for r in rows]).to_csv(OUT/f'{prefix}_candidates.csv',index=False)
+    torch.save(cache,OUT/f'{prefix}_validation_cache.pt')
     print('Selected validation recipe:',json.dumps(chosen,indent=2),flush=True)
     with Path('JOURNAL.md').open('a') as journal:
-        journal.write(f"\n## {chosen['frozen_at']} - Garment refinement and scoring-rule selection\n\n"
+        journal.write(f"\n## {chosen['frozen_at']} - {prefix.capitalize()} refinement and scoring-rule selection\n\n"
                       f"Validation: {baseline['correct']} -> {chosen['correct']}/6000 correct; Shirt F1 {baseline['shirt_f1']:.6f} -> {chosen['shirt_f1']:.6f}. "
                       f"Dense MACs/image {baseline['macs']:,} -> {chosen['macs']:,}. Searched {len(rows)} recorded recipes; "
                       "accuracy ranks first, with lower MACs/parameters breaking ties. Both validation halves and Shirt F1 were guarded. "
-                      "No new test evaluation was used for this selection. Evidence: `results/garment_recipe.json`, `results/garment_candidates.csv`.\n")
+                      f"No new test evaluation was used for this selection. Evidence: `results/{prefix}_recipe.json`, `results/{prefix}_candidates.csv`.\n")
 
 
 if __name__=='__main__':
-    run()
+    import argparse
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--spatial',action='store_true')
+    run(parser.parse_args().spatial)

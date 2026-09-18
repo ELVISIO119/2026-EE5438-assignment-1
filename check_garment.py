@@ -1,7 +1,7 @@
 """Check objective algebra and gradients, including batches with no garment examples."""
 import torch
 from torch.nn import functional as F
-from train import training_loss
+from train import Model,load_initial_state,training_loss
 
 torch.manual_seed(58561440)
 logits=torch.randn(7,10,requires_grad=True)
@@ -19,3 +19,15 @@ assert 0<focal<ce
 (actual+focal).backward()
 assert torch.isfinite(logits.grad).all() and logits.grad.abs().sum()>0
 print('Garment conditional CE, ordinary CE equivalence, focal loss and gradients verified.')
+
+cfg=dict(model='mixer',patch=4,width=32,depth=2,dropout=0.)
+old=Model(cfg,.28,.35).eval()
+new=Model(dict(cfg,spatial_head=True),.28,.35).eval()
+load_initial_state(new,dict(state_dict=old.state_dict(),mean=.28,std=.35))
+x=torch.rand(3,1,28,28)
+assert torch.allclose(old(x),new(x),atol=1e-6,rtol=1e-5)
+assert sum(p.numel() for p in new.parameters())-sum(p.numel() for p in old.parameters())==(49-1)*32*10
+new(x).square().mean().backward()
+assert all(p.grad is not None and torch.isfinite(p.grad).all() for p in new.parameters())
+assert not any(isinstance(m,(torch.nn.Conv2d,torch.nn.MultiheadAttention)) for m in new.modules())
+print('Spatial head preserves initial logits, adds the expected parameters and has finite gradients.')
