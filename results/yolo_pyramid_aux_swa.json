@@ -1,0 +1,158 @@
+{
+  "config": {
+    "name": "yolo_pyramid_aux",
+    "model": "pyramid",
+    "width": 96,
+    "depth": 3,
+    "multiscale_fusion": true,
+    "auxiliary_weight": 0.3,
+    "dropout": 0.1,
+    "epochs": 120,
+    "lr": 0.0008,
+    "decay": 0.025,
+    "schedule": true,
+    "augmentation": true,
+    "label_smoothing": 0.025,
+    "bf16": true,
+    "averages": true,
+    "grad_clip": 1.0,
+    "hypothesis": "Matched to pyramid fusion except a training-only ten-class auxiliary head on pooled fine-stage features, CE weight 0.3. Head initialization preserves the training RNG; deployment removes the head. Tests intermediate supervision, not the full YOLOv9 PGI method."
+  },
+  "seed": 58561440,
+  "parameters": 827305,
+  "macs": 68718912,
+  "best_epoch": 100,
+  "val_accuracy": 0.9241666793823242,
+  "val_loss": 0.2791520059108734,
+  "history": [
+    {
+      "epoch": 97,
+      "val_loss": 0.2806697189807892,
+      "val_accuracy": 0.9203333258628845
+    },
+    {
+      "epoch": 98,
+      "val_loss": 0.2805020213127136,
+      "val_accuracy": 0.9231666326522827
+    },
+    {
+      "epoch": 99,
+      "val_loss": 0.2790328562259674,
+      "val_accuracy": 0.9226666688919067
+    },
+    {
+      "epoch": 100,
+      "val_loss": 0.2791520059108734,
+      "val_accuracy": 0.9241666793823242
+    },
+    {
+      "epoch": 101,
+      "val_loss": 0.28040650486946106,
+      "val_accuracy": 0.9229999780654907
+    },
+    {
+      "epoch": 102,
+      "val_loss": 0.28107884526252747,
+      "val_accuracy": 0.921833336353302
+    },
+    {
+      "epoch": 103,
+      "val_loss": 0.2813168466091156,
+      "val_accuracy": 0.9210000038146973
+    },
+    {
+      "epoch": 104,
+      "val_loss": 0.28171786665916443,
+      "val_accuracy": 0.9210000038146973
+    },
+    {
+      "epoch": 105,
+      "val_loss": 0.2819646894931793,
+      "val_accuracy": 0.9206666350364685
+    },
+    {
+      "epoch": 106,
+      "val_loss": 0.2823614478111267,
+      "val_accuracy": 0.9210000038146973
+    },
+    {
+      "epoch": 107,
+      "val_loss": 0.2829124331474304,
+      "val_accuracy": 0.9206666350364685
+    },
+    {
+      "epoch": 108,
+      "val_loss": 0.2831341326236725,
+      "val_accuracy": 0.92166668176651
+    },
+    {
+      "epoch": 109,
+      "val_loss": 0.2833669185638428,
+      "val_accuracy": 0.921833336353302
+    },
+    {
+      "epoch": 110,
+      "val_loss": 0.2834244668483734,
+      "val_accuracy": 0.922166645526886
+    },
+    {
+      "epoch": 111,
+      "val_loss": 0.28366756439208984,
+      "val_accuracy": 0.922166645526886
+    },
+    {
+      "epoch": 112,
+      "val_loss": 0.28402432799339294,
+      "val_accuracy": 0.922166645526886
+    },
+    {
+      "epoch": 113,
+      "val_loss": 0.28414639830589294,
+      "val_accuracy": 0.921999990940094
+    },
+    {
+      "epoch": 114,
+      "val_loss": 0.28430864214897156,
+      "val_accuracy": 0.921833336353302
+    },
+    {
+      "epoch": 115,
+      "val_loss": 0.28452181816101074,
+      "val_accuracy": 0.921999990940094
+    },
+    {
+      "epoch": 116,
+      "val_loss": 0.2847049832344055,
+      "val_accuracy": 0.92166668176651
+    },
+    {
+      "epoch": 117,
+      "val_loss": 0.28486356139183044,
+      "val_accuracy": 0.921833336353302
+    },
+    {
+      "epoch": 118,
+      "val_loss": 0.285428524017334,
+      "val_accuracy": 0.9214999675750732
+    },
+    {
+      "epoch": 119,
+      "val_loss": 0.28556692600250244,
+      "val_accuracy": 0.9214999675750732
+    },
+    {
+      "epoch": 120,
+      "val_loss": 0.28588297963142395,
+      "val_accuracy": 0.92166668176651
+    }
+  ],
+  "seconds": 290.55203644931316,
+  "complete": true,
+  "gradient_evaluations": 50640,
+  "training_only_parameters": 970,
+  "auxiliary_head_macs_per_training_image": 960,
+  "auxiliary_note": "Fine-stage auxiliary classifier is optimized during training only and excluded from saved deployment checkpoints and inference cost.",
+  "completed_at": "2026-09-18T11:47:28.375794+00:00",
+  "averaging": "swa",
+  "shared_training_run": "yolo_pyramid_aux"
+}

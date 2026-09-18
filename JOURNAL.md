@@ -465,3 +465,17 @@ Validation accuracy 92.83% at epoch 90. Same training trajectory as the ordinary
 ### 2026-09-18T11:42:35.384828+00:00 - yolo_pyramid_fusion SWA
 
 Validation accuracy 92.70% at epoch 100. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/yolo_pyramid_fusion_swa.json`.
+
+## 2026-09-18T11:47:28.375794+00:00 — yolo_pyramid_aux
+
+Hypothesis: Matched to pyramid fusion except a training-only ten-class auxiliary head on pooled fine-stage features, CE weight 0.3. Head initialization preserves the training RNG; deployment removes the head. Tests intermediate supervision, not the full YOLOv9 PGI method.
+
+Measured validation accuracy: 92.45%; checkpoint epoch 78; 827,305 parameters; 68,718,912 dense MACs/image; 290.6s training/validation wall time. Configuration and every epoch: `results/yolo_pyramid_aux.json`. Test set not evaluated in this run.
+
+### 2026-09-18T11:47:28.375794+00:00 - yolo_pyramid_aux EMA
+
+Validation accuracy 92.70% at epoch 57. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/yolo_pyramid_aux_ema.json`.
+
+### 2026-09-18T11:47:28.375794+00:00 - yolo_pyramid_aux SWA
+
+Validation accuracy 92.42% at epoch 100. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/yolo_pyramid_aux_swa.json`.
