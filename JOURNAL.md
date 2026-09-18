@@ -263,3 +263,7 @@ Validation accuracy 94.08% at epoch 17. Same training trajectory as the ordinary
 ### 2026-09-18T10:17:32.750223+00:00 - accuracy_wide_clean SWA
 
 Validation accuracy 94.03% at epoch 26. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/accuracy_wide_clean_swa.json`.
+
+## 2026-09-18T10:20:30.592091+00:00 - Freeze final recipe
+
+Selected `0.3250*accuracy_wide_clean_swa:10:T1.5 + 0.3250*accuracy_p2_clean_swa:30:T1.25 + 0.3500*mixer_pruned_75:10:T1.0` from 506 validation-only candidates: 5717/6000 correct (95.28%). Total stored parameters 2,207,556; dense MACs/image 3,183,978,880, including all members and views. Checkpoint hashes and the selection rule are in `results/final_recipe.json`. No test labels were loaded by selection.

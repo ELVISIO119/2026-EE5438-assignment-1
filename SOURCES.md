@@ -11,6 +11,7 @@
 - SAM: https://arxiv.org/abs/2010.01412
 - ASAM: https://arxiv.org/abs/2102.11600
 - Knowledge distillation: https://arxiv.org/abs/1503.02531
+- Temperature scaling: Guo et al., *On Calibration of Modern Neural Networks* (2017), https://arxiv.org/abs/1706.04599 (official title/authors checked 2026-09-18). Here temperature is applied to log probabilities after averaging inference views; this is an assignment-specific use, not a reproduction of the paper's experiments.
 
 The models are small assignment-specific implementations trained from scratch on the official training split. No pretrained weights or external training examples are used. Native PyTorch implements AdamW, Muon, averaging, loss functions and automatic differentiation; the small SAM/ASAM perturbation helper has a runnable restoration check. This is a single-seed exploratory benchmark, not a statistical replication of the cited papers.
 

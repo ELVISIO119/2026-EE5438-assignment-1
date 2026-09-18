@@ -1,34 +1,47 @@
 {
-  "name": "mixer_average:4 + mixer_average_swa:4 + mixer_muon:4",
+  "name": "0.3250*accuracy_wide_clean_swa:10:T1.5 + 0.3250*accuracy_p2_clean_swa:30:T1.25 + 0.3500*mixer_pruned_75:10:T1.0",
   "components": [
     {
-      "name": "mixer_average",
-      "views": 4,
-      "sha256": "fae83cad3cc65dc5f589bc10e5fc08c4fd537471ce9b2022b07c093d117ba4d3"
+      "name": "accuracy_wide_clean_swa",
+      "views": 10,
+      "temperature": 1.5,
+      "weight": 0.325,
+      "sha256": "0aa9d82bef91689cc3b4b76c97b385153e325887adf376d641f082358aabea0f"
     },
     {
-      "name": "mixer_average_swa",
-      "views": 4,
-      "sha256": "37d428908c9540e3d4f92fd19f4cd76937fea7bd55369abe517b7cf9f4399863"
+      "name": "accuracy_p2_clean_swa",
+      "views": 30,
+      "temperature": 1.25,
+      "weight": 0.325,
+      "sha256": "31e66eb705618c067df9d65c5a5cb991addbb4f567a7c5dbab408f87859d6227"
     },
     {
-      "name": "mixer_muon",
-      "views": 4,
-      "sha256": "bdbf5994d63c23cdf4d6b059c625e4710f3a533e7992ad8d2c69229190548d7e"
+      "name": "mixer_pruned_75",
+      "views": 10,
+      "temperature": 1.0,
+      "weight": 0.35,
+      "sha256": "c0b7eafe5070b3985442bfdf729ab2955c7340a172dc5b817150cc02771d5f53"
     }
   ],
-  "parameters": 1435920,
-  "macs": 348036096,
-  "correct": 5680,
+  "parameters": 2207556,
+  "macs": 3183978880,
+  "correct": 5717,
   "examples": 6000,
-  "accuracy": 0.9466666666666667,
-  "loss": 0.1661766618490219,
-  "frozen_at": "2026-09-18T08:28:40.312871+00:00",
+  "accuracy": 0.9528333333333333,
+  "loss": 0.15295259654521942,
+  "validation_half_correct": [
+    2853,
+    2864
+  ],
+  "frozen_at": "2026-09-18T10:20:30.592091+00:00",
   "seed": 58561440,
-  "candidates": 31,
+  "candidates": 506,
   "selection_split": "validation_only",
-  "rule": "Maximize validation correct count; tie-break by fewer total dense MACs, then parameters, then NLL.",
-  "search": "Models within 1.5 percentage points of best raw validation; 1/2/4 views; equally weighted pairs/triples from top four distinct models.",
-  "view_definition": "1: identity; 2: identity + horizontal flip; 4: those plus left/right one-pixel zero-padded shifts.",
+  "objective": "accuracy_first",
+  "rule": "Maximize validation correct count; tie-break only by validation NLL; no compute penalty.",
+  "search": "Models within 3.5 percentage points of best raw validation; 1/2/4/10/18/30/50 views; raw equal pairs/triples from top ten distinct checkpoints; calibrated prefixes and bounded greedy combinations can use every eligible checkpoint.",
+  "view_definition": "1: identity; 2: identity + horizontal flip; 4: those plus left/right one-pixel shifts; 10: center/cardinal shifts with flips; 18: all 3x3 offsets with flips; 30: ten views at affine-grid scales 1/0.96/1.04; 50: all 5x5 offsets with flips. Shifts are zero-padded.",
+  "benchmark_status": "Exploratory continuation on a previously evaluated public benchmark; selection code uses validation only, not a new blinded test.",
+  "calibration": "Greedy/prefix pool selects per-model post-view probability temperature from [0.75,1,1.25,1.5,2] by validation NLL. Raw individual/pair/triple candidates remain eligible.",
   "cost_note": "Sum stored parameters across members; MACs include every model/view. Dense FLOPs approximately twice MACs."
 }
