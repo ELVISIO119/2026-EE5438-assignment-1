@@ -115,7 +115,7 @@ def run(recipe_path,compile_models=False):
         full['images_per_second']=len(sample)/(full['median_ms']/1000)
         result['timing'][key]=dict(single_view_batch128=single,full_recipe_batch128=full)
         (OUT/'nvfp4_benchmark.json').write_text(json.dumps(result,indent=2))
-    for key,group in (('reference',models),('nvfp4',compressed)):
+    for key,group in timing_models.items():
         print('Validation:',key,flush=True)
         p=ensemble(group,vx)
         result['validation'][key]=details(p,vy)

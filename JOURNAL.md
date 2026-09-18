@@ -282,6 +282,14 @@ The user requested improved garment discrimination, an NVFP4 acceleration experi
 
 The bounded validation search considers ordinary/EMA/SWA checkpoints with 1/10/18/30 views, five calibration temperatures, and fixed mixture weights. It also tests reducing views or removing existing ensemble members. Selection maximizes validation accuracy, breaks ties by lower dense MACs then parameters then NLL, and guards both validation halves and Shirt F1. A failed targeted method is retained as a negative result. NVFP4 is a separate hardware deployment experiment: it changes numerical representation and possibly runtime/storage, not parameter count or mathematical dense FLOPs. Existing test artifacts will be preserved before any accepted replacement.
 
+### NVFP4 execution and benchmark findings
+
+`timeout 1800 .venv/bin/python benchmark_nvfp4.py --compile` exercised packed W4A4 channel Linear layers using torchao 0.16.0 and PyTorch 2.10.0 on RTX 5090. Profiling recorded `aten::_scaled_mm` and the SM120 CUTLASS E2M1 block-scaled GEMM kernel. Quantized weights occupy two FP4 values per byte; unsupported token dimensions, embeddings, norms and classifier heads retain the original precision. This is real hardware FP4 execution, not fake quantization or weight-only dequantization to BF16 GEMM.
+
+The first compiled attempt reached PyTorch's default eight-specialization limit while comparing six models and multiple view layouts; partial evidence is in `results/nvfp4_initial_attempt.json`. The benchmark now permits 32 expected specializations. The completed run records synchronized batch-128 medians, all samples, storage bytes, kernel evidence and full validation for eager/compiled original/NVFP4 paths in `results/nvfp4_benchmark.json`. Compilation time and dataset/checkpoint loading are excluded; image transforms, inference, probability aggregation and CPU output transfer are included. No training experiment ran concurrently with timing; another idle service occupied GPU memory.
+
+Original eager validation gives 5,717/6,000 correct, versus 5,694 for eager NVFP4. Compiled original gives 5,716 and compiled NVFP4 gives 5,693; compilation changes floating-point execution slightly and is not assumed bit-exact. NVFP4 is slower than the corresponding original-precision path here, so it is not promoted. Logical parameter counts and dense FLOPs do not decrease from quantization; byte storage and measured runtime are reported separately. No test-set quantization search was performed.
+
 ## 2026-09-18T10:31:38.090198+00:00 — garment_wide
 
 Hypothesis: Matched to accuracy_wide_clean except an auxiliary conditional cross-entropy among T-shirt, Pullover, Dress, Coat and Shirt. Test whether training attention to garment distinctions improves validation without changing class priors.
