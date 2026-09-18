@@ -165,6 +165,24 @@ def class_routes():
         '36 fixed predicted-class threshold combinations: upper garments 0/2/4/6 at .85/.9/.95/.975; Dress 3 at .8/.9/.95; remaining classes at .7/.8/.9. First-pass pre-exit, fallback weights/views and view batch 4 remain fixed. Runtime never sees true labels. No fitting or test access. Preserve balanced correct/Shirt-F1/half guards and no parameter increase; >=1% lower average MACs and >=5% lower observed latency on both validation slices.')
 
 
+@torch.inference_mode()
+def reuse_views():
+    base=json.loads((OUT/'class_routes_balanced_recipe.json').read_text())
+    x,y,vx,vy,_,_=load_data(); del x,y
+    models={n:load_model(n) for n in model_names(base)}
+    rows=[]
+    for reuse,view_batch in product((False,True),(4,8)):
+        recipe={k:base[k] for k in ('front','back','threshold','classes','parameters','pre_exit','class_thresholds')}
+        back=dict(base['back'],reuse_gate=reuse,view_batch=view_batch)
+        back['worst_case_macs']=back['full_macs']+(0 if reuse else back['cascade']['macs'])
+        recipe.update(back=back,goal='balanced',label=f'reuse_gate={reuse}:view_batch={view_batch}')
+        p,execution=predict(recipe,vx,models)
+        rows.append(dict(recipe,**details(p,vy),macs=execution['macs_per_image'],candidate_id=len(rows)))
+        print('Reuse validation:',recipe['label'],rows[-1]['correct'],round(rows[-1]['macs']),flush=True)
+    select_candidates(rows,dict(balanced=base),models,vx,vy,'reuse',.99,
+        'Four actual runtime comparisons: identity-view reuse on/off and view batch 4/8. Preserve all class thresholds, weights and view counts from class_routes frozen validation selection. The wide gate identity probability is reused before view averaging/temperature calibration, skipping one real pass for each full-fallback image. Preserve correct/Shirt-F1/half guards, >=1% lower average MACs, unchanged stored parameters and >=5% lower latency on both validation slices. No test access in either phase.')
+
+
 def evaluate(prefix='refine'):
     """Only the validation-qualified, already frozen endpoints receive test evaluation."""
     from hybrid_experiment import evaluate_frozen
@@ -176,7 +194,7 @@ def evaluate(prefix='refine'):
 
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser(); parser.add_argument('--test',action='store_true'); parser.add_argument('--progressive',action='store_true'); parser.add_argument('--batched',action='store_true'); parser.add_argument('--class-routes',action='store_true')
+    parser=argparse.ArgumentParser(); parser.add_argument('--test',action='store_true'); parser.add_argument('--progressive',action='store_true'); parser.add_argument('--batched',action='store_true'); parser.add_argument('--class-routes',action='store_true'); parser.add_argument('--reuse',action='store_true')
     args=parser.parse_args()
-    prefix='class_routes' if args.class_routes else 'batched' if args.batched else 'progressive' if args.progressive else 'refine'
-    evaluate(prefix) if args.test else {'class_routes':class_routes,'batched':batched,'progressive':progressive,'refine':run}[prefix]()
+    prefix='reuse' if args.reuse else 'class_routes' if args.class_routes else 'batched' if args.batched else 'progressive' if args.progressive else 'refine'
+    evaluate(prefix) if args.test else {'reuse':reuse_views,'class_routes':class_routes,'batched':batched,'progressive':progressive,'refine':run}[prefix]()

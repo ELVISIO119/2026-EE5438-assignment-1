@@ -23,11 +23,13 @@ def load_model(name):
 
 
 @torch.no_grad()
-def probabilities(model,x,views=1,view_batch=1):
+def probabilities(model,x,views=1,view_batch=1,cached_first=None):
     assert views in (1,2,4,10,18,30,50)
-    assert view_batch in (1,2,4)
+    assert view_batch in (1,2,4,8)
+    if cached_first is not None:
+        assert views in (1,2,4,10,30) and cached_first.shape==(len(x),10)
     outputs=[]
-    for batch in x.split(128):
+    for index,batch in enumerate(x.split(128)):
         images=[batch]
         if views>=2:
             images.append(batch.flip(-1))
@@ -48,6 +50,9 @@ def probabilities(model,x,views=1,view_batch=1):
                 images.extend(shifted+[image.flip(-1) for image in shifted])
         assert len(images)==views
         per_view=[]
+        if cached_first is not None:
+            per_view=[cached_first[index*128:index*128+len(batch)].to(batch.device)]
+            images=images[1:]
         for start in range(0,len(images),view_batch):
             group=images[start:start+view_batch]
             joined=group[0] if len(group)==1 else torch.cat(group)
@@ -98,11 +103,18 @@ def recipe_probabilities(recipe,x,models=None):
         accepted=int(mask.sum())
         routed=x[(~mask).to(x.device)]
     components=recipe['components']
+    reuse=recipe.get('reuse_gate',False)
+    if reuse:
+        assert cascade and cascade['views']==1
+        assert sum(c['name']==cascade['name'] for c in components)==1
     weights=torch.tensor([c.get('weight',1.) for c in components])
     assert torch.isfinite(weights).all() and (weights>0).all()
     weights=weights/weights.sum()
-    probs=torch.empty(0,10) if len(routed)==0 else sum(w*calibrate(probabilities(model(c['name']),routed,c['views'],view_batch),c.get('temperature',1.)) for w,c in zip(weights,components))
-    full_macs=recipe.get('full_macs',recipe['macs'])
+    probs=torch.empty(0,10) if len(routed)==0 else sum(w*calibrate(
+        probabilities(model(c['name']),routed,c['views'],view_batch,
+                      cheap[~mask] if reuse and c['name']==cascade['name'] else None),
+        c.get('temperature',1.)) for w,c in zip(weights,components))
+    full_macs=recipe.get('full_macs',recipe['macs'])-(cascade['macs'] if reuse else 0)
     macs=full_macs
     if cascade:
         cheap[~mask]=probs
@@ -137,6 +149,25 @@ if __name__=='__main__':
     inputs=torch.rand(131,1,28,28)
     for views in (1,2,4,10,18,30,50):
         expected=probabilities(Pixels(),inputs,views)
-        for grouped in (2,4):
+        for grouped in (2,4,8):
             assert torch.allclose(probabilities(Pixels(),inputs,views,grouped),expected,atol=1e-7)
     print('Grouped views match sequential probabilities across partial image/view batches.')
+    class CountPixels(Pixels):
+        def __init__(self):
+            super().__init__(); self.rows=0
+        def forward(self,x):
+            self.rows+=len(x)
+            return super().forward(x)
+    for views in (1,2,4,10,30):
+        for threshold in (1.,1e-6):
+            recipe=dict(components=[dict(name='shared',views=views)],macs=10*views,full_macs=10*views,
+                        view_batch=8,cascade=dict(name='shared',views=1,threshold=threshold,classes=list(range(10)),macs=10))
+            original=CountPixels(); reused=CountPixels()
+            expected,old_cost=recipe_probabilities(recipe,inputs,dict(shared=original))
+            actual,new_cost=recipe_probabilities(dict(recipe,reuse_gate=True),inputs,dict(shared=reused))
+            assert torch.allclose(actual,expected,atol=1e-7)
+            routed=new_cost['full_ensemble']
+            assert original.rows-reused.rows==routed
+            assert abs(old_cost['macs_per_image']-new_cost['macs_per_image']-routed/len(inputs)*10)<1e-7
+            assert old_cost['worst_case_macs']-new_cost['worst_case_macs']==10
+    print('Reused identity view matches output and skips/charges exactly one pass per fallback image.')
