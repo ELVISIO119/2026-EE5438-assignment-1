@@ -57,6 +57,12 @@ def probability_metrics(probs,labels):
     return dict(correct=correct,examples=len(labels),accuracy=correct/len(labels),loss=loss)
 
 
+def calibrate(probs,temperature=1.):
+    """Temperature scaling of log probabilities AFTER averaging a model's views."""
+    assert temperature>0
+    return probs if temperature==1. else (probs.clamp_min(1e-12).log()/temperature).softmax(1)
+
+
 if __name__=='__main__':
     class Constant(torch.nn.Module):
         def __init__(self):

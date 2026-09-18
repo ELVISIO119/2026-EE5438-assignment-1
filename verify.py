@@ -12,7 +12,7 @@ import nbformat
 import numpy as np
 from sklearn.metrics import accuracy_score,precision_recall_fscore_support
 from train import OUT,load_data,model_cost
-from evaluation import load_model,probabilities,probability_metrics,digest
+from evaluation import load_model,probabilities,probability_metrics,digest,calibrate
 
 
 def checkpoints():
@@ -44,7 +44,7 @@ def checkpoints():
         for component,weight in zip(components,weights):
             assert digest(component['name'])==component['sha256']
             model=load_model(component['name'])
-            probs=probabilities(model,vx,component['views'])*weight
+            probs=calibrate(probabilities(model,vx,component['views']),component.get('temperature',1.))*weight
             total=probs if total is None else total+probs
             count,cost=model_cost(model)
             params+=count; macs+=cost*component['views']

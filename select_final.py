@@ -8,7 +8,7 @@ from pathlib import Path
 import pandas as pd
 import torch
 from train import OUT,SEED,load_data
-from evaluation import load_model,probabilities,probability_metrics,digest
+from evaluation import load_model,probabilities,probability_metrics,digest,calibrate
 
 
 def select(accuracy_first=False):
@@ -74,7 +74,16 @@ def select(accuracy_first=False):
     if accuracy_first:
         # Bounded validation search: equal-weight prefixes plus at most eight greedy additions.
         # Both fixed validation halves must avoid losing correct predictions on an accepted step.
-        candidates.extend(accuracy_ensembles(leaders,cached,vy,rank))
+        calibrated=[]
+        for candidate in leaders:
+            temperature=min((.75,1.,1.25,1.5,2.),key=lambda t:probability_metrics(calibrate(cached[candidate['name']],t),vy)['loss'])
+            key=candidate['name']+f':T{temperature}'
+            cached[key]=calibrate(cached[candidate['name']],temperature)
+            calibrated.append(dict(candidate,name=key,
+                                   components=[dict(candidate['components'][0],temperature=temperature)],
+                                   **probability_metrics(cached[key],vy)))
+        candidates.extend(calibrated)
+        candidates.extend(accuracy_ensembles(calibrated,cached,vy,rank))
     selected=min(candidates,key=rank)
     for component in selected['components']:
         component['sha256']=digest(component['name'])
@@ -85,6 +94,7 @@ def select(accuracy_first=False):
                 search=('Models within 3.5 percentage points of best raw validation; 1/2/4/10/18/30/50 views; top ten distinct model checkpoints; equal pairs/triples/prefixes and bounded greedy weighted combinations.' if accuracy_first else 'Models within 1.5 percentage points of best raw validation; 1/2/4 views; equally weighted pairs/triples from top four distinct models.'),
                 view_definition='1: identity; 2: identity + horizontal flip; 4: those plus left/right one-pixel shifts; 10: center/cardinal shifts with flips; 18: all 3x3 offsets with flips; 30: ten views at affine-grid scales 1/0.96/1.04; 50: all 5x5 offsets with flips. Shifts are zero-padded.',
                 benchmark_status='Exploratory continuation on a previously evaluated public benchmark; selection code uses validation only, not a new blinded test.',
+                calibration='Greedy/prefix pool selects per-model post-view probability temperature from [0.75,1,1.25,1.5,2] by validation NLL. Raw individual/pair/triple candidates remain eligible.' if accuracy_first else 'None',
                 cost_note='Sum stored parameters across members; MACs include every model/view. Dense FLOPs approximately twice MACs.')
     (OUT/'final_recipe.json').write_text(json.dumps(recipe,indent=2))
     pd.DataFrame([{k:v for k,v in c.items() if k!='components'} for c in sorted(candidates,key=rank)]).to_csv(OUT/'validation_candidates.csv',index=False)
@@ -137,6 +147,7 @@ def accuracy_ensembles(leaders,cached,labels,rank):
             outcomes.append(current)
     (OUT/'weighted_search.json').write_text(json.dumps(dict(
         attempted_weight_settings=trials,retained_candidates=len(outcomes),
+        temperature_grid=[.75,1.,1.25,1.5,2.],temperature_selection='Minimum validation NLL per model after averaging views',
         constraint='Accepted greedy steps cannot reduce correct count on either fixed 3000-example validation half; halves are development data, not independent test sets.',
         alpha_grid=[.1,.2,.35,.5],max_steps_per_start=8,starts=min(3,len(leaders))),indent=2))
     return outcomes

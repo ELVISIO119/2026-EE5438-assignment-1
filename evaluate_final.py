@@ -9,7 +9,7 @@ import torchvision
 from sklearn.metrics import classification_report,confusion_matrix
 from torchvision.datasets import FashionMNIST
 from train import OUT,DEVICE
-from evaluation import load_model,probabilities,probability_metrics,digest
+from evaluation import load_model,probabilities,probability_metrics,digest,calibrate
 
 
 def evaluate_final():
@@ -22,7 +22,7 @@ def evaluate_final():
     predictions=[]
     for component in recipe['components']:
         model=load_model(component['name'])
-        predictions.append(probabilities(model,x,component['views']))
+        predictions.append(calibrate(probabilities(model,x,component['views']),component.get('temperature',1.)))
         del model
     weights=torch.tensor([c.get('weight',1.) for c in recipe['components']])
     assert torch.isfinite(weights).all() and (weights>0).all()

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import torch
 import select_final
-from evaluation import probabilities,probability_metrics
+from evaluation import probabilities,probability_metrics,calibrate
 
 
 class InspectViews(torch.nn.Module):
@@ -28,6 +28,12 @@ for views,unique in ((10,10),(18,18),(30,30),(50,50)):
     assert torch.allclose(p.sum(1),torch.ones(1))
 
 labels=torch.zeros(6000,dtype=torch.long)
+example=torch.softmax(torch.randn(8,10),dim=1)
+for temperature in (.75,1.,1.25,1.5,2.):
+    calibrated=calibrate(example,temperature)
+    assert torch.equal(example.argmax(1),calibrated.argmax(1))
+    assert torch.allclose(calibrated.sum(1),torch.ones(8),atol=1e-6)
+assert torch.equal(example,calibrate(example))
 leaders=[]; cached={}
 for index in range(3):
     key=f'model{index}:10'
