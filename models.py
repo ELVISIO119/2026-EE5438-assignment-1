@@ -33,13 +33,26 @@ class ResidualMLP(nn.Module):
     def forward(self,x):
         return self.head(self.norm(self.blocks(self.embed(x.flatten(1)))))
 
+class PartialChannelMLP(nn.Module):
+    """CSP-inspired channel split and dense fusion; no convolution or attention."""
+    def __init__(self,width,dropout):
+        super().__init__()
+        assert width%2==0
+        self.transform=nn.Sequential(nn.Linear(width//2,width),nn.GELU(),nn.Dropout(dropout),nn.Linear(width,width//2))
+        self.fuse=nn.Linear(width,width)
+
+    def forward(self,x):
+        preserved,processed=x.chunk(2,dim=-1)
+        return self.fuse(torch.cat((preserved,self.transform(processed)),dim=-1))
+
+
 class MixerBlock(nn.Module):
-    def __init__(self,tokens,width,hidden,dropout):
+    def __init__(self,tokens,width,hidden,dropout,partial_channel=False):
         super().__init__()
         self.token_norm=nn.LayerNorm(width)
         self.token=nn.Sequential(nn.Linear(tokens,128),nn.GELU(),nn.Dropout(dropout),nn.Linear(128,tokens))
         self.channel_norm=nn.LayerNorm(width)
-        self.channel=nn.Sequential(nn.Linear(width,hidden),nn.GELU(),nn.Dropout(dropout),nn.Linear(hidden,width))
+        self.channel=PartialChannelMLP(width,dropout) if partial_channel else nn.Sequential(nn.Linear(width,hidden),nn.GELU(),nn.Dropout(dropout),nn.Linear(hidden,width))
 
     def forward(self,x):
         x=x+self.token(self.token_norm(x).transpose(1,2)).transpose(1,2)
@@ -72,10 +85,11 @@ class PyramidMLP(nn.Module):
         width=cfg['width']
         self.fuse=cfg.get('multiscale_fusion',True)
         self.embed=nn.Linear(4,width)
-        self.fine=nn.Sequential(*[MixerBlock(196,width,2*width,cfg['dropout']) for _ in range(cfg['depth'])])
+        partial=cfg.get('partial_channel',False)
+        self.fine=nn.Sequential(*[MixerBlock(196,width,2*width,cfg['dropout'],partial) for _ in range(cfg['depth'])])
         self.fine_norm=nn.LayerNorm(width) if self.fuse else nn.Identity()
         self.merge=nn.Sequential(nn.LayerNorm(4*width),nn.Linear(4*width,2*width))
-        self.coarse=nn.Sequential(*[MixerBlock(49,2*width,4*width,cfg['dropout']) for _ in range(cfg['depth'])])
+        self.coarse=nn.Sequential(*[MixerBlock(49,2*width,4*width,cfg['dropout'],partial) for _ in range(cfg['depth'])])
         self.coarse_norm=nn.LayerNorm(2*width)
         # Changing head width must not change the subsequent training RNG stream.
         with torch.random.fork_rng(devices=[]):
