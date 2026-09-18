@@ -95,6 +95,18 @@ def run(cfg):
         model.load_state_dict(initial['state_dict'])
         del initial
     params,macs = model_cost(model)
+    teacher=None
+    teacher_params=teacher_macs=0
+    if cfg.get('teacher'):
+        checkpoint=torch.load(OUT/f"{cfg['teacher']}.pt",map_location=DEVICE,weights_only=True)
+        # Keep teacher construction from changing the student's random-number stream.
+        with torch.random.fork_rng(devices=[torch.cuda.current_device()] if DEVICE.type=='cuda' else []):
+            teacher=Model(checkpoint['config'],checkpoint['mean'],checkpoint['std']).to(DEVICE)
+        teacher.load_state_dict(checkpoint['state_dict'])
+        teacher.requires_grad_(False).eval()
+        teacher_params,teacher_macs=model_cost(teacher)
+        del checkpoint
+        assert not cfg.get('sam'), 'Distillation and SAM are separate controlled trials.'
     hidden=[p for name,p in model.named_parameters() if '.blocks.' in name and p.ndim==2] if cfg.get('optimizer')=='muon' else []
     hidden_ids={id(p) for p in hidden}
     other=[p for p in model.parameters() if id(p) not in hidden_ids]
@@ -142,6 +154,12 @@ def run(cfg):
                 targets=lam*targets+(1-lam)*targets[perm]
             model.zero_grad(set_to_none=True)
             logits=model(images); loss=F.cross_entropy(logits,targets)
+            if teacher is not None:
+                temperature=cfg['temperature']
+                with torch.no_grad():
+                    teacher_prob=F.softmax(teacher(images)/temperature,dim=1)
+                kl=F.kl_div(F.log_softmax(logits/temperature,dim=1),teacher_prob,reduction='batchmean')*temperature**2
+                loss=(1-cfg['distill_alpha'])*loss+cfg['distill_alpha']*kl
             loss.backward()
             if cfg.get('sam'):
                 from sharpness import perturb,restore
@@ -181,6 +199,9 @@ def run(cfg):
                     val_accuracy=best[0],val_loss=-best[1],history=history,
                     seconds=time.perf_counter()-started,complete=epoch==cfg['epochs'])
         result['gradient_evaluations']=epoch*math.ceil(len(x)/128)*(2 if cfg.get('sam') else 1)
+        if teacher is not None:
+            result.update(teacher_parameters=teacher_params,teacher_macs=teacher_macs,
+                          teacher_training_cost_included=False,teacher_forward_passes=epoch*len(x))
         (OUT/f"{cfg['name']}.json").write_text(json.dumps(result,indent=2))
         if epoch==1 or epoch%20==0 or epoch==cfg['epochs']:
             print(cfg['name'],row,flush=True)
