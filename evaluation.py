@@ -24,7 +24,7 @@ def load_model(name):
 
 @torch.no_grad()
 def probabilities(model,x,views=1):
-    assert views in (1,2,4,10,18)
+    assert views in (1,2,4,10,18,30,50)
     outputs=[]
     for batch in x.split(128):
         images=[batch]
@@ -32,11 +32,19 @@ def probabilities(model,x,views=1):
             images.append(batch.flip(-1))
         if views==4:
             images.extend([F.pad(batch,(1,0,0,0))[...,:28],F.pad(batch,(0,1,0,0))[...,1:]])
-        if views in (10,18):
-            shifts=[(0,0),(-1,0),(1,0),(0,-1),(0,1)] if views==10 else [(dy,dx) for dy in (-1,0,1) for dx in (-1,0,1)]
-            padded=F.pad(batch,(1,1,1,1))
-            shifted=[padded[:,:,1+dy:29+dy,1+dx:29+dx] for dy,dx in shifts]
-            images=shifted+[image.flip(-1) for image in shifted]
+        if views in (10,18,30,50):
+            radius=2 if views==50 else 1
+            shifts=[(0,0),(-1,0),(1,0),(0,-1),(0,1)] if views in (10,30) else [(dy,dx) for dy in range(-radius,radius+1) for dx in range(-radius,radius+1)]
+            images=[]
+            for scale in ((1.,.96,1.04) if views==30 else (1.,)):
+                scaled=batch
+                if scale!=1.:
+                    theta=torch.zeros(len(batch),2,3,device=batch.device)
+                    theta[:,0,0]=theta[:,1,1]=scale
+                    scaled=F.grid_sample(batch,F.affine_grid(theta,batch.shape,align_corners=False),align_corners=False)
+                padded=F.pad(scaled,(radius,)*4)
+                shifted=[padded[:,:,radius+dy:radius+dy+28,radius+dx:radius+dx+28] for dy,dx in shifts]
+                images.extend(shifted+[image.flip(-1) for image in shifted])
         assert len(images)==views
         outputs.append(torch.stack([model(image).softmax(1) for image in images]).mean(0).cpu())
     return torch.cat(outputs)
@@ -58,9 +66,9 @@ if __name__=='__main__':
             self.calls+=1
             assert x.shape[1:]==(1,28,28)
             return torch.zeros(len(x),10,device=x.device)
-    for views in (1,2,4,10,18):
+    for views in (1,2,4,10,18,30,50):
         model=Constant()
         probs=probabilities(model,torch.rand(3,1,28,28),views)
         assert model.calls==views and probs.shape==(3,10)
         assert torch.allclose(probs,torch.full_like(probs,.1),atol=1e-7)
-    print('All five inference view counts preserve shape and normalized probabilities.')
+    print('All seven inference view counts preserve shape and normalized probabilities.')

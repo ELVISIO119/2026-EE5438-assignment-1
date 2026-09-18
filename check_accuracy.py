@@ -18,11 +18,13 @@ class InspectViews(torch.nn.Module):
 
 x=torch.zeros(1,1,28,28)
 x[0,0,14,10]=1.
-for views,unique in ((10,10),(18,18)):
+for views,unique in ((10,10),(18,18),(30,30),(50,50)):
     model=InspectViews()
     p=probabilities(model,x,views)
-    positions={tuple(torch.nonzero(image[0,0])[0].tolist()) for image in model.seen}
-    assert len(positions)==unique and all(image.sum()==1 for image in model.seen)
+    transforms={image.numpy().tobytes() for image in model.seen}
+    assert len(transforms)==unique
+    if views!=30:
+        assert all(image.sum()==1 for image in model.seen)
     assert torch.allclose(p.sum(1),torch.ones(1))
 
 labels=torch.zeros(6000,dtype=torch.long)
@@ -45,4 +47,4 @@ for row in outcomes:
     assert row['parameters']==10*len(row['components'])
     assert row['macs']==100*len(row['components'])
     assert sum(row['validation_half_correct'])==row['correct']
-print('Ten/eighteen distinct shifted views, convex ensemble weights, complementary errors and total costs verified.')
+print('Distinct shifted/scaled views, convex ensemble weights, complementary errors and total costs verified.')

@@ -42,7 +42,7 @@ def select(accuracy_first=False):
     for row in eligible:
         model=load_model(row['name'])
         checkpoint_hash=digest(row['name'])
-        for views in ((1,2,4,10,18) if accuracy_first else (1,2,4)):
+        for views in ((1,2,4,10,18,30,50) if accuracy_first else (1,2,4)):
             cache_path=cache_dir/f"{row['name']}_{views}_{checkpoint_hash[:12]}_{code_hash[:12]}.pt"
             if cache_path.exists():
                 probs=torch.load(cache_path,map_location='cpu',weights_only=True)
@@ -82,8 +82,8 @@ def select(accuracy_first=False):
                 candidates=len(candidates),selection_split='validation_only',
                 objective='accuracy_first' if accuracy_first else 'accuracy_with_cost_ties',
                 rule=('Maximize validation correct count; tie-break only by validation NLL; no compute penalty.' if accuracy_first else 'Maximize validation correct count; tie-break by fewer total dense MACs, then parameters, then NLL.'),
-                search=('Models within 3.5 percentage points of best raw validation; 1/2/4/10/18 views; top ten distinct model checkpoints; equal pairs/triples/prefixes and bounded greedy weighted combinations.' if accuracy_first else 'Models within 1.5 percentage points of best raw validation; 1/2/4 views; equally weighted pairs/triples from top four distinct models.'),
-                view_definition='1: identity; 2: identity + horizontal flip; 4: those plus left/right one-pixel shifts; 10: center/cardinal shifts with flips; 18: all 3x3 offsets with flips. Shifts are zero-padded.',
+                search=('Models within 3.5 percentage points of best raw validation; 1/2/4/10/18/30/50 views; top ten distinct model checkpoints; equal pairs/triples/prefixes and bounded greedy weighted combinations.' if accuracy_first else 'Models within 1.5 percentage points of best raw validation; 1/2/4 views; equally weighted pairs/triples from top four distinct models.'),
+                view_definition='1: identity; 2: identity + horizontal flip; 4: those plus left/right one-pixel shifts; 10: center/cardinal shifts with flips; 18: all 3x3 offsets with flips; 30: ten views at affine-grid scales 1/0.96/1.04; 50: all 5x5 offsets with flips. Shifts are zero-padded.',
                 benchmark_status='Exploratory continuation on a previously evaluated public benchmark; selection code uses validation only, not a new blinded test.',
                 cost_note='Sum stored parameters across members; MACs include every model/view. Dense FLOPs approximately twice MACs.')
     (OUT/'final_recipe.json').write_text(json.dumps(recipe,indent=2))
