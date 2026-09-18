@@ -1,5 +1,11 @@
 # Experiment journal
 
+## Accuracy-first extension — objective set before new experiments
+
+The final objective is now validation accuracy without a parameter or MAC budget. Retain the existing 54,000/6,000 stratified split and assignment seed. Add a finer-patch Mixer, a wider/deeper Mixer, augmented refinement of the Muon-trained Mixer, and a larger flat-input residual MLP. Compare ordinary, EMA and SWA checkpoints. Expand deterministic inference to 10 and 18 views, including flips and both image axes. Select ensembles on validation data, tie-breaking by validation negative log-likelihood, with no compute penalty.
+
+The public benchmark has already been evaluated in this project. This is an exploratory continuation, not a newly blinded test. Existing test scores are historical context only; new candidate fitting, selection and stopping decisions use training/validation evidence. Freeze the new recipe before its test evaluation, and do not use that result to revise it. The previous delivery remains recoverable in Git and in a local archive.
+
 ## Project setup
 
 Objective: improve Fashion-MNIST classification using only MLPs while keeping a clear record of architecture, optimizer, regularization and inference costs.
