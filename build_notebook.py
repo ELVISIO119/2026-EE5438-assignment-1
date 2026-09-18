@@ -29,7 +29,7 @@ def build():
                                   'image_processing_experiment.py','benchmark_awq.py',
                                   'run_yolo.py','select_yolo.py','check_pyramid.py',
                                   'pil_experiment.py','feature_experiment.py','moe_experiment.py','loss_followup.py',
-                                  'hybrid_experiment.py','import_legacy.py','SOURCES.md','requirements.txt')]
+                                  'hybrid_experiment.py','refine_cascade.py','import_legacy.py','SOURCES.md','requirements.txt')]
     files+=list((ROOT/'configs').glob('*.json'))+list(OUT.glob('*.json'))+list(OUT.glob('*.csv'))
     files += [OUT/f'{name}.pt' for name in sorted({'baseline_sgd_sigmoid','legacy_clean','legacy_muon'}|{c['name'] for c in recipe['components']})]
     buffer=io.BytesIO()
@@ -44,7 +44,7 @@ def build():
 
     **Cai Haochen | Student ID 58561440 | EE5438 | Semester A 2026-2027**
 
-    The two optimized deployment options in **Section 13** each obtain **{evidence['hybrid_test_metrics']['selected']['balanced']['accuracy']:.2%} test accuracy**. They use inexpensive first-stage MLPs and send uncertain images to the original cascade. The balanced option reduces average test MACs to 492.48 million; the accuracy-priority option uses 841.89 million and stores fewer parameters. Both are evaluated by default Run All.
+    The latest **progressive, batched-view classifier in Section 14** obtains **{evidence['batched_test_metrics']['selected']['balanced']['accuracy']:.2%} test accuracy**, using 475.71 million average test MACs and 3,164,836 stored parameters. It accepts very confident predictions after one small MLP and batches fallback views to reduce GPU overhead. Default Run All evaluates it and the preceding frozen options. The two preceding options in **Section 13** also obtain **{evidence['hybrid_test_metrics']['selected']['balanced']['accuracy']:.2%} test accuracy**; their results remain explicit references, including the smaller-storage accuracy-priority option.
 
     The frozen reference classifier, retained in Sections 1–12, obtains **{metrics['accuracy']:.2%} test accuracy**, macro precision **{metrics['macro_precision']:.4f}**, macro recall **{metrics['macro_recall']:.4f}**, and macro F1 **{metrics['macro_f1']:.4f}** on 10,000 Fashion-MNIST test images. All components are MLPs. No convolution, attention, Transformer, outside training images or externally pretrained weights are used. The new front-stage weights come from this student's earlier training on the same assignment split; their provenance is retained.
 
@@ -56,7 +56,7 @@ def build():
 
     **Run All performs real evaluation of the frozen weights.** The portable bundle below contains readable Python sources, configuration files, recorded training histories, and the selected checkpoints. It is unpacked into a new temporary working directory, leaving existing files untouched. The bundle is not a remote dependency.
 
-    Set `RETRAIN_ALL=True` to rerun the repository's training sequence from scratch before validation selection and test evaluation. This excludes the two imported legacy checkpoints: their original configurations, histories and hashes are retained, but the optional training sequence does not recreate their original training. Section 13 evaluates frozen hybrid endpoints only in default mode; after retraining, their stored hash bindings no longer apply and a new validation-only freeze is required. Training is opt-in because it includes all negative-result experiments. Recorded histories are not represented as newly executed training. PyTorch 2.10, torchvision 0.25, NumPy, pandas, scikit-learn and matplotlib are required. CUDA is recommended; CPU evaluation is supported but slower.
+    Set `RETRAIN_ALL=True` to rerun the repository's training sequence from scratch before validation selection and test evaluation. This excludes the two imported legacy checkpoints: their original configurations, histories and hashes are retained, but the optional training sequence does not recreate their original training. Sections 13–14 evaluate frozen hybrid endpoints only in default mode; after retraining, their stored hash bindings no longer apply and a new validation-only freeze is required. Training is opt-in because it includes all negative-result experiments. Recorded histories are not represented as newly executed training. PyTorch 2.10, torchvision 0.25, NumPy, pandas, scikit-learn and matplotlib are required. CUDA is recommended; CPU evaluation is supported but slower.
 
     The official 60,000-image training set is stratified into 54,000 training and 6,000 validation examples, 600 per validation class, using seed **58561440**. Mean and standard deviation come only from the 54,000 training images. Validation chooses checkpoints, averaging, pruning, inference views and ensemble weights. The test recipe is frozen and checkpoint hashes are checked before its evaluation. The public test benchmark has been evaluated during development; this continuation is not an independently blinded test. New candidate fitting and selection use training/validation data only. Re-evaluating the frozen recipe checks implementation consistency, not an independent replication of generalization.
     ''')
@@ -577,6 +577,47 @@ plt.show()
     The same-device latency comparison uses the first 1,024 validation images, internal batch size 128, three warmups and seven synchronized repetitions. It includes views, routing, softmax, averaging and CPU output, excluding model loading and input transfer. Recorded medians are 104.39 ms for the earlier dual model, 236.45 ms for the original cascade, 95.49 ms for balanced and 144.84 ms for accuracy priority. These are shared RTX 5090 measurements selected on validation timing, not independent speed confirmation or single-image latency. Average test MACs and validation timing use different image sets and are explicitly labelled.
 
     The 0.07-percentage-point test gain over the original cascade is seven images, not evidence of statistical significance. The public test set and development split were repeatedly observed during the wider project; neither a class ranking nor a general improvement is guaranteed. All source code, both frozen recipes and their five unique model checkpoints are embedded for default execution. The original `final_recipe.json` remains an explicit reproducible reference; optimized deployment uses `hybrid_experiment.predict` with either `hybrid_*_recipe.json`.''')
+    md('''## 14. Progressive exits and batched fallback views
+
+    Further optimization first tested 360 fallback-view/threshold combinations with all weights fixed. None preserved the relevant reference's validation correct count, Shirt F1 and both development-half counts while reducing average MACs by at least 5%. Lowering fallback quality hurts precisely the difficult images still needing it; no candidate from that phase was tested or adopted.
+
+    A second phase tried 24 one-pass pre-exit policies. Three actual balanced finalists preserved validation metrics and lowered compute, but their roughly 2% speed gains missed the predeclared 5% latency target. The first prediction is reused for unresolved images: only the missing second model or flipped view runs. All skipped/reused work is accounted for, with executable row-count checks. No accuracy-priority candidate qualified. These negative results remain in `refine_experiment.json` and `progressive_experiment.json`.
+
+    A third phase batches two or four fallback views per model call for those three accuracy/compute-qualified actual finalists, yielding six additional runtime candidates. Batching improves device utilization and reduces kernel launches without changing mathematical MACs; progressive skipping provides the MAC reduction. Since BF16 rounding can change with matrix batch shape, every candidate's actual routed validation outputs are recomputed. Selection preserves correct count, Shirt F1 and both halves, requires at least 1% fewer average MACs with no added parameters, and requires at least 5% lower median latency on BOTH first and last 1,024 validation images. The one-percent compute floor was declared before the progressive experiment because it targets one inexpensive first-stage pass. Selection uses a bounded top-five shortlist, not proof of global optimality.
+
+    **Frozen pipeline:** run `legacy_clean` once. Accept any predicted class at confidence >=0.99. Otherwise run `legacy_muon` once and average it with the saved first prediction; accept only agreement and mean confidence >=0.90. Remaining images enter the unchanged original cascade, where up to four views are concatenated per model forward. The same five models are stored, and no architecture or optimizer changes are made. Four-view groups use at most 512 transformed images for an internal batch of 128 original images, so temporary activation memory grows. This is device-specific throughput optimization, not a single-image or CPU speed guarantee.
+
+    The selected recipe was committed before test evaluation. Test accuracy remains 9,449/10,000 (94.49%), average test MACs decrease from 492,477,669 to 475,709,806 (3.4%), and stored parameters stay at 3,164,836. Worst-case cost remains 3,319,207,680 MACs. Exactly 3,977 test images exit after the first small model, and 8,552 exit before the fallback cascade. The correct count is unchanged, but the prediction vectors and which images are correct need not be identical. No threshold was retuned from test results.
+    ''')
+    code('''from refine_cascade import evaluate as evaluate_refinement
+refined_recipe=json.loads(Path('results/batched_balanced_recipe.json').read_text())
+refined_record=json.loads(Path('results/batched_test_metrics.json').read_text())
+if not RETRAIN_ALL:
+    refined_test=evaluate_refinement('batched')
+    print('Recorded / executed test correct:',refined_record['selected']['balanced']['correct'],refined_test['selected']['balanced']['correct'])
+else:
+    refined_test=refined_record
+    print('Recorded refinement only: new weights require a new validation-only freeze.')
+row=refined_test['selected']['balanced']
+display(pd.DataFrame(row['classification_report']).T.round(4))
+print('Actual test execution:',row['execution'])
+display(pd.DataFrame([{'slice':label,'reference_ms':a['median_ms'],'progressive_batched_ms':b['median_ms'],
+                      'time_reduction_%':100*(1-b['median_ms']/a['median_ms'])}
+                     for label,a,b in zip(['First 1024','Last 1024'],refined_recipe['reference_latency'],refined_recipe['timings'])]))
+fig,axes=plt.subplots(1,2,figsize=(11,4),layout='constrained')
+axes[0].bar(['Original balanced','Progressive + batching'],
+            [refined_recipe['reference_latency'][0]['median_ms'],refined_recipe['timings'][0]['median_ms']])
+axes[0].set(ylabel='Median milliseconds / 1,024 validation images',title='Recorded same-session throughput comparison')
+axes[1].bar(['Original balanced','Progressive + batching'],
+            [hybrid_test['selected']['balanced']['execution']['macs_per_image']/1e6,row['execution']['macs_per_image']/1e6])
+axes[1].set(ylabel='Average test MACs (millions)',title='Both frozen recipes: 94.49% test accuracy')
+plt.show()
+''')
+    md('''Observed latency changes from 95.36 to 58.09 ms on the first 1,024 validation images (39.1% lower) and from 96.36 to 56.61 ms on the last 1,024 (41.2% lower). Both sets are repeatedly reused development data and timing-selection inputs, not independent confirmation. Measurement includes routing, views, probability aggregation and CPU output, excluding loading/input transfer, with three warmups and seven synchronized repetitions on a shared RTX 5090. The original reference and both prior hybrids remain available for comparison. Use `hybrid_experiment.predict` with `results/batched_balanced_recipe.json` for this deployment; `python3 refine_cascade.py --batched --test` evaluates its frozen weights.
+
+    **Optimizer scope.** The user's “pre head Muon” likely refers to **Per-Head Muon**. Kimi K3's official report, Section 2.5, partitions attention Q/K/V momentum matrices along head boundaries and orthogonalizes each block separately. It targets training dynamics and optimizer overhead, not extra inference heads or lower deployed MACs. Our pure MLPs have no attention heads; that variant is not implemented or claimed. Existing Muon training already updates hidden-block matrices with Muon and embedding/classifier/bias/normalization parameters with AdamW.
+
+    **Reward versus supervised feedback.** RL rewards can encode error severity and compute costs, but they must be designed; RL does not inherently diagnose mistakes or know corrective actions. Cross-entropy already provides graded confidence feedback. A learned routing policy could choose between exit and additional computation, with a reward reflecting classification loss and cost. This round uses explicit validation-selected thresholds, not RL, a contextual-bandit training run or a newly trained gate. No benefit from those untested alternatives is claimed.''')
     md('## References\n\n'+(ROOT/'SOURCES.md').read_text().split('\n',1)[1])
     notebook=nbf.v4.new_notebook(cells=cells,metadata={'kernelspec':{'name':'python3','display_name':'Python 3','language':'python'},'language_info':{'name':'python','version':platform_version()}})
     target=ROOT/'submission'/'Assign01_Cai_Haochen_58561440.ipynb'

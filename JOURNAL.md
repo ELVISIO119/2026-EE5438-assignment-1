@@ -1,5 +1,15 @@
 # Experiment journal
 
+## 2026-09-19 — Progressive/batched outcome and integration (feature/42-progressive-integration)
+
+Commit `0a208c0` froze the selected clean-first .99/all-class, four-view-batch recipe before test evaluation; `73f949e` records the test result. Validation remains 5,717/6,000 correct, Shirt F1 0.859348 and development-half counts [2,855,2,862]. Average validation MACs fall from 475,266,565 to 460,521,803. Test remains 9,449/10,000 correct (94.49%), with average MACs falling from 492,477,669 to 475,709,806 (3.4%). Parameters remain 3,164,836; worst-case MACs remain 3,319,207,680. First-pass pre-exits number 3,977 on test; total exits before the fallback number 8,552. No test-driven selection change is made.
+
+Paired latency on the first/last 1,024 validation images changes from 95.356/96.355 ms to 58.088/56.611 ms, reductions of 39.1%/41.2%. Grouping reduces launch overhead and improves utilization without reducing arithmetic; progressive skipped passes account for MAC savings. It uses more activation memory and is not a single-image latency guarantee. Both timing slices are reused development data. Per-Head Muon terminology was checked against the official Kimi K3 technical report Section 2.5; it applies to attention Q/K/V head blocks, absent from this pure MLP. Neither that variant nor RL training is represented as implemented.
+
+Integration embeds the runtime and new experiment source in the notebook, runs the frozen new classifier, and retains both unsuccessful phases. The shared evaluation function still defaults to sequential views, preserving earlier references. The original source folder remains read-only. Section A still requires a genuine student handwritten scan.
+
+Verification completed: all 117 checkpoints, the original cascade, both prior hybrids and the new progressive/batched validation pipeline reproduce their recorded counts and costs. The portable notebook executed with 15 figures and the updated ZIP passed execution, probability-metric, freeze/hash and archive checks. On test, two labels differ from the prior balanced pipeline: one corrected error and one newly introduced error. This explains the unchanged accuracy without claiming identical predictions. The preceding ZIP is preserved at `archives/Assign01_Cai_Haochen_58561440_before_progressive.zip`; no Canvas upload was performed.
+
 ## 2026-09-19 — Grouped-view runtime follow-up (feature/41-batched-views)
 
 Progressive front exits produced three actual balanced finalists preserving 5,717 validation correct and the class/half guards, but the roughly 2% observed latency saving did not meet the predeclared 5% requirement. No endpoint was promoted or tested. The lowest-cost finalist, clean first at .99 over all predicted classes, uses 460,521,803 average validation MACs instead of 475,266,565. Accuracy-priority candidates did not qualify.

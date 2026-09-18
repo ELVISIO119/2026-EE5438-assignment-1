@@ -69,8 +69,8 @@ def checkpoints():
     from hybrid_experiment import model_names,predict,self_check
     self_check()
     result['hybrid_recipes']={}
-    for goal in ('balanced','accuracy'):
-        recipe=json.loads((OUT/f'hybrid_{goal}_recipe.json').read_text())
+    for prefix,goal in (('hybrid','balanced'),('hybrid','accuracy'),('batched','balanced')):
+        recipe=json.loads((OUT/f'{prefix}_{goal}_recipe.json').read_text())
         assert set(recipe['checkpoint_hashes'])==model_names(recipe)
         assert all(digest(n)==h for n,h in recipe['checkpoint_hashes'].items())
         models={n:load_model(n) for n in model_names(recipe)}
@@ -81,8 +81,8 @@ def checkpoints():
         assert measured['correct']==recipe['correct']
         assert execution==recipe['validation_execution']
         assert abs(execution['macs_per_image']-recipe['macs'])<1e-5
-        result['hybrid_recipes'][goal]=dict(**measured,parameters=params,execution=execution)
-        print('Verified hybrid:',goal,measured,flush=True)
+        result['hybrid_recipes'][f'{prefix}_{goal}']=dict(**measured,parameters=params,execution=execution)
+        print('Verified hybrid:',prefix,goal,measured,flush=True)
         del models
     (OUT/'checkpoint_verification.json').write_text(json.dumps(result,indent=2))
 
@@ -112,22 +112,23 @@ def submission():
     recipe=json.loads((OUT/'final_recipe.json').read_text())
     for component in recipe['components']:
         assert digest(component['name'])==component['sha256']
-    hybrid=json.loads((OUT/'hybrid_test_metrics.json').read_text())
-    predictions=np.load(OUT/'hybrid_test_predictions.npz')
-    assert np.array_equal(predictions['labels'],labels)
-    for goal,row in hybrid['selected'].items():
-        recipe=json.loads((OUT/f'hybrid_{goal}_recipe.json').read_text())
-        assert row['recipe_frozen_at']==recipe['frozen_at']<hybrid['evaluated_at']
-        assert row['checkpoint_hashes']==recipe['checkpoint_hashes']
-        assert all(digest(n)==h for n,h in row['checkpoint_hashes'].items())
-        probs=predictions[goal]
-        assert probs.shape==(10000,10) and np.isfinite(probs).all()
-        assert np.allclose(probs.sum(1),1,atol=1e-5)
-        assert int((probs.argmax(1)==labels).sum())==row['correct']
-        assert np.isclose(accuracy_score(labels,probs.argmax(1)),row['accuracy'])
-        _,_,mf,_=precision_recall_fscore_support(labels,probs.argmax(1),average='macro',zero_division=0)
-        assert np.isclose(mf,row['macro_f1'])
-        print('Verified hybrid test predictions:',goal,row['accuracy'])
+    for prefix in ('hybrid','batched'):
+        hybrid=json.loads((OUT/f'{prefix}_test_metrics.json').read_text())
+        predictions=np.load(OUT/f'{prefix}_test_predictions.npz')
+        assert np.array_equal(predictions['labels'],labels)
+        for goal,row in hybrid['selected'].items():
+            recipe=json.loads((OUT/f'{prefix}_{goal}_recipe.json').read_text())
+            assert row['recipe_frozen_at']==recipe['frozen_at']<hybrid['evaluated_at']
+            assert row['checkpoint_hashes']==recipe['checkpoint_hashes']
+            assert all(digest(n)==h for n,h in row['checkpoint_hashes'].items())
+            probs=predictions[goal]
+            assert probs.shape==(10000,10) and np.isfinite(probs).all()
+            assert np.allclose(probs.sum(1),1,atol=1e-5)
+            assert int((probs.argmax(1)==labels).sum())==row['correct']
+            assert np.isclose(accuracy_score(labels,probs.argmax(1)),row['accuracy'])
+            _,_,mf,_=precision_recall_fscore_support(labels,probs.argmax(1),average='macro',zero_division=0)
+            assert np.isclose(mf,row['macro_f1'])
+            print('Verified hybrid test predictions:',prefix,goal,row['accuracy'])
     archive_path=directory/'Assign01_Cai_Haochen_58561440.zip'
     with ZipFile(archive_path) as archive:
         assert archive.testzip() is None

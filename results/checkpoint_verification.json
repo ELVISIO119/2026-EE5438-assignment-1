@@ -1,5 +1,5 @@
 {
-  "verified_at": "2026-09-18T16:19:05.190912+00:00",
+  "verified_at": "2026-09-18T16:36:45.563170+00:00",
   "checks": [
     {
       "name": "accuracy_muon_refine",
@@ -831,7 +831,7 @@
     "macs": 1698398697.0666666
   },
   "hybrid_recipes": {
-    "balanced": {
+    "hybrid_balanced": {
       "correct": 5717,
       "examples": 6000,
       "accuracy": 0.9528333333333333,
@@ -852,7 +852,7 @@
         }
       }
     },
-    "accuracy": {
+    "hybrid_accuracy": {
       "correct": 5721,
       "examples": 6000,
       "accuracy": 0.9535,
@@ -871,6 +871,29 @@
           "macs_per_image": 2755688429.49763,
           "worst_case_macs": 3261201664
         }
+      }
+    },
+    "batched_balanced": {
+      "correct": 5717,
+      "examples": 6000,
+      "accuracy": 0.9528333333333333,
+      "loss": 0.1712823510169983,
+      "parameters": 3164836,
+      "execution": {
+        "examples": 6000,
+        "early_exit": 5170,
+        "full_ensemble": 830,
+        "macs_per_image": 460521802.92266667,
+        "worst_case_macs": 3319207680,
+        "fallback_execution": {
+          "examples": 830,
+          "early_exit": 70,
+          "full_ensemble": 760,
+          "macs_per_image": 2992673324.7228913,
+          "worst_case_macs": 3261201664
+        },
+        "pre_exit": 2373,
+        "front_macs_per_image": 46535326.336
       }
     }
   }
