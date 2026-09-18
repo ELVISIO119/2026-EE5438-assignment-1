@@ -189,6 +189,37 @@ def run():
     print(json.dumps(dict(candidate_count=len(rows),selected={k:{f:r[f] for f in ('label','correct','macs','parameters','shirt_f1')} for k,r in selected.items()},timings=timings),indent=2),flush=True)
 
 
+@torch.inference_mode()
+def evaluate_frozen():
+    from torchvision.datasets import FashionMNIST
+    from sklearn.metrics import classification_report, confusion_matrix
+    recipes={goal:json.loads((OUT/f'hybrid_{goal}_recipe.json').read_text()) for goal in ('balanced','accuracy')}
+    for recipe in recipes.values():
+        assert set(recipe['checkpoint_hashes'])==model_names(recipe)
+        assert recipe['selection_split']=='validation_only' and recipe['frozen_at']
+        assert all(digest(name)==value for name,value in recipe['checkpoint_hashes'].items())
+    data=FashionMNIST('data',train=False,download=True)
+    x=data.data.unsqueeze(1).float().div(255).to(DEVICE); labels=data.targets
+    outputs={}; saved=dict(labels=labels.numpy())
+    models={name:load_model(name) for recipe in recipes.values() for name in model_names(recipe)}
+    for goal,recipe in recipes.items():
+        p,execution=predict(recipe,x,models)
+        metrics=details(p,labels); metrics.pop('validation_half_correct')
+        outputs[goal]=dict(**metrics,parameters=recipe['parameters'],execution=execution,
+                           classification_report=classification_report(labels,p.argmax(1),target_names=data.classes,output_dict=True,zero_division=0),
+                           confusion_matrix=confusion_matrix(labels,p.argmax(1)).tolist(),
+                           recipe_label=recipe['label'],recipe_frozen_at=recipe['frozen_at'],
+                           checkpoint_hashes=recipe['checkpoint_hashes'])
+        saved[goal]=p.numpy()
+    result=dict(complete=True,selected=outputs,evaluated_at=datetime.now(timezone.utc).isoformat(),
+                protocol='Exactly two endpoints frozen by validation before test access. No recipe, threshold or checkpoint is changed from these outcomes. Previously observed public benchmark, not an independent blinded test.')
+    (OUT/'hybrid_test_metrics.json').write_text(json.dumps(result,indent=2))
+    np.savez_compressed(OUT/'hybrid_test_predictions.npz',**saved)
+    print(json.dumps({k:{f:v[f] for f in ('accuracy','correct','shirt_f1','parameters','execution')} for k,v in outputs.items()},indent=2))
+    return result
+
+
 if __name__=='__main__':
-    parser=argparse.ArgumentParser(); parser.add_argument('--check',action='store_true')
-    args=parser.parse_args(); self_check() if args.check else run()
+    parser=argparse.ArgumentParser(); parser.add_argument('--check',action='store_true'); parser.add_argument('--test',action='store_true')
+    args=parser.parse_args()
+    self_check() if args.check else evaluate_frozen() if args.test else run()
