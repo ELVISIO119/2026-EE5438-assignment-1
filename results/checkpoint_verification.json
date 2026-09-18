@@ -1,6 +1,132 @@
 {
-  "verified_at": "2026-09-18T08:28:36.268356+00:00",
+  "verified_at": "2026-09-18T10:21:01.382849+00:00",
   "checks": [
+    {
+      "name": "accuracy_muon_refine",
+      "accuracy": 0.9385,
+      "parameters": 478640,
+      "macs": 29003008,
+      "sha256": "8177b217996b1fdfac6759030c9d262aa78a148f58a015abb7a121477196c557"
+    },
+    {
+      "name": "accuracy_muon_refine_ema",
+      "accuracy": 0.938,
+      "parameters": 478640,
+      "macs": 29003008,
+      "sha256": "dd333185119ce1ac0aabbf65dce19fc5aec7e48cde1daa0c5f9e7493aa6bdb95"
+    },
+    {
+      "name": "accuracy_muon_refine_swa",
+      "accuracy": 0.937,
+      "parameters": 478640,
+      "macs": 29003008,
+      "sha256": "6da6eaf058b6f236d2a92207228a1e0e7e4d99037278b84680fbbd614ef9f533"
+    },
+    {
+      "name": "accuracy_p2",
+      "accuracy": 0.935,
+      "parameters": 529858,
+      "macs": 72329664,
+      "sha256": "520a4f00122a33ccc5de0d09fdb1763322db7fb48998f286a660748da4c0fd96"
+    },
+    {
+      "name": "accuracy_p2_clean",
+      "accuracy": 0.9395,
+      "parameters": 529858,
+      "macs": 72329664,
+      "sha256": "60bb70cac01232a7a5f15db0a8730482846017c4f3c7ce77eb622fec44fbf0c2"
+    },
+    {
+      "name": "accuracy_p2_clean_ema",
+      "accuracy": 0.9398333333333333,
+      "parameters": 529858,
+      "macs": 72329664,
+      "sha256": "610e0acf151798e313ad67befef4e15922d13d3fccd20af38433d3e1cba32f4e"
+    },
+    {
+      "name": "accuracy_p2_clean_swa",
+      "accuracy": 0.9385,
+      "parameters": 529858,
+      "macs": 72329664,
+      "sha256": "31e66eb705618c067df9d65c5a5cb991addbb4f567a7c5dbab408f87859d6227"
+    },
+    {
+      "name": "accuracy_p2_ema",
+      "accuracy": 0.934,
+      "parameters": 529858,
+      "macs": 72329664,
+      "sha256": "e0a989ab6fa1da774f25b9d348642345665c9b4d10f87060ef8145c33bf9ed9e"
+    },
+    {
+      "name": "accuracy_p2_swa",
+      "accuracy": 0.935,
+      "parameters": 529858,
+      "macs": 72329664,
+      "sha256": "2c1a799dd128962e7a652ded43d036177cf4fd0c80e2e61faf0c8040d5fce87c"
+    },
+    {
+      "name": "accuracy_residual",
+      "accuracy": 0.9193333333333333,
+      "parameters": 10066698,
+      "macs": 10046976,
+      "sha256": "babada09ca9893085560dac0e3b13824c84bcae4e021d73d4951e4e1465f069b"
+    },
+    {
+      "name": "accuracy_residual_ema",
+      "accuracy": 0.9186666666666666,
+      "parameters": 10066698,
+      "macs": 10046976,
+      "sha256": "9ac1278bd8611c09729c854e9cac8a65360da361487c236db8c8f6d396f21536"
+    },
+    {
+      "name": "accuracy_residual_swa",
+      "accuracy": 0.918,
+      "parameters": 10066698,
+      "macs": 10046976,
+      "sha256": "4fef5e600f40b84bf9f3192dc1a9cc79eef1ccb8f81cf0b187781204b06dc679"
+    },
+    {
+      "name": "accuracy_wide",
+      "accuracy": 0.9346666666666666,
+      "parameters": 1297746,
+      "macs": 77222784,
+      "sha256": "376cf6ab23adb57fc189a50fea3dfe27e788a23e091a21e9d7d8df6a8ea0e00a"
+    },
+    {
+      "name": "accuracy_wide_clean",
+      "accuracy": 0.941,
+      "parameters": 1297746,
+      "macs": 77222784,
+      "sha256": "b649446187fc751cf59d8f905df9fadeffe6df69410b4a150e6eb18d548b2df2"
+    },
+    {
+      "name": "accuracy_wide_clean_ema",
+      "accuracy": 0.9408333333333333,
+      "parameters": 1297746,
+      "macs": 77222784,
+      "sha256": "dd4ebb8a136b6a103c7148dfbc072752a57c7db93e821bfe61ed045e3589c817"
+    },
+    {
+      "name": "accuracy_wide_clean_swa",
+      "accuracy": 0.9403333333333334,
+      "parameters": 1297746,
+      "macs": 77222784,
+      "sha256": "0aa9d82bef91689cc3b4b76c97b385153e325887adf376d641f082358aabea0f"
+    },
+    {
+      "name": "accuracy_wide_ema",
+      "accuracy": 0.9378333333333333,
+      "parameters": 1297746,
+      "macs": 77222784,
+      "sha256": "c1cec5d2ca04ca1d1d656ccdc71a68ca60f7adce46d843067c95ecee6abd0dff"
+    },
+    {
+      "name": "accuracy_wide_swa",
+      "accuracy": 0.933,
+      "parameters": 1297746,
+      "macs": 77222784,
+      "sha256": "bc1eb6de6edb7105ffa5210fa3a40f32c30025007d1d8bfa4cec52b9c6aa65a3"
+    },
     {
       "name": "adamw_sigmoid",
       "accuracy": 0.8978333333333334,
@@ -177,5 +303,13 @@
       "sha256": "1350e2e4e8bf3fbb571fea6fd4e611908cf4c7e725967c51b702d04f75361443"
     }
   ],
-  "check_count": 25
+  "check_count": 43,
+  "frozen_recipe": {
+    "correct": 5717,
+    "examples": 6000,
+    "accuracy": 0.9528333333333333,
+    "loss": 0.15295259654521942,
+    "parameters": 2207556,
+    "macs": 3183978880
+  }
 }
