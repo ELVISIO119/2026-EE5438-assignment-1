@@ -44,7 +44,7 @@ def build():
 
     **Cai Haochen | Student ID 58561440 | EE5438 | Semester A 2026-2027**
 
-    The latest **class-conditional classifier in Section 15** obtains **{evidence['class_routes_test_metrics']['selected']['balanced']['accuracy']:.2%} test accuracy**, using 410.16 million average test MACs and 3,164,836 stored parameters. It uses predicted-class thresholds after small-model agreement, accepting more images before the expensive fallback. Default Run All evaluates it and the preceding frozen options. The progressive/batched reference in **Section 14** uses 475.71 million average test MACs at the same 94.49% observed accuracy. Section 13 preserves earlier hybrids, including the smaller-storage accuracy-priority option.
+    The latest **adaptive-view classifier in Section 16** obtains **{evidence['adaptive_test_metrics']['selected']['balanced']['accuracy']:.2%} test accuracy**, using 339.42 million average test MACs and 3,164,836 stored parameters. It adds fine-patch views only when the initial fallback ensemble remains uncertain, reusing completed work. Default Run All evaluates it and preceding frozen options. The class-conditional reference in **Section 15** uses 410.16 million average test MACs at the same observed accuracy; Section 14 uses 475.71 million. Section 13 preserves earlier hybrids, including the smaller-storage accuracy-priority option.
 
     The frozen reference classifier, retained in Sections 1–12, obtains **{metrics['accuracy']:.2%} test accuracy**, macro precision **{metrics['macro_precision']:.4f}**, macro recall **{metrics['macro_recall']:.4f}**, and macro F1 **{metrics['macro_f1']:.4f}** on 10,000 Fashion-MNIST test images. All components are MLPs. No convolution, attention, Transformer, outside training images or externally pretrained weights are used. The new front-stage weights come from this student's earlier training on the same assignment split; their provenance is retained.
 
@@ -56,7 +56,7 @@ def build():
 
     **Run All performs real evaluation of the frozen weights.** The portable bundle below contains readable Python sources, configuration files, recorded training histories, and the selected checkpoints. It is unpacked into a new temporary working directory, leaving existing files untouched. The bundle is not a remote dependency.
 
-    Set `RETRAIN_ALL=True` to rerun the repository's training sequence from scratch before validation selection and test evaluation. This excludes the two imported legacy checkpoints: their original configurations, histories and hashes are retained, but the optional training sequence does not recreate their original training. Sections 13–15 evaluate frozen hybrid endpoints only in default mode; after retraining, their stored hash bindings no longer apply and a new validation-only freeze is required. Training is opt-in because it includes all negative-result experiments. Recorded histories are not represented as newly executed training. PyTorch 2.10, torchvision 0.25, NumPy, pandas, scikit-learn and matplotlib are required. CUDA is recommended; CPU evaluation is supported but slower.
+    Set `RETRAIN_ALL=True` to rerun the repository's training sequence from scratch before validation selection and test evaluation. This excludes the two imported legacy checkpoints: their original configurations, histories and hashes are retained, but the optional training sequence does not recreate their original training. Sections 13–16 evaluate frozen hybrid endpoints only in default mode; after retraining, their stored hash bindings no longer apply and a new validation-only freeze is required. Training is opt-in because it includes all negative-result experiments. Recorded histories are not represented as newly executed training. PyTorch 2.10, torchvision 0.25, NumPy, pandas, scikit-learn and matplotlib are required. CUDA is recommended; CPU evaluation is supported but slower.
 
     The official 60,000-image training set is stratified into 54,000 training and 6,000 validation examples, 600 per validation class, using seed **58561440**. Mean and standard deviation come only from the 54,000 training images. Validation chooses checkpoints, averaging, pruning, inference views and ensemble weights. The test recipe is frozen and checkpoint hashes are checked before its evaluation. The public test benchmark has been evaluated during development; this continuation is not an independently blinded test. New candidate fitting and selection use training/validation data only. Re-evaluating the frozen recipe checks implementation consistency, not an independent replication of generalization.
     ''')
@@ -659,6 +659,42 @@ plt.show()
     md('''Same-session median latency changes from 58.13 to 46.73 ms on the first slice (19.6% lower) and from 56.67 to 41.40 ms on the last slice (27.0% lower). Each contains 1,024 validation images; timing uses three warmups and seven synchronized repetitions, includes views/routing/probabilities/CPU output, and excludes loading/input transfer. Both slices remain development and timing-selection data. These are shared-device throughput results, not independent confirmation or single-image latency guarantees. Validation and the public test benchmark have been repeatedly observed across the project; no class-ranking or significance claim is made.
 
     Reproduce frozen evaluation with `python3 refine_cascade.py --class-routes --test`. Deploy using `hybrid_experiment.predict` and `results/class_routes_balanced_recipe.json`. The same five checkpoints and all runtime code are embedded. Original reference recipes and test records remain available; the earlier stages in this notebook describe their own historical results.''')
+    md('''## 16. Add fallback views only when needed
+
+    The previous reduced-view experiments weakened every hard-image fallback and did not qualify. Here the full 10/30/10-view ensemble remains available, while medium-difficulty images can stop earlier. Keep the class-conditional front, .99 first-pass exit, fallback wide gate, weights, temperatures and four-view grouping unchanged. On reaching the full ensemble, compute **10/10/10 views** first. If its weighted/calibrated maximum probability reaches **0.70**, return that prediction; otherwise append the fine-patch model's remaining twenty views and reconstruct its thirty-view probability before calibration. Other model outputs and the first-ten fine-patch mean are reused. No new model is trained or stored.
+
+    The first ten views exactly match the initial scale-one prefix of the thirty-view definition. Repeating their saved mean ten times in the final average gives the same weight as the original sum in real arithmetic; floating-point rounding and subset batch shape can still change results. Runnable checks verify prefix equivalence within tolerance, actual skipped image-view rows, early/full exits and average/worst-case costs. No compute discount is claimed for work that still executes.
+
+    Compare twelve fixed policies: confidence .70/.80/.90/.95/.975/.99, allowing either all predicted classes or classes 1/5/7/8/9. Cached screening is followed by actual routed recomputation of up to five eligible finalists. Preserve the reference correct count, Shirt F1 and both development halves; add no parameters; require at least 1% fewer average MACs and at least 5% lower latency on both first/last 1,024 validation slices. The .70 all-class rule is selected and committed before test evaluation. Validation remains 5,718/6,000 correct, Shirt F1 0.859829 and halves [2,856,2,862]; average validation MACs fall from 399,102,505 to 324,844,050.
+
+    Test accuracy remains 9,449/10,000 (94.49%), with average MACs falling from 410,159,652 to 339,421,241 (17.2%). Parameters remain 3,164,836; worst-case MACs remain 3,319,207,680. Of 1,112 images reaching three-model inference, 489 exit after the initial views and 623 need the extra twenty fine-patch views. Earlier front and wide-gate route counts are unchanged. No threshold or checkpoint was changed after this test evaluation.
+    ''')
+    code('''adaptive_recipe=json.loads(Path('results/adaptive_balanced_recipe.json').read_text())
+adaptive_record=json.loads(Path('results/adaptive_test_metrics.json').read_text())
+if not RETRAIN_ALL:
+    adaptive_test=evaluate_refinement('adaptive')
+    print('Recorded / executed test correct:',adaptive_record['selected']['balanced']['correct'],adaptive_test['selected']['balanced']['correct'])
+else:
+    adaptive_test=adaptive_record
+    print('Recorded adaptive views only; retrained weights require a new validation freeze.')
+adaptive_row=adaptive_test['selected']['balanced']
+display(pd.DataFrame(adaptive_row['classification_report']).T.round(4))
+print('Actual test routing:',adaptive_row['execution'])
+display(pd.DataFrame([{'slice':label,'previous_ms':a['median_ms'],'adaptive_ms':b['median_ms'],
+                      'time_reduction_%':100*(1-b['median_ms']/a['median_ms'])}
+                     for label,a,b in zip(['First 1024','Last 1024'],adaptive_recipe['reference_latency'],adaptive_recipe['timings'])]))
+fig,axes=plt.subplots(1,2,figsize=(11,4),layout='constrained')
+axes[0].bar(['Fixed fallback views','Adaptive fallback views'],
+            [adaptive_recipe['reference_latency'][0]['median_ms'],adaptive_recipe['timings'][0]['median_ms']])
+axes[0].set(ylabel='Median ms / 1,024 validation images',title='Same-session timing; shared RTX 5090')
+axes[1].bar(['Fixed fallback views','Adaptive fallback views'],
+            [class_test['selected']['balanced']['execution']['macs_per_image']/1e6,adaptive_row['execution']['macs_per_image']/1e6])
+axes[1].set(ylabel='Average test MACs (millions)',title='Both frozen recipes: 94.49% test accuracy')
+plt.show()
+''')
+    md('''Same-session medians change from 46.66 to 39.64 ms on the first 1,024 validation images (15.1% lower) and from 41.44 to 35.58 ms on the last 1,024 (14.1% lower). Timing includes views, routing, probability aggregation and CPU output, excludes model loading/input transfer, and uses three warmups plus seven synchronized repetitions on the shared RTX 5090. Both slices are reused selection data, not independent speed confirmation or single-image latency measurements. The public test benchmark has been repeatedly observed; unchanged accuracy is not evidence of a generalization improvement.
+
+    Evaluate the frozen option with `python3 refine_cascade.py --adaptive --test`, or call `hybrid_experiment.predict` with `results/adaptive_balanced_recipe.json`. The same five model checkpoints and all runtime code are embedded. Historical reference recipes remain available; optional retraining requires a new validation-only freeze before reusing any adaptive decision policy.''')
     md('## References\n\n'+(ROOT/'SOURCES.md').read_text().split('\n',1)[1])
     notebook=nbf.v4.new_notebook(cells=cells,metadata={'kernelspec':{'name':'python3','display_name':'Python 3','language':'python'},'language_info':{'name':'python','version':platform_version()}})
     target=ROOT/'submission'/'Assign01_Cai_Haochen_58561440.ipynb'

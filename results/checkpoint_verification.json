@@ -1,5 +1,5 @@
 {
-  "verified_at": "2026-09-18T16:44:50.893481+00:00",
+  "verified_at": "2026-09-18T16:56:13.040536+00:00",
   "checks": [
     {
       "name": "accuracy_muon_refine",
@@ -914,6 +914,34 @@
           "full_ensemble": 647,
           "macs_per_image": 2950352958.839609,
           "worst_case_macs": 3261201664
+        },
+        "pre_exit": 2373,
+        "front_macs_per_image": 46535326.336
+      }
+    },
+    "adaptive_balanced": {
+      "correct": 5718,
+      "examples": 6000,
+      "accuracy": 0.953,
+      "loss": 0.17181798815727234,
+      "parameters": 3164836,
+      "execution": {
+        "examples": 6000,
+        "early_exit": 5283,
+        "full_ensemble": 717,
+        "macs_per_image": 324844049.87733334,
+        "worst_case_macs": 3319207680,
+        "fallback_execution": {
+          "examples": 717,
+          "early_exit": 70,
+          "full_ensemble": 647,
+          "macs_per_image": 2328943293.232915,
+          "worst_case_macs": 3261201664,
+          "adaptive_views": {
+            "examples": 647,
+            "view_exit": 308,
+            "extra_views": 339
+          }
         },
         "pre_exit": 2373,
         "front_macs_per_image": 46535326.336
