@@ -13,7 +13,7 @@ from train import OUT, SEED, load_data
 
 @torch.inference_mode()
 def run(stems,prefix='yolo'):
-    assert prefix in ('yolo','features','moe')
+    assert prefix in ('yolo','features','moe','loss')
     reference_path=OUT/f'{prefix}_reference.json'
     if not reference_path.exists():
         reference_path.write_text((OUT/'final_recipe.json').read_text())

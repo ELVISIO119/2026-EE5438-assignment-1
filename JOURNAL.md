@@ -1,5 +1,17 @@
 # Experiment journal
 
+## 2026-09-18 — Focal and weighted-CE follow-up design (feature/34-garment-loss-followup)
+
+The user proposed focal gamma 2, class-weighted CE, targeted augmentation and garment-only post-training. The earlier gamma-1 and conditional-garment objectives already exist; this follow-up isolates gamma 2 and mild weight 1.5 for T-shirt/Pullover/Coat/Shirt. Fashion-MNIST is balanced, so these weights express difficulty preference, not imbalance correction. Weighted CE divides by the sum of sample weights, matching native PyTorch. Self-checks compare both losses with independent expressions and verify gradients.
+
+Both new configurations match `features_gray`: wide SWA initialization, 30 clean epochs, same optimizer, schedule, seed, architecture and averaging. The existing completed CE run is reused as the exact matching control. All training classes remain present. Only if a selected loss improves overall correct count while preserving Shirt recall/F1 and both fixed development-half counts will local augmentation be stacked. No aggressive upper-half crop or garment-only replacement of the shared classifier is assumed safe: these can discard discriminative information or cause forgetting. Three selected families enter the existing 58-candidate validation deployment grid; no test-driven selection.
+
+## 2026-09-18 — Sparse-expert outcome
+
+The selected three-expert EMA checkpoint achieves 5,641/6,000 validation correct (94.0167%) versus 5,642 (94.0333%) for the approximately parameter-matched one-expert EMA control. Route counts are [2,308, 2,330, 1,362]; every expert is used. Dense soft inference on the selected sparse checkpoint also yields 5,641 correct. The SWA checkpoint loses nine correct predictions when switching dense to hard routing, documenting a possible train/inference mismatch.
+
+Stored parameters are 1,742,421 (MoE) versus 1,741,651 (control). Top-1 MoE uses 77,370,816 dense MACs per image, versus 77,665,728 for soft all-expert inference. Most computation remains in the shared trunk. For 1,024 images, measured eager forward-only medians are 7.8068 ms (parent), 9.2951 ms (single-expert control), 10.9350 ms (top-1 MoE), and 8.6472 ms (dense soft MoE). Sparse dispatch is slower on this small model/backend, despite executing fewer expert MACs. These are shared-device measurements. All 39 deployment candidates retain the original 5,721-correct cascade; final weights and the original freeze timestamp remain unchanged.
+
 ## 2026-09-18 — Shared-trunk sparse expert design (feature/33-moe-routing)
 
 Test three width-384 residual MLP experts after the wide Mixer's pooled features, with a learned Linear router and original classifier. Train a soft weighted feature mixture and deploy top-1 dispatch to genuinely skip unselected expert rows. A single width-1152 residual MLP is the approximately total-parameter-matched control. Both start from the same wide SWA parent and receive 30 clean epochs with the existing AdamW schedule. Expert output layers start at zero; extra initialization preserves the parent's RNG stream. Expert branches use no dropout, keeping the shared-trunk dropout and shuffle stream matched. All layers, including the trunk, are fine-tuned. This changes readout capacity rather than sparsifying expensive trunk blocks.

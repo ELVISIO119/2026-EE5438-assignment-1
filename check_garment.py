@@ -16,6 +16,14 @@ assert torch.allclose(actual,expected)
 assert torch.allclose(training_loss(logits[5:],targets[5:],{'garment_loss_weight':.5}),F.cross_entropy(logits[5:],labels[5:]))
 focal=training_loss(logits,targets,{'focal_gamma':1.})
 assert 0<focal<ce
+focal2=training_loss(logits,targets,{'focal_gamma':2.})
+expected_focal2=((1-logits.softmax(1)[torch.arange(len(labels)),labels]).square()*F.cross_entropy(logits,labels,reduction='none')).mean()
+torch.testing.assert_close(focal2,expected_focal2)
+weights=torch.ones(10); weights[[0,2,4,6]]=1.5
+weighted=training_loss(logits,targets,{'class_weights':weights.tolist()})
+torch.testing.assert_close(weighted,F.cross_entropy(logits,labels,weight=weights))
+torch.testing.assert_close(training_loss(logits,targets,{'class_weights':[1.]*10}),ce)
+(weighted+focal2).backward(retain_graph=True)
 (actual+focal).backward()
 assert torch.isfinite(logits.grad).all() and logits.grad.abs().sum()>0
 print('Garment conditional CE, ordinary CE equivalence, focal loss and gradients verified.')

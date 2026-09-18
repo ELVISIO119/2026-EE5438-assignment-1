@@ -97,6 +97,13 @@ def training_loss(logits, targets, cfg):
         assert gamma>0 and not cfg.get('mixup',0) and not cfg.get('label_smoothing',0)
         losses=losses*(1-(targets*logits.softmax(1)).sum(1)).pow(gamma)
     loss=losses.mean()
+    if cfg.get('class_weights') is not None:
+        assert not gamma and not cfg.get('mixup',0) and not cfg.get('label_smoothing',0)
+        weights=logits.new_tensor(cfg['class_weights'])
+        assert weights.shape==(10,) and torch.isfinite(weights).all() and (weights>0).all()
+        sample_weights=(targets*weights).sum(1)
+        # Same normalization as native weighted CE: sum(w * loss) / sum(w).
+        loss=(losses*sample_weights).sum()/sample_weights.sum()
     weight=cfg.get('garment_loss_weight',0.)
     if weight:
         assert weight>0
