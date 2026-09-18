@@ -141,3 +141,21 @@ Keep 50% of channel neurons: validation 81.23%; 281,264 parameters; 19,369,216 M
 Hypothesis: Physically retain 50% of channel-MLP neurons ranked by incoming/outgoing weight norms, then clean fine-tune. Compare pre- and post-fine-tuning validation accuracy and real matrix dimensions. Source: mixer_adamw.
 
 Measured validation accuracy: 93.47%; checkpoint epoch 12; 281,264 parameters; 19,369,216 dense MACs/image; 38.3s training/validation wall time. Configuration and every epoch: `results/mixer_pruned_50.json`. Test set not evaluated.
+
+## 2026-09-18T08:26:24.379846+00:00 — regularization_none
+
+Hypothesis: Complete a 2x2 dropout/decoupled-weight-decay comparison around residual_gelu. This cell has neither dropout nor weight decay; data, architecture, initialization, batch size and schedule are held fixed.
+
+Measured validation accuracy: 90.72%; checkpoint epoch 33; 994,314 parameters; 989,696 dense MACs/image; 14.1s training/validation wall time. Configuration and every epoch: `results/regularization_none.json`. Test set not evaluated.
+
+## 2026-09-18T08:26:41.608567+00:00 — regularization_dropout
+
+Hypothesis: Enable only dropout p=0.1 versus regularization_none, holding weight decay at zero. Dropout necessarily consumes random draws; this is a fixed-seed comparison, not identical stochastic trajectories.
+
+Measured validation accuracy: 90.98%; checkpoint epoch 24; 994,314 parameters; 989,696 dense MACs/image; 14.9s training/validation wall time. Configuration and every epoch: `results/regularization_dropout.json`. Test set not evaluated.
+
+## 2026-09-18T08:26:58.204215+00:00 — regularization_decay
+
+Hypothesis: Enable only decoupled weight decay 0.01 versus regularization_none. Compare with dropout-only and residual_gelu (both enabled) to describe regularization without conflating it with architecture changes.
+
+Measured validation accuracy: 90.68%; checkpoint epoch 17; 994,314 parameters; 989,696 dense MACs/image; 14.2s training/validation wall time. Configuration and every epoch: `results/regularization_decay.json`. Test set not evaluated.
