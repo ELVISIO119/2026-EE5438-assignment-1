@@ -62,10 +62,10 @@ def select(accuracy_first=False):
     for candidate in sorted(candidates,key=rank):
         if candidate['components'][0]['name'] not in {c['components'][0]['name'] for c in leaders}:
             leaders.append(candidate)
-        if len(leaders)==(10 if accuracy_first else 4):
+        if not accuracy_first and len(leaders)==4:
             break
     for size in (2,3):
-        for group in itertools.combinations(leaders,size):
+        for group in itertools.combinations(leaders[:10],size):
             probs=torch.stack([cached[c['name']] for c in group]).mean(0)
             candidates.append(dict(name=' + '.join(c['name'] for c in group),
                                    components=[item for c in group for item in c['components']],
@@ -91,7 +91,7 @@ def select(accuracy_first=False):
                 candidates=len(candidates),selection_split='validation_only',
                 objective='accuracy_first' if accuracy_first else 'accuracy_with_cost_ties',
                 rule=('Maximize validation correct count; tie-break only by validation NLL; no compute penalty.' if accuracy_first else 'Maximize validation correct count; tie-break by fewer total dense MACs, then parameters, then NLL.'),
-                search=('Models within 3.5 percentage points of best raw validation; 1/2/4/10/18/30/50 views; top ten distinct model checkpoints; equal pairs/triples/prefixes and bounded greedy weighted combinations.' if accuracy_first else 'Models within 1.5 percentage points of best raw validation; 1/2/4 views; equally weighted pairs/triples from top four distinct models.'),
+                search=('Models within 3.5 percentage points of best raw validation; 1/2/4/10/18/30/50 views; raw equal pairs/triples from top ten distinct checkpoints; calibrated prefixes and bounded greedy combinations can use every eligible checkpoint.' if accuracy_first else 'Models within 1.5 percentage points of best raw validation; 1/2/4 views; equally weighted pairs/triples from top four distinct models.'),
                 view_definition='1: identity; 2: identity + horizontal flip; 4: those plus left/right one-pixel shifts; 10: center/cardinal shifts with flips; 18: all 3x3 offsets with flips; 30: ten views at affine-grid scales 1/0.96/1.04; 50: all 5x5 offsets with flips. Shifts are zero-padded.',
                 benchmark_status='Exploratory continuation on a previously evaluated public benchmark; selection code uses validation only, not a new blinded test.',
                 calibration='Greedy/prefix pool selects per-model post-view probability temperature from [0.75,1,1.25,1.5,2] by validation NLL. Raw individual/pair/triple candidates remain eligible.' if accuracy_first else 'None',
