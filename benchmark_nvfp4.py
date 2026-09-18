@@ -85,6 +85,8 @@ def run(recipe_path,compile_models=False):
                             nvfp4_storage_bytes=storage_bytes(quantized)))
     timing_models={'reference':models,'nvfp4':compressed}
     if compile_models:
+        # Six distinct models and contiguous/non-contiguous views share Model.forward's code cache.
+        torch._dynamo.config.recompile_limit=32
         # Compile both paths under the same setting; exclude compilation from steady-state timing.
         timing_models.update({k+'_compiled':[torch.compile(m,fullgraph=True,mode='default') for m in v]
                               for k,v in list(timing_models.items())})
