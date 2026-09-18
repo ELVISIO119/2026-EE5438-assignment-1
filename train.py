@@ -63,7 +63,7 @@ def model_cost(model):
     hooks = [m.register_forward_hook(count) for m in model.modules() if isinstance(m, nn.Linear)]
     model.eval()
     with torch.no_grad():
-        model(torch.zeros(1,1,28,28,device=DEVICE))
+        model(torch.zeros(1,1,28,28,device=next(model.parameters()).device))
     for hook in hooks:
         hook.remove()
     return sum(p.numel() for p in model.parameters()), cost[0]

@@ -24,3 +24,15 @@ for fusion in (False,True):
     assert not any(isinstance(m,(torch.nn.Conv2d,torch.nn.MultiheadAttention)) for m in model.modules())
     print('Pyramid fusion:',fusion,'deployment parameters/MACs:',model_cost(model))
 print('Adjacent token grouping, finite gradients and output shapes verified.')
+
+# Feature fusion changes the head, but not backbone initialization or training RNG.
+torch.manual_seed(58561440)
+control=PyramidMLP(dict(width=16,depth=1,dropout=.1,multiscale_fusion=False))
+control_rng=torch.get_rng_state()
+torch.manual_seed(58561440)
+fusion=PyramidMLP(dict(width=16,depth=1,dropout=.1,multiscale_fusion=True))
+assert torch.equal(control_rng,torch.get_rng_state())
+for name,weight in control.state_dict().items():
+    if not name.startswith('head.'):
+        assert torch.equal(weight,fusion.state_dict()[name]),name
+print('Paired backbones and post-initialization RNG are exactly matched.')
