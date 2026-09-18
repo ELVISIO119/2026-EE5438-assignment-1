@@ -70,6 +70,7 @@ def time_call(fn,repeats=7):
 def run(recipe_path,compile_models=False):
     assert DEVICE.type=='cuda' and torch.cuda.get_device_capability()[0]>=10
     recipe=json.loads(recipe_path.read_text())
+    assert not recipe.get('cascade'), 'Use an ungated recipe, such as results/spatial_recipe.json.'
     x,y,vx,vy,_,_=load_data()
     del x,y
     models=[]; compressed=[]; names=[]; members=[]
@@ -133,7 +134,7 @@ def run(recipe_path,compile_models=False):
 if __name__=='__main__':
     from pathlib import Path
     parser=argparse.ArgumentParser()
-    parser.add_argument('--recipe',type=Path,default=OUT/'final_recipe.json')
+    parser.add_argument('--recipe',type=Path,default=OUT/'spatial_recipe.json')
     parser.add_argument('--compile',action='store_true')
     args=parser.parse_args()
     run(args.recipe,args.compile)

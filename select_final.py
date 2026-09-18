@@ -11,12 +11,7 @@ from train import OUT,SEED,load_data
 from evaluation import load_model,probabilities,probability_metrics,digest,calibrate
 
 
-def select(accuracy_first=False,exclude_prefixes=()):
-    if accuracy_first:
-        for path in Path('configs').glob('accuracy_*.json'):
-            cfg=json.loads(path.read_text())
-            result=json.loads((OUT/f"{cfg['name']}.json").read_text())
-            assert result.get('complete'), f"Finish {cfg['name']} before accuracy-first selection."
+def write_pareto(exclude_prefixes=()):
     rows=[]
     for path in sorted(OUT.glob('*.json')):
         if path.stem.startswith(exclude_prefixes):
@@ -32,6 +27,16 @@ def select(accuracy_first=False,exclude_prefixes=()):
                               and (other['parameters']<row['parameters'] or other['macs']<row['macs']
                                    or other['val_accuracy']>row['val_accuracy']) for other in rows)
     pd.DataFrame(rows).to_csv(OUT/'pareto.csv',index=False)
+    return rows
+
+
+def select(accuracy_first=False,exclude_prefixes=()):
+    if accuracy_first:
+        for path in Path('configs').glob('accuracy_*.json'):
+            cfg=json.loads(path.read_text())
+            result=json.loads((OUT/f"{cfg['name']}.json").read_text())
+            assert result.get('complete'), f"Finish {cfg['name']} before accuracy-first selection."
+    rows=write_pareto(exclude_prefixes)
     x,y,vx,vy,_,_=load_data()
     del x,y
     best_accuracy=max(row['val_accuracy'] for row in rows)

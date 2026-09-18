@@ -14,6 +14,8 @@ OUT=ROOT/'results'
 
 
 def build():
+    from select_final import write_pareto
+    write_pareto()
     recipe=json.loads((OUT/'final_recipe.json').read_text())
     metrics=json.loads((OUT/'final_test_metrics.json').read_text())
     evidence={p.stem:json.loads(p.read_text()) for p in OUT.glob('*.json')}
@@ -22,7 +24,9 @@ def build():
     classes=list(class_metrics)
     confusions=sorted([(count,classes[i],classes[j]) for i,row in enumerate(metrics['confusion_matrix']) for j,count in enumerate(row) if i!=j],reverse=True)[:3]
     files=[ROOT/name for name in ('models.py','train.py','baseline.py','sharpness.py','prune.py',
-                                  'evaluation.py','select_final.py','evaluate_final.py','SOURCES.md','requirements.txt')]
+                                  'evaluation.py','select_final.py','evaluate_final.py','garment_experiment.py',
+                                  'cascade_experiment.py','benchmark_cascade.py','benchmark_nvfp4.py',
+                                  'SOURCES.md','requirements.txt')]
     files+=list((ROOT/'configs').glob('*.json'))+list(OUT.glob('*.json'))+list(OUT.glob('*.csv'))
     files += [OUT/f'{name}.pt' for name in sorted({'baseline_sgd_sigmoid'}|{c['name'] for c in recipe['components']})]
     buffer=io.BytesIO()
@@ -39,7 +43,9 @@ def build():
 
     The frozen final classifier obtains **{metrics['accuracy']:.2%} test accuracy**, macro precision **{metrics['macro_precision']:.4f}**, macro recall **{metrics['macro_recall']:.4f}**, and macro F1 **{metrics['macro_f1']:.4f}** on 10,000 Fashion-MNIST test images. All components are MLPs. No convolution, attention, Transformer, outside training images or pretrained weights are used.
 
-    The technical summary and limitations at the end explain which changes helped, which did not, and the full inference cost. Accuracy meets the assignment's highest published accuracy threshold when at least 93%; marks and top-ten bonus are determined by the instructor, not guaranteed by this notebook.
+    A confidence gate first evaluates one unflipped view with the wide Mixer. Predictions of Trouser, Sandal, Sneaker, Bag or Ankle boot with probability at least 0.90 exit immediately. All other images use the full three-model ensemble. The same wide-model weights are shared between stages; no extra model is stored. The gate uses predictions only, never the true class.
+
+    The technical summary and limitations at the end explain which changes helped, which did not, and both average and worst-case inference cost. Accuracy meets the assignment's highest published accuracy threshold when at least 93%; marks and top-ten bonus are determined by the instructor, not guaranteed by this notebook.
     ''')
     md('''## 1. Reproducibility and data discipline
 
@@ -81,6 +87,8 @@ print({'Python':platform.python_version(), 'PyTorch':torch.__version__,
     The dense Mixer reshapes a 28x28 image into 49 non-overlapping 4x4 patches, embeds each with a Linear layer, and alternates token and channel MLPs. Six blocks use width 128; the student uses width 64 and three blocks. Token mixing is shared across channels and channel mixing across tokens. LayerNorm, residual additions, GELU and mean pooling complete this MLP-only design. There is no convolutional patch embedding or attention.
 
     The accuracy-first extension also trains a 2x2-patch Mixer (196 tokens, width 96, six blocks), a larger 4x4-patch Mixer (width 192, eight blocks), and a flat-input residual SwiGLU MLP (width 768, four blocks). The Muon-trained Mixer receives a separate augmented refinement trial. These are complete recipe comparisons, not isolated architectural causal effects. All architectures remain pure MLPs.
+
+    A subsequent readout experiment replaces mean pooling with flattening followed by a linear classifier. Repeating the original head weights across token positions and dividing by the number of tokens reproduces the original mean-pooled logits in real arithmetic at initialization. This tests positional discrimination with added parameters; it does not introduce convolution or attention. These trials are recorded even when they overfit and are not selected.
     ''')
     code('''from matplotlib.patches import FancyBboxPatch
 fig,ax=plt.subplots(figsize=(14,3))
@@ -94,7 +102,7 @@ for i,label in enumerate(labels):
     ax.text(x+1.3,1.1,label,ha='center',va='center',fontsize=9)
     if i<4: ax.annotate('',xy=(x+2.9,1.1),xytext=(x+2.65,1.1),arrowprops={'arrowstyle':'->'})
 ax.set(xlim=(-.2,14.9),ylim=(0,2.2)); ax.axis('off')
-ax.set_title('Pure MLP inference: dense token/channel mixing and probability aggregation')
+ax.set_title('Full ensemble path for images not accepted by the confidence gate')
 plt.tight_layout(); plt.show()
 ''')
     code((ROOT/'models.py').read_text())
@@ -128,7 +136,17 @@ plt.tight_layout(); plt.show()
     for name in ['accuracy_p2','accuracy_wide','accuracy_muon_refine','accuracy_residual','accuracy_p2_clean','accuracy_wide_clean']:
         run(json.loads(Path(f'configs/{name}.json').read_text()))
     from select_final import select
-    select(accuracy_first=True)
+    select(accuracy_first=True,exclude_prefixes=('garment_','focal_','spatial_'))
+    from garment_experiment import run as select_refinements
+    for name in ['garment_wide','garment_p2','focal_wide','focal_p2']:
+        run(json.loads(Path(f'configs/{name}.json').read_text()))
+    select_refinements()
+    for name in ['spatial_wide','spatial_p2','spatial_pruned','spatial_pruned_garment']:
+        run(json.loads(Path(f'configs/{name}.json').read_text()))
+    select_refinements(spatial=True)
+    from cascade_experiment import run as select_cascade
+    select_cascade(Path('results/spatial_recipe.json'))
+    Path('results/final_recipe.json').write_text(Path('results/cascade_recipe.json').read_text())
 else:
     print('Using recorded training evidence and frozen checkpoints; full retraining is disabled.')
 ''')
@@ -158,7 +176,8 @@ for ax in axes: ax.grid(alpha=.2); ax.legend(fontsize=7)
 plt.tight_layout(); plt.show()
 ''')
     md('Training objectives differ across smoothed-label, Mixup and ordinary cross-entropy runs; their loss magnitudes are not controlled comparisons. More epochs and BF16 distinguish the Mixer recipe from the earlier residual recipe. Ordinary, EMA and SWA entries share one fine-tuning run; do not sum their wall times as independent experiments.')
-    code('''pareto=pd.read_csv('results/pareto.csv')
+    code('''from select_final import write_pareto
+pareto=pd.DataFrame(write_pareto())
 fig,axes=plt.subplots(1,2,figsize=(12,4))
 for ax,cost in zip(axes,['parameters','macs']):
     ax.scatter(pareto[cost],100*pareto.val_accuracy,c=pareto.pareto.astype(int),cmap='coolwarm',s=38)
@@ -187,6 +206,10 @@ ax.grid(alpha=.2); ax.legend(fontsize=8); plt.tight_layout(); plt.show()
     Ten views consist of the image and four one-pixel cardinal translations, each with and without horizontal flip. Eighteen views use every 3x3 translation offset with both flip states. Thirty views combine the ten-view setting with affine-grid scales 1/0.96/1.04, using bilinear interpolation; fifty views cover every 5x5 translation offset with both flip states. Padding is zero, never wraparound. The earlier 1/2/4-view definitions remain unchanged. Selection maximizes total validation correct count, with validation negative log-likelihood as its only tie-breaker. Parameters and MACs are recorded but have no selection penalty or cutoff. The fixed candidate search is exploratory and cannot guarantee a global optimum or the highest class ranking.
 
     Before greedy/prefix ensemble construction, each selected model's view-averaged probabilities are calibrated as `softmax(log(p)/T)`, with T chosen from 0.75/1/1.25/1.5/2 by validation NLL. This post-view transformation preserves each individual model's argmax but can change ensemble decisions by adjusting relative confidence. Raw individual, equal-pair and equal-triple candidates remain eligible. Temperature and mixture-weight choices use no test labels.
+
+    The follow-up keeps this ensemble as its reference. Four garment/focal-loss recipes and four spatial-readout recipes add 24 ordinary/EMA/SWA checkpoints. Each round searches 583 recorded validation recipes, including reduced views and dropped members. Candidates cannot reduce Shirt F1 or correct counts on either fixed validation half; accuracy ranks first, followed by lower MACs, fewer parameters and NLL. Neither round displaced the reference.
+
+    A final 43-candidate gate search considers each existing ensemble member, one or two first-stage views, and thresholds 0.90/0.95/0.975/0.99/0.995/0.999/0.9999. Only predicted classes 1/5/7/8/9 may exit early; all upper-garment predictions receive full inference. Validation accuracy ranks first, then average MACs and NLL, with the same Shirt F1/half-count guards. The actual routed pipeline was recomputed before freezing, including batch repacking. The selected gate gives 5,721/6,000 correct, compared with the reference's 5,717. Validation remains development data; the small gain is not a significance claim.
     ''')
     code('''recipe=json.loads(Path('results/final_recipe.json').read_text())
 display(pd.DataFrame(recipe['components']))
@@ -251,7 +274,7 @@ fig.suptitle('First 12 errors in test-index order (not cherry-picked)'); plt.sho
 
     The frozen recipe is **{recipe['name']}**. It obtains **{metrics['correct']}/10,000 correct ({metrics['accuracy']:.2%})** on the official test split, compared with **{metrics['baseline']['accuracy']:.2%}** for the fixed sigmoid/SGD reference. Macro precision is **{metrics['macro_precision']:.4f}**, macro recall **{metrics['macro_recall']:.4f}**, macro F1 **{metrics['macro_f1']:.4f}**, and weighted F1 **{metrics['weighted_f1']:.4f}**. The confusion matrix and per-class table identify remaining class-specific errors.
 
-    Deployment requires **{recipe['parameters']:,} total stored parameters** and **{recipe['macs']:,} dense MACs per image**, approximately **{2*recipe['macs']:,} dense FLOPs**. These totals include all ensemble members and every inference view. They must not be presented as the cost of one single-pass model. Averaged weights themselves add no deployment model beyond the resulting checkpoint.
+    Deployment requires **{recipe['parameters']:,} total stored parameters**. The actual test routing averages **{metrics['macs']:,.0f} dense MACs per image**, approximately **{2*metrics['macs']:,.0f} dense FLOPs**. The validation average is **{recipe['macs']:,.0f} MACs/image** and the worst case is **{recipe.get('worst_case_macs',recipe['macs']):,} MACs/image**. Conditional cost depends on the input distribution. The worst case includes both the first-stage pass and the full ensemble; it is slightly higher than the ungated ensemble. Shared first-stage weights are counted only once. No claim of lower parameter count, uniformly lower worst-case FLOPs, or a guaranteed tie-break award is made.
 
     The validation candidate table retains alternatives and their cost. No independent test evaluation of every candidate is used to choose the displayed winner. A higher validation score from a large search may reflect both genuine error complementarity and validation overfitting; small differences should not be interpreted as proven generalization improvements.
 
@@ -261,6 +284,36 @@ fig.suptitle('First 12 errors in test-index order (not cherry-picked)'); plt.sho
 
     Section A is supplied separately as a typed study guide. The assignment requires the student's genuine handwritten or iPad-written answers in one PDF. A typed guide is not a compliant handwritten submission. Review and understand the answers and code, and follow the course's assistance/disclosure rules before submission.
     ''')
+    md('''## 6. Targeted post-training and deployment experiments
+
+    All post-training uses Fashion-MNIST only. The auxiliary objective adds 0.5 times conditional cross-entropy among T-shirt, Pullover, Dress, Coat and Shirt to ordinary ten-class CE; other classes remain in training to avoid forgetting. Focal loss uses gamma 1 without a class-balancing alpha. Each wide/fine-patch trial has an existing clean-refinement control. The spatial/pruned pair isolates the auxiliary-loss change within that spatial recipe. No MNIST pretraining or other external dataset was introduced.
+
+    Single-model gains did not translate into a better ensemble. Spatial readouts overfit, and neither refinement round passed the reference's global/half-count/Shirt-F1 guards with a better result. These are negative results for these settings, not a claim that targeted post-training is universally ineffective. The gate improves validation Shirt precision slightly; it does not demonstrate a substantial improvement in Shirt recall.
+
+    The following deployment numbers are **recorded measurements**, not rerun timings in this notebook. NVFP4 was tested on the ungated reference ensemble, using torchao 0.16.0 with PyTorch 2.10.0 on RTX 5090. Only channel hidden matrices were quantized to packed W4A4; token matrices, embeddings, normalization and heads retained higher precision. Profiler evidence includes the native scaled GEMM and SM120 E2M1 CUTLASS kernel. NVFP4 was slower and less accurate here, so the submitted model retains original precision. Optional benchmark scripts are included in the bundle; torchao is not required for default Run All.
+    ''')
+    code('''nv=json.loads(Path('results/nvfp4_benchmark.json').read_text())
+deployment=pd.DataFrame([{'mode':mode,'validation_accuracy_%':100*nv['validation'][mode]['accuracy'],
+                          'Shirt_F1':nv['validation'][mode]['shirt_f1'],
+                          'milliseconds_per_128_images':timing['full_recipe_batch128']['median_ms']}
+                         for mode,timing in nv['timing'].items()])
+display(deployment.round(4))
+display(pd.DataFrame(nv['members'])[['name','reference_storage_bytes','all_bf16_parameter_bytes','nvfp4_storage_bytes']])
+print('Real FP4 operations:',nv['fp4_profiler_operations'])
+fig,axes=plt.subplots(1,2,figsize=(12,4),layout='constrained')
+labels=['Original','NVFP4','Original compiled','NVFP4 compiled']
+axes[0].bar(labels,deployment['validation_accuracy_%']); axes[0].set(ylabel='Validation accuracy (%)',ylim=(94,96))
+axes[1].bar(labels,deployment['milliseconds_per_128_images']); axes[1].set(ylabel='Milliseconds / 128 images (lower is better)')
+for ax in axes: ax.tick_params(axis='x',rotation=20)
+fig.suptitle('Recorded ungated reference benchmark on shared RTX 5090'); plt.show()
+speed=json.loads(Path('results/cascade_benchmark.json').read_text())
+display(pd.DataFrame([{'pipeline':name,'milliseconds_per_1024_images':row['median_ms'],
+                       'images_per_second':row['images_per_second'],'average_MACs':row['execution']['macs_per_image']}
+                      for name,row in speed['timing'].items()]))
+print('Recorded cascade speedup:',speed['speedup'])
+print('Actual current test routing:',test['execution'])
+''')
+    md('''Quantization reduces some byte storage, not logical parameter count or mathematical dense FLOPs. The all-BF16 byte column is a storage comparison, not the original FP32 checkpoint size; scale/layout overhead can make partial NVFP4 storage exceed an all-BF16 model for small shapes. Compilation changes floating-point arithmetic slightly: the original compiled path loses one validation-correct example, so it is not described as lossless. The frozen submitted path uses eager original-precision inference. Cascade timing uses 1,024 validation images and the same preloaded weights in both paths; NVFP4 timing uses batches of 128. Do not directly compare these different batch totals. All timings exclude load/compile time and are descriptive measurements on a shared device.''')
     md('## References\n\n'+(ROOT/'SOURCES.md').read_text().split('\n',1)[1])
     notebook=nbf.v4.new_notebook(cells=cells,metadata={'kernelspec':{'name':'python3','display_name':'Python 3','language':'python'},'language_info':{'name':'python','version':platform_version()}})
     target=ROOT/'submission'/'Assign01_Cai_Haochen_58561440.ipynb'
