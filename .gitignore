@@ -1,0 +1,12 @@
+data/
+*.pt
+*.pth
+__pycache__/
+.ipynb_checkpoints/
+.venv/
+.env
+.env.*
+*.pem
+*.key
+*token*
+*credential*
