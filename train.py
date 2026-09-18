@@ -214,7 +214,7 @@ def run(cfg):
                       f"Hypothesis: {cfg['hypothesis']}\n\n"
                       f"Measured validation accuracy: {best[0]:.2%}; checkpoint epoch {best_epoch}; "
                       f"{params:,} parameters; {macs:,} dense MACs/image; {result['seconds']:.1f}s training/validation wall time. "
-                      f"Configuration and every epoch: `results/{cfg['name']}.json`. Test set not evaluated.\n")
+                      f"Configuration and every epoch: `results/{cfg['name']}.json`. Test set not evaluated in this run.\n")
     for key in averages:
         averaged=dict(result,history=average_history[key],val_accuracy=average_best[key][0],
                       val_loss=-average_best[key][1],best_epoch=average_epochs[key],

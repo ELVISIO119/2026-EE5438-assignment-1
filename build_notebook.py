@@ -82,6 +82,21 @@ print({'Python':platform.python_version(), 'PyTorch':torch.__version__,
 
     The accuracy-first extension also trains a 2x2-patch Mixer (196 tokens, width 96, six blocks), a larger 4x4-patch Mixer (width 192, eight blocks), and a flat-input residual SwiGLU MLP (width 768, four blocks). The Muon-trained Mixer receives a separate augmented refinement trial. These are complete recipe comparisons, not isolated architectural causal effects. All architectures remain pure MLPs.
     ''')
+    code('''from matplotlib.patches import FancyBboxPatch
+fig,ax=plt.subplots(figsize=(14,3))
+labels=['28 x 28 image\\nNormalize', 'Reshape patches\\nLinear embedding',
+        'Residual Mixer blocks\\nToken MLP + channel MLP',
+        'LayerNorm + mean\\nLinear head + softmax',
+        'Average views\\nWeighted model average']
+for i,label in enumerate(labels):
+    x=3*i
+    ax.add_patch(FancyBboxPatch((x,.5),2.6,1.2,boxstyle='round,pad=0.08',facecolor='#e5eef8',edgecolor='#24486b'))
+    ax.text(x+1.3,1.1,label,ha='center',va='center',fontsize=9)
+    if i<4: ax.annotate('',xy=(x+2.9,1.1),xytext=(x+2.65,1.1),arrowprops={'arrowstyle':'->'})
+ax.set(xlim=(-.2,14.9),ylim=(0,2.2)); ax.axis('off')
+ax.set_title('Pure MLP inference: dense token/channel mixing and probability aggregation')
+plt.tight_layout(); plt.show()
+''')
     code((ROOT/'models.py').read_text())
     md('''### Training code
 
@@ -237,6 +252,12 @@ plt.suptitle('First 12 errors in test-index order (not cherry-picked)'); plt.tig
     target.parent.mkdir(exist_ok=True)
     NotebookClient(notebook,timeout=3600,resources={'metadata':{'path':str(ROOT)}}).execute()
     nbf.write(notebook,target)
+    number=0
+    for cell in notebook.cells:
+        for output in cell.get('outputs',[]):
+            if 'image/png' in output.get('data',{}):
+                number+=1
+                (OUT/f'notebook_figure_{number:02d}.png').write_bytes(base64.b64decode(output['data']['image/png']))
     print(target)
 
 
