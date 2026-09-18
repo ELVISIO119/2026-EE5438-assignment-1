@@ -1,5 +1,11 @@
 # Experiment journal
 
+## 2026-09-19 — Refine the expensive fallback view budget (feature/39-cascade-view-budget)
+
+Keep all five existing checkpoints fixed. Refine both deployed hybrid front families with thresholds .875/.9/.925/.95/.975, wide/pruned fallback view counts 2/4/10 and fine-patch counts 4/10/18/30: 360 cached validation candidates. Fallback gate, temperatures and mixture weights remain unchanged. No new fitting or test evaluation occurs during search. Require preserved validation correct count, Shirt F1 and both development-half counts against each corresponding hybrid, at least 5% fewer average MACs, no added parameters, and at least 5% lower observed median latency on BOTH first and last 1,024 validation images. Recompute cached top five eligible candidates per goal with real subset routing, then rank correct count, MACs, first-slice latency and NLL. Failed candidates remain evidence. Hash-freeze any qualified endpoints and commit before evaluating them on the previously observed public test benchmark. Both timing slices are development data, not independent confirmation. This is a bounded screen, not proof of global optimality.
+
+Run `timeout 1800 python3 refine_cascade.py`; the existing routing self-check and validation guards apply. User authorized continuation and implementation. Raw evidence stays JSON/CSV; no formal report is generated. External original checkpoint sources remain read-only.
+
 ## 2026-09-19 — Frozen hybrid outcomes and portable integration
 
 Commit `3b4f92e` freezes the latency-qualified endpoints before their test evaluation; `930ff57` records the outcomes. Balanced obtains 5,717/6,000 validation correct and 9,449/10,000 test correct, with 492,477,669 average test MACs and 3,164,836 stored parameters. Accuracy priority obtains 5,721 validation correct and the same 9,449 test correct, with 841,892,537 average test MACs and 2,686,196 parameters. Their first stages accept 8,534 and 7,115 test images, respectively. Both worst-case costs are 3,319,207,680 MACs. No recipe is changed based on these test results.

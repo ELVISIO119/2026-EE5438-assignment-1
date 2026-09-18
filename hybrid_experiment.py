@@ -218,10 +218,10 @@ def choose_fast():
 
 
 @torch.inference_mode()
-def evaluate_frozen():
+def evaluate_frozen(prefix='hybrid',goals=('balanced','accuracy')):
     from torchvision.datasets import FashionMNIST
     from sklearn.metrics import classification_report, confusion_matrix
-    recipes={goal:json.loads((OUT/f'hybrid_{goal}_recipe.json').read_text()) for goal in ('balanced','accuracy')}
+    recipes={goal:json.loads((OUT/f'{prefix}_{goal}_recipe.json').read_text()) for goal in goals}
     for recipe in recipes.values():
         assert set(recipe['checkpoint_hashes'])==model_names(recipe)
         assert recipe['selection_split']=='validation_only' and recipe['frozen_at']
@@ -240,9 +240,9 @@ def evaluate_frozen():
                            checkpoint_hashes=recipe['checkpoint_hashes'])
         saved[goal]=p.numpy()
     result=dict(complete=True,selected=outputs,evaluated_at=datetime.now(timezone.utc).isoformat(),
-                protocol='Exactly two endpoints frozen by validation before test access. No recipe, threshold or checkpoint is changed from these outcomes. Previously observed public benchmark, not an independent blinded test.')
-    (OUT/'hybrid_test_metrics.json').write_text(json.dumps(result,indent=2))
-    np.savez_compressed(OUT/'hybrid_test_predictions.npz',**saved)
+                protocol=f'Exactly {len(recipes)} endpoints frozen by validation before this test access. No recipe, threshold or checkpoint is changed from these outcomes. Previously observed public benchmark, not an independent blinded test.')
+    (OUT/f'{prefix}_test_metrics.json').write_text(json.dumps(result,indent=2))
+    np.savez_compressed(OUT/f'{prefix}_test_predictions.npz',**saved)
     print(json.dumps({k:{f:v[f] for f in ('accuracy','correct','shirt_f1','parameters','execution')} for k,v in outputs.items()},indent=2))
     return result
 
