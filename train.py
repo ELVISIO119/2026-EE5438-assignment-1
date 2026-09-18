@@ -170,6 +170,8 @@ def run(cfg):
                     F.cross_entropy(model(images),targets).backward()
                 finally:
                     restore(saved)
+            if cfg.get('grad_clip'):
+                nn.utils.clip_grad_norm_(model.parameters(),cfg['grad_clip'],error_if_nonfinite=True)
             for optimizer in optimizers:
                 optimizer.step()
             if averages:
