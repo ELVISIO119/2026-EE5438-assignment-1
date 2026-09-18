@@ -1,5 +1,9 @@
 # Experiment journal
 
+## 2026-09-19 — Final selection before test
+
+All four reuse/batching runtime candidates preserve 5,718 validation correct. Reuse lowers average validation MACs from 399,102,505 to 390,775,315, but neither grouped setting meets the >=5% latency improvement requirement against the class-routing reference. Four-view reuse takes 46.24/41.15 ms and eight-view reuse takes 48.48/40.99 ms on the first/last slices. No reuse candidate qualifies or is tested. Retain the already-frozen class-routing recipe from commit `1dd4705` as this round's only new test endpoint; this decision precedes test access. The unused runtime optimization and its negative timing result remain reproducible, disabled in deployment. Run `timeout 1800 python3 refine_cascade.py --class-routes --test` without changing its stored thresholds or hashes.
+
 ## 2026-09-19 — Reuse the fallback gate view (feature/44-reuse-gate-view)
 
 The class-routing screen selected predicted upper-garment threshold .85, Dress .90 and remaining classes .90. Actual validation gives 5,718 correct (one more than the reference), preserves Shirt F1 and both development halves, and lowers average MACs from 460,521,803 to 399,102,505. Both latency slices meet the >=5% reduction rule. Its recipe is frozen and committed before test access, but no test evaluation is performed yet.
