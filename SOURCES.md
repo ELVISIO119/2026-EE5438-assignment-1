@@ -11,6 +11,7 @@
 - Starter notebook: https://colab.research.google.com/drive/1UQYf7m0xGBaqUgnviLBR9rfbmddkUsxq
 - Fashion-MNIST: https://github.com/zalandoresearch/fashion-mnist
 - Muon parameter-group guidance: https://github.com/KellerJordan/Muon (README checked 2026-09-18).
+- Per-Head Muon: MoonshotAI, *Kimi K3: Open Frontier Intelligence*, official [technical report](https://github.com/MoonshotAI/Kimi-K3/blob/main/k3_tech_report.pdf), Section 2.5, checked 2026-09-19. Q/K/V momentum matrices are partitioned along attention heads and orthogonalized separately. The report attributes better head-scale balance/stability and slightly reduced optimizer overhead to this change. This is a training optimizer variant, not an extra classifier head or an inference acceleration layer. Our pure MLPs have no attention heads; no Per-Head Muon implementation or benefit is claimed. Existing Muon training applies to two-dimensional hidden-block weights; embedding, classifier and one-dimensional parameters use AdamW, consistent with the original Muon repository guidance.
 - Native Muon: https://docs.pytorch.org/docs/stable/generated/torch.optim.Muon.html
 - Native parameter averaging: https://docs.pytorch.org/docs/stable/optim.html#weight-averaging-swa-and-ema
 - MLP-Mixer architecture: https://arxiv.org/abs/2105.01601
