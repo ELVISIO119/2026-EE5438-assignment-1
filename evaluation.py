@@ -71,7 +71,12 @@ def calibrate(probs,temperature=1.):
 
 def early_mask(probs,cascade):
     confidence,predicted=probs.max(1)
-    return (confidence>=cascade['threshold']) & torch.isin(predicted,torch.tensor(cascade['classes'],device=predicted.device))
+    threshold=cascade['threshold']
+    if 'class_thresholds' in cascade:
+        thresholds=torch.as_tensor(cascade['class_thresholds'],device=probs.device,dtype=probs.dtype)
+        assert thresholds.shape==(probs.shape[1],) and ((thresholds>=0)&(thresholds<=1)).all()
+        threshold=thresholds[predicted]
+    return (confidence>=threshold) & torch.isin(predicted,torch.tensor(cascade['classes'],device=predicted.device))
 
 
 @torch.no_grad()
@@ -108,6 +113,9 @@ def recipe_probabilities(recipe,x,models=None):
 
 
 if __name__=='__main__':
+    p=torch.tensor([[.8,.2],[.2,.8]])
+    assert early_mask(p,dict(threshold=.9,classes=[0,1],class_thresholds=[.75,.85])).tolist()==[True,False]
+    assert early_mask(p,dict(threshold=.7,classes=[0])).tolist()==[True,False]
     class Constant(torch.nn.Module):
         def __init__(self):
             super().__init__()

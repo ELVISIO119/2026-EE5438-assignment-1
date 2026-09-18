@@ -9,7 +9,7 @@ import torch
 
 from evaluation import calibrate, digest, early_mask, load_model, probabilities
 from garment_experiment import details
-from hybrid_experiment import benchmark, exit_mask, front_probabilities, model_names, predict
+from hybrid_experiment import benchmark, exit_mask, front_probabilities, model_names, predict, progressive_front
 from train import DEVICE, OUT, SEED, load_data
 
 
@@ -143,6 +143,28 @@ def batched():
         'Only accuracy/compute-qualified actual progressive finalists, fallback views grouped 2 or 4 in each forward. No new weights, thresholds or view counts. All candidates evaluated on actual routed validation. Grouping preserves mathematical MACs and can change BF16 rounding, which is checked before selection. Require the progressive accuracy/compute/latency guards. View grouping increases activation memory, not stored parameters.')
 
 
+@torch.inference_mode()
+def class_routes():
+    base=json.loads((OUT/'batched_balanced_recipe.json').read_text())
+    x,y,vx,vy,_,_=load_data(); del x,y
+    models={n:load_model(n) for n in model_names(base)}
+    front,agree,pre,front_cost=progressive_front(base,vx,models)
+    back,_=predict(base['back'],vx,models)
+    gate=base['back']['cascade']
+    gate_p=probabilities(models[gate['name']],vx,gate['views'])
+    back_cost=gate['macs']+(~early_mask(gate_p,gate)).double()*base['back']['full_macs']
+    rows=[]
+    for garment,dress,easy in product((.85,.9,.95,.975),(.8,.9,.95),(.7,.8,.9)):
+        thresholds=[garment if c in (0,2,4,6) else dress if c==3 else easy for c in range(10)]
+        recipe={k:base[k] for k in ('front','back','threshold','classes','parameters','pre_exit')}
+        recipe.update(class_thresholds=thresholds,goal='balanced',label=f'class_routes:{garment}:{dress}:{easy}')
+        mask=pre | exit_mask(front,agree,recipe)
+        p=back.clone(); p[mask]=front[mask]
+        rows.append(dict(recipe,**details(p,vy),macs=float((front_cost+(~mask)*back_cost).mean()),candidate_id=len(rows)))
+    select_candidates(rows,dict(balanced=base),models,vx,vy,'class_routes',.99,
+        '36 fixed predicted-class threshold combinations: upper garments 0/2/4/6 at .85/.9/.95/.975; Dress 3 at .8/.9/.95; remaining classes at .7/.8/.9. First-pass pre-exit, fallback weights/views and view batch 4 remain fixed. Runtime never sees true labels. No fitting or test access. Preserve balanced correct/Shirt-F1/half guards and no parameter increase; >=1% lower average MACs and >=5% lower observed latency on both validation slices.')
+
+
 def evaluate(prefix='refine'):
     """Only the validation-qualified, already frozen endpoints receive test evaluation."""
     from hybrid_experiment import evaluate_frozen
@@ -154,6 +176,7 @@ def evaluate(prefix='refine'):
 
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser(); parser.add_argument('--test',action='store_true'); parser.add_argument('--progressive',action='store_true'); parser.add_argument('--batched',action='store_true')
+    parser=argparse.ArgumentParser(); parser.add_argument('--test',action='store_true'); parser.add_argument('--progressive',action='store_true'); parser.add_argument('--batched',action='store_true'); parser.add_argument('--class-routes',action='store_true')
     args=parser.parse_args()
-    evaluate('batched' if args.batched else 'progressive' if args.progressive else 'refine') if args.test else batched() if args.batched else progressive() if args.progressive else run()
+    prefix='class_routes' if args.class_routes else 'batched' if args.batched else 'progressive' if args.progressive else 'refine'
+    evaluate(prefix) if args.test else {'class_routes':class_routes,'batched':batched,'progressive':progressive,'refine':run}[prefix]()

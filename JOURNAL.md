@@ -1,5 +1,11 @@
 # Experiment journal
 
+## 2026-09-19 — Predicted-class routing (feature/43-class-conditional-routing)
+
+Continue from the frozen progressive/batched balanced reference (5,717/6,000 validation correct, 94.49% observed test accuracy). Keep weights, pre-exit .99, fallback and view grouping fixed. Compare 36 class-group threshold tuples: predicted upper garments 0/2/4/6 use .85/.9/.95/.975; Dress uses .8/.9/.95; classes 1/5/7/8/9 use .7/.8/.9. Only predicted classes are available to runtime. Cached screening is followed by actual routed recomputation of the top five eligible candidates. Preserve total validation correct, Shirt F1 and both development-half counts; require >=1% lower average MACs, no parameter increase, and >=5% lower median latency on both first/last 1,024 validation slices. Freeze and commit a qualifying recipe before any new test access; otherwise keep the reference. Reused validation/public-test limitations remain. This is a small explicit threshold policy, not RL or a learned router.
+
+Run `python3 evaluation.py`, `python3 hybrid_experiment.py --check`, then `timeout 1800 python3 refine_cascade.py --class-routes`. User authorized continuing implementation and experiments. The existing original source folder remains read-only.
+
 ## 2026-09-19 — Progressive/batched outcome and integration (feature/42-progressive-integration)
 
 Commit `0a208c0` froze the selected clean-first .99/all-class, four-view-batch recipe before test evaluation; `73f949e` records the test result. Validation remains 5,717/6,000 correct, Shirt F1 0.859348 and development-half counts [2,855,2,862]. Average validation MACs fall from 475,266,565 to 460,521,803. Test remains 9,449/10,000 correct (94.49%), with average MACs falling from 492,477,669 to 475,709,806 (3.4%). Parameters remain 3,164,836; worst-case MACs remain 3,319,207,680. First-pass pre-exits number 3,977 on test; total exits before the fallback number 8,552. No test-driven selection change is made.

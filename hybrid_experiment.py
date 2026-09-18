@@ -21,8 +21,7 @@ def model_names(recipe):
 
 
 def exit_mask(p,agreement,recipe):
-    confidence,predicted=p.max(1)
-    return (confidence>=recipe['threshold']) & agreement & torch.isin(predicted,torch.tensor(recipe['classes']))
+    return early_mask(p,recipe) & agreement
 
 
 @torch.inference_mode()
