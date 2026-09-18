@@ -1,5 +1,7 @@
 # Sources and implementation notes
 
+- Native AWQ implementation used here: torchao 0.16.0 [AWQ API](https://github.com/pytorch/ao/blob/v0.16.0/torchao/prototype/awq/api.py), [activation-aware scale search](https://github.com/pytorch/ao/blob/v0.16.0/torchao/prototype/awq/core.py), and [tile-packed INT4 backend](https://github.com/pytorch/ao/blob/v0.16.0/torchao/quantization/quantize_/workflows/int4/int4_tile_packed_to_4d_tensor.py). Installed source inspected 2026-09-18. This uses native activation-aware scaling with group-32 INT4 and BF16 activations, not a reproduction of every component of the original LLM AWQ pipeline. The backend pads input dimensions to multiples of 1,024, which matters for these small MLP matrices.
+
 - Assignment: https://eelmpo.github.io/ee5438/pdf/2026_EE5438_Ass01.pdf
 - Course slides: https://eelmpo.github.io/ee5438/schedule.html
 - Starter notebook: https://colab.research.google.com/drive/1UQYf7m0xGBaqUgnviLBR9rfbmddkUsxq
