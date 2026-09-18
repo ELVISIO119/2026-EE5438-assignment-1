@@ -27,6 +27,7 @@ def build():
                                   'evaluation.py','select_final.py','evaluate_final.py','garment_experiment.py',
                                   'cascade_experiment.py','benchmark_cascade.py','benchmark_nvfp4.py',
                                   'image_processing_experiment.py','benchmark_awq.py',
+                                  'run_yolo.py','select_yolo.py','check_pyramid.py',
                                   'SOURCES.md','requirements.txt')]
     files+=list((ROOT/'configs').glob('*.json'))+list(OUT.glob('*.json'))+list(OUT.glob('*.csv'))
     files += [OUT/f'{name}.pt' for name in sorted({'baseline_sgd_sigmoid'}|{c['name'] for c in recipe['components']})]
@@ -44,7 +45,7 @@ def build():
 
     The frozen final classifier obtains **{metrics['accuracy']:.2%} test accuracy**, macro precision **{metrics['macro_precision']:.4f}**, macro recall **{metrics['macro_recall']:.4f}**, and macro F1 **{metrics['macro_f1']:.4f}** on 10,000 Fashion-MNIST test images. All components are MLPs. No convolution, attention, Transformer, outside training images or pretrained weights are used.
 
-    A confidence gate first evaluates one unflipped view with the wide Mixer. Predictions of Trouser, Sandal, Sneaker, Bag or Ankle boot with probability at least 0.90 exit immediately. All other images use the full three-model ensemble. The same wide-model weights are shared between stages; no extra model is stored. The gate uses predictions only, never the true class.
+    A confidence gate first evaluates one unflipped view with the wide Mixer. Predictions of Trouser, Sandal, Sneaker, Bag or Ankle boot with probability at least 0.90 exit immediately. All other images use the selected ensemble detailed below. The same wide-model weights are shared between stages; no extra model is stored. The gate uses predictions only, never the true class.
 
     The technical summary and limitations at the end explain which changes helped, which did not, and both average and worst-case inference cost. Accuracy meets the assignment's highest published accuracy threshold when at least 93%; marks and top-ten bonus are determined by the instructor, not guaranteed by this notebook.
     ''')
@@ -137,7 +138,7 @@ plt.tight_layout(); plt.show()
     for name in ['accuracy_p2','accuracy_wide','accuracy_muon_refine','accuracy_residual','accuracy_p2_clean','accuracy_wide_clean']:
         run(json.loads(Path(f'configs/{name}.json').read_text()))
     from select_final import select
-    select(accuracy_first=True,exclude_prefixes=('garment_','focal_','spatial_'))
+    select(accuracy_first=True,exclude_prefixes=('garment_','focal_','spatial_','yolo_'))
     from garment_experiment import run as select_refinements
     for name in ['garment_wide','garment_p2','focal_wide','focal_p2']:
         run(json.loads(Path(f'configs/{name}.json').read_text()))
@@ -148,6 +149,12 @@ plt.tight_layout(); plt.show()
     from cascade_experiment import run as select_cascade
     select_cascade(Path('results/spatial_recipe.json'))
     Path('results/final_recipe.json').write_text(Path('results/cascade_recipe.json').read_text())
+    from run_yolo import run as train_yolo, STEMS
+    train_yolo(force=True)
+    Path('results/yolo_reference.json').write_text(Path('results/final_recipe.json').read_text())
+    from select_yolo import run as select_yolo
+    select_yolo(STEMS)
+    Path('results/final_recipe.json').write_text(Path('results/yolo_recipe.json').read_text())
 else:
     print('Using recorded training evidence and frozen checkpoints; full retraining is disabled.')
 ''')
@@ -263,7 +270,7 @@ fig.suptitle('First 12 errors in test-index order (not cherry-picked)'); plt.sho
 
     The finer-patch clean fine-tuning trial obtains ordinary/EMA/SWA accuracies {acc('accuracy_p2_clean')}/{acc('accuracy_p2_clean_ema')}/{acc('accuracy_p2_clean_swa')}; the corresponding wider-model trial obtains {acc('accuracy_wide_clean')}/{acc('accuracy_wide_clean_ema')}/{acc('accuracy_wide_clean_swa')}. Parent checkpoints remain eligible. These follow-up trials test whether the clean fine-tuning benefit observed in the initial four-pixel Mixer transfers to the new models.
 
-    Enlarging the inference and ensemble search lets models combine complementary errors. The selected component table records each model, number of views, exact weight when nonuniform, and checkpoint hash. The final selection rule uses validation correct count and NLL only; training and inference costs remain visible for assessment, even though they are no longer optimization constraints.
+    Enlarging the inference and ensemble search lets models combine complementary errors. The selected component table records each model, number of views, exact weight when nonuniform, and checkpoint hash. The initial accuracy-first search used validation correct count and NLL. Later deployment comparisons keep accuracy first and use lower average MACs and parameter counts to break ties, with development-half and Shirt-F1 guards; training and inference costs remain visible for assessment.
 
     ### Regularization and model efficiency
 
@@ -334,9 +341,37 @@ awq_rows=[{'mode':mode,'validation_accuracy_%':100*row['accuracy'],
           for mode,row in awq['validation'].items()]
 display(pd.DataFrame(awq_rows).round(4))
 print('Packed INT4 operations:',awq['packed_profiler_operations'])
-print('Final model unchanged: input-processing and AWQ candidates were not adopted.')
+print('Input-processing and AWQ candidates were not adopted.')
 ''')
-    md('''AWQ obtains 5,711/6,000 correct versus 5,721 for the original cascade, and is approximately 3.52 times slower in this eager backend. Its 7,331,088 stored tensor bytes improve on the original FP32 storage but exceed the 5,422,224-byte channel-BF16 control after padding and scales. Plain INT4 also outperforms AWQ in this particular calibration trial; activation-aware scaling is not guaranteed to improve classification accuracy. The channel-BF16 control matches original validation metrics and is faster here, but remains a benchmark control rather than a separately promoted submission recipe. The final model and previously measured 94.42% test accuracy remain unchanged.''')
+    md('''AWQ obtains 5,711/6,000 correct versus 5,721 for the original cascade, and is approximately 3.52 times slower in this eager backend. Its 7,331,088 stored tensor bytes improve on the original FP32 storage but exceed the 5,422,224-byte channel-BF16 control after padding and scales. Plain INT4 also outperforms AWQ in this particular calibration trial; activation-aware scaling is not guaranteed to improve classification accuracy. The channel-BF16 control matches original validation metrics and is faster here, but remains a benchmark control rather than a separately promoted submission recipe. That comparison retained the 94.42% reference model; the following architecture experiments use it as their frozen comparison.''')
+    md('''## 8. Detector-inspired pure MLP experiments
+
+    These trials borrow feature-fusion, partial-channel processing and intermediate-supervision ideas associated with modern detectors. They are **not YOLO models or reproductions of PGI**. All spatial operations are reshapes, concatenations and dense Linear layers; there is no convolution, attention, external pretraining, detection-box loss or NMS.
+
+    A 2x2 Linear patch embedding creates 196 tokens of width 96. Three fine-stage Mixer blocks process them. Each adjacent 2x2 group of tokens is concatenated, normalized and linearly projected to width 192, giving 49 coarse tokens. Three coarse Mixer blocks follow. The control classifies the pooled coarse features; feature fusion concatenates pooled fine and coarse features before its small Linear head. Backbone initialization and the post-initialization random-number stream are identical for that pair.
+
+    Auxiliary supervision adds a ten-class head on pooled fine features with loss weight 0.3. It is optimized during training only and is absent from deployment checkpoints and inference FLOPs. Its construction preserves the paired model's random-number stream. This tests ordinary deep supervision, not the full programmable-gradient method from YOLOv9.
+
+    The partial-channel variant passes one half of the normalized channels directly to concatenation and transforms the other half through an MLP, followed by a Linear fusion layer. Residual connections and full token mixing remain. This changes architecture and parameter count, so matching the seed and training hyperparameters does not establish a parameter-matched causal effect.
+
+    Each initial trial uses 120 epochs with the same AdamW/warmup/cosine, geometric augmentation, label smoothing, dropout and weight decay. Every architecture then receives 30 clean-refinement epochs from its best raw-validation ordinary/EMA/SWA checkpoint. Optimizers restart for refinement; the auxiliary trial also constructs a fresh training-only head because that head is excluded from deployment checkpoints. The table reports the best raw-validation checkpoint from those six candidates per architecture. Training-only auxiliary parameters are reported separately from deployment cost.
+    ''')
+    code('''yolo=json.loads(Path('results/yolo_summary.json').read_text())
+assert yolo['complete']
+display(pd.DataFrame(yolo['families'])[['family','selected_checkpoint','accuracy','shirt_recall','shirt_f1','parameters','macs']])
+fig,axes=plt.subplots(1,2,figsize=(12,4),layout='constrained')
+families=pd.DataFrame(yolo['families'])
+labels=['Coarse control','Feature fusion','Auxiliary loss','Partial channels']
+axes[0].plot(labels,100*families['accuracy'],'o'); axes[0].set(ylabel='Single-view validation accuracy (%)',ylim=(92,95)); axes[0].grid(axis='y',alpha=.25)
+axes[1].bar(labels,families['macs']/1e6); axes[1].set(ylabel='Million dense MACs per image')
+for ax in axes: ax.tick_params(axis='x',rotation=20)
+fig.suptitle('Recorded pure-MLP architecture comparisons; equal epoch budgets'); plt.show()
+print('Cascade validation correct:',yolo['reference_correct'],'->',yolo['selected_correct'])
+print('Finite validation candidate count:',yolo['candidate_count'])
+display(pd.DataFrame(yolo['selected_components']))
+''')
+    md('''Deployment selection keeps the original confidence gate fixed. One raw-validation checkpoint per architecture enters a bounded comparison of 1/10/30 views, standalone inference, additions with weights 0.1/0.2/0.35, and replacement of either non-gate ensemble member. Selection prioritizes correct count, then average MACs, parameters and NLL; neither development-half correct count nor Shirt F1 may regress. The chosen recipe is recomputed with actual routing before freezing. The halves are reused development data, not independent holdouts. Small gains after many validation comparisons are exploratory and do not establish statistical significance. Only individually supported changes should be combined; negative comparisons remain visible.''')
+    md('''The original 5,721/6,000-correct cascade wins all 77 comparisons; the best non-reference candidate obtains 5,714. Therefore the final submission remains the previously frozen 94.42% test model. Feature fusion and auxiliary supervision do not improve the coarse-only control in this experiment. Partial-channel fusion is smaller and slightly more accurate than full-channel fusion, but its Shirt F1 is lower and it does not improve the existing deployment. Auxiliary supervision did not justify stacking it with the partial-channel variant, so that additional combination was not run. All 91 saved project checkpoints, including the 24 new ones, were reloaded and their recorded validation accuracy and deployment costs verified. These negative results apply to this configuration, budget and seed; they do not invalidate the broader design ideas.''')
     md('## References\n\n'+(ROOT/'SOURCES.md').read_text().split('\n',1)[1])
     notebook=nbf.v4.new_notebook(cells=cells,metadata={'kernelspec':{'name':'python3','display_name':'Python 3','language':'python'},'language_info':{'name':'python','version':platform_version()}})
     target=ROOT/'submission'/'Assign01_Cai_Haochen_58561440.ipynb'
