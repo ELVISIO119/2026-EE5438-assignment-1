@@ -1,5 +1,15 @@
 # Experiment journal
 
+## 2026-09-19 — MoE and loss integration (feature/35-moe-loss-integration)
+
+Re-evaluated all 115 saved checkpoints and the unchanged frozen cascade successfully. The portable notebook executed with 13 figures, adding expert occupancy/latency and class-recall comparisons. The two-file ZIP passed execution, archive, metric and credential-history checks. The prior archive is retained as `archives/Assign01_Cai_Haochen_58561440_before_moe_loss.zip`. The final recipe remains byte-for-byte equivalent as parsed JSON to both experiment reference snapshots, including its original freeze timestamp. Section A remains a typed study guide that must be replaced by the student's genuine handwritten scan; no Canvas upload was performed. Shared-trunk experts were tested; independently bootstrap-trained bagging and garment-only experts were not represented as completed experiments.
+
+## 2026-09-19 — Loss-follow-up outcome (local date; raw JSON timestamps are UTC)
+
+Selected raw-validation checkpoints: CE `features_gray` 5,642/6,000, gamma-2 focal `loss_focal2_ema` 5,644, weighted CE `loss_weighted_ema` 5,641. Shirt correct counts are 485, 485 and 483 out of 600. Focal raises precision from 0.842014 to 0.847902 and F1 from 0.824830 to 0.827645 without increasing recall. Its fixed-half counts change from [2,808, 2,834] to [2,806, 2,838], failing the prospective advancement rule; weighted CE also fails. Neither is stacked with local augmentation or garment-only post-training. This is a bounded decision under reused validation, not statistical rejection of the methods.
+
+All 58 deployment comparisons retain the original 5,721-correct cascade. No new candidate test evaluation was performed; final weights and the original freeze timestamp remain unchanged. Evidence: `results/loss_experiment.json`, `results/loss_candidates.csv`, `results/loss_recipe.json`.
+
 ## 2026-09-18 — Focal and weighted-CE follow-up design (feature/34-garment-loss-followup)
 
 The user proposed focal gamma 2, class-weighted CE, targeted augmentation and garment-only post-training. The earlier gamma-1 and conditional-garment objectives already exist; this follow-up isolates gamma 2 and mild weight 1.5 for T-shirt/Pullover/Coat/Shirt. Fashion-MNIST is balanced, so these weights express difficulty preference, not imbalance correction. Weighted CE divides by the sum of sample weights, matching native PyTorch. Self-checks compare both losses with independent expressions and verify gradients.

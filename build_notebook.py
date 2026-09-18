@@ -28,7 +28,7 @@ def build():
                                   'cascade_experiment.py','benchmark_cascade.py','benchmark_nvfp4.py',
                                   'image_processing_experiment.py','benchmark_awq.py',
                                   'run_yolo.py','select_yolo.py','check_pyramid.py',
-                                  'pil_experiment.py','feature_experiment.py',
+                                  'pil_experiment.py','feature_experiment.py','moe_experiment.py','loss_followup.py',
                                   'SOURCES.md','requirements.txt')]
     files+=list((ROOT/'configs').glob('*.json'))+list(OUT.glob('*.json'))+list(OUT.glob('*.csv'))
     files += [OUT/f'{name}.pt' for name in sorted({'baseline_sgd_sigmoid'}|{c['name'] for c in recipe['components']})]
@@ -139,7 +139,7 @@ plt.tight_layout(); plt.show()
     for name in ['accuracy_p2','accuracy_wide','accuracy_muon_refine','accuracy_residual','accuracy_p2_clean','accuracy_wide_clean']:
         run(json.loads(Path(f'configs/{name}.json').read_text()))
     from select_final import select
-    select(accuracy_first=True,exclude_prefixes=('garment_','focal_','spatial_','yolo_','pil_','features_'))
+    select(accuracy_first=True,exclude_prefixes=('garment_','focal_','spatial_','yolo_','pil_','features_','moe_','loss_'))
     from garment_experiment import run as select_refinements
     for name in ['garment_wide','garment_p2','focal_wide','focal_p2']:
         run(json.loads(Path(f'configs/{name}.json').read_text()))
@@ -163,6 +163,14 @@ plt.tight_layout(); plt.show()
     Path('results/features_reference.json').write_text(Path('results/final_recipe.json').read_text())
     fit_features(force=True)
     Path('results/final_recipe.json').write_text(Path('results/features_recipe.json').read_text())
+    from moe_experiment import run as fit_moe
+    Path('results/moe_reference.json').write_text(Path('results/final_recipe.json').read_text())
+    fit_moe(force=True)
+    Path('results/final_recipe.json').write_text(Path('results/moe_recipe.json').read_text())
+    from loss_followup import run as fit_losses
+    Path('results/loss_reference.json').write_text(Path('results/final_recipe.json').read_text())
+    fit_losses(force=True)
+    Path('results/final_recipe.json').write_text(Path('results/loss_recipe.json').read_text())
 else:
     print('Using recorded training evidence and frozen checkpoints; full retraining is disabled.')
 ''')
@@ -460,6 +468,58 @@ del validation_x,validation_y
     md('''The grayscale and gradient variants both obtain 5,642/6,000 correct (94.0333%); adding local contrast gives 5,640 (94.00%). Correctly classified Shirts fall from 485/600 to 484 and 483. Gradient Shirt F1 rises slightly because false-positive predictions decrease, not because recall improves. Across 58 deployment candidates, the strongest non-reference alternative reaches 5,718 correct and the original 5,721-correct cascade remains selected. The submitted weights and original freeze timestamp are unchanged; no new candidate test evaluation is performed.
 
     Explicit gradients highlight outlines and local contrast emphasizes small intensity changes, but neither adds information absent from the pixels. These linear filters can be represented by a sufficiently capable network; their practical effect is to change the available input representation and optimization. They may also amplify noise or remove useful texture if substituted for grayscale, which is why grayscale is retained. This single-seed, short fine-tuning comparison does not settle performance from scratch or under longer training; repeated validation reuse limits generalization claims.''')
+    md('''## 11. Shared-trunk sparse MLP experts
+
+    This experiment tests whether routing among three small residual MLP experts improves the wide Mixer's pooled representation. Each expert maps 192 -> 384 -> 192 with GELU; its output is added to the shared feature vector before the original classifier. A Linear router maps 192 features to three probabilities. The approximately total-parameter-matched control has one 192 -> 1152 -> 192 expert and a redundant one-output router for implementation consistency.
+
+    Both trials start from the same wide SWA checkpoint and fine-tune all weights for 30 clean epochs with the same AdamW schedule. Expert output matrices and biases start at zero. Additional initialization preserves the trunk random stream; experts have no dropout so the shared-trunk dropout/shuffle stream remains matched. Training uses soft weighted expert features, while validation and deployed inference use argmax top-1 routing and execute only the selected expert on each image. This train/inference difference can hurt accuracy, so dense soft-inference metrics are also recorded for the same checkpoints.
+
+    No load-balancing loss is used; route counts expose unequal utilization. These shared-trunk experts are not independently bootstrapped bagging models, class-supervised garment experts, or speculative decoding. The expensive shared trunk still runs for every image. Parameter counts include all stored experts, while sparse MACs include the trunk, router, selected expert and head. Equal-sized experts make sparse dense-Linear MACs independent of the route. The fixed feature preprocessing experiments remain separate.
+    ''')
+    code('''moe=json.loads(Path('results/moe_experiment.json').read_text())
+moe_selection=json.loads(Path('results/moe_summary.json').read_text())
+assert moe['complete'] and moe_selection['complete']
+display(pd.DataFrame([{k:r[k] for k in ['name','accuracy','shirt_recall','shirt_f1','parameters','sparse_macs','full_expert_macs','routes']} for r in moe['checkpoints']]))
+display(pd.DataFrame([{'name':r['name'],'top1_accuracy':r['accuracy'],'soft_accuracy':r['dense_metrics']['accuracy']} for r in moe['checkpoints'] if 'dense_metrics' in r]))
+print('Reference / selected deployment correct:',moe_selection['reference_correct'],moe_selection['selected_correct'])
+print('Deployment candidate count:',moe_selection['candidate_count'])
+from moe_experiment import self_check as check_moe
+check_moe()
+fig,axes=plt.subplots(1,2,figsize=(12,4),layout='constrained')
+axes[0].bar(['Expert 1','Expert 2','Expert 3'],moe['selected']['routes'])
+axes[0].set(title='Selected top-1 checkpoint: validation routes',ylabel='Images')
+timings=moe['timings']
+axes[1].barh(list(timings),[r['median_ms'] for r in timings.values()])
+axes[1].set(xlabel='Median milliseconds / 1,024 images',title='Recorded eager latency; shared GPU')
+axes[1].tick_params(axis='y',labelsize=8)
+plt.show()
+''')
+    md('''Latency uses the same first 1,024 validation images in batches of 128, three warmups and seven synchronized timing repetitions. Timing includes routing and model computation but excludes loading, preprocessing transfer, softmax and output transfer; these are local forward-only comparisons, not end-to-end cascade timings. Hardware is shared, so measurements are descriptive. Dense forward MACs do not represent backward/optimizer training FLOPs and exclude activation, normalization, memory traffic and dispatch overhead.
+
+    One ordinary/EMA/SWA checkpoint per family enters the fixed standalone/addition/replacement comparison at 1/10/30 views. The original gate is retained and shared with its existing member. Actual routed inference verifies the winning recipe, with the existing Shirt-F1 and both-development-half guards. These are repeatedly reused development data; neither a few extra correct predictions nor route imbalance establishes a general superiority or failure of MoE.''')
+    md('''The selected top-1 MoE reaches 94.0167% single-view validation accuracy, versus 94.0333% for the one-expert control. Its dense soft path has the same 5,641-correct count. All 39 deployment comparisons retain the original cascade. Median forward-only latency per 1,024 images is 7.81 ms for the parent, 9.30 ms for the control, 10.93 ms for sparse MoE and 8.65 ms for dense soft MoE. Top-1 saves only about 0.38% of full-model dense MACs relative to all-expert inference; dispatch overhead outweighs that saving in this implementation. The experiment does not support promoting these lightweight experts for accuracy or speed.''')
+    md('''## 12. Stronger focal loss and mild garment weighting
+
+    The earlier focal-gamma-one and conditional-garment losses did not improve the final recipe. A separate paired follow-up tests gamma two and class-weighted cross-entropy against the completed grayscale CE control. All start from the same wide SWA checkpoint and use the same 30-epoch clean fine-tuning recipe. Only the loss changes; each family selects ordinary/EMA/SWA by validation correct count then NLL. These new results should not be interpreted as an isolated gamma-one-versus-gamma-two comparison, because the historical gamma-one trial had a different parent.
+
+    Focal loss is `mean((1-p_true)^2 * CE)` with no alpha balancing. Weighted CE gives weight 1.5 to T-shirt, Pullover, Coat and Shirt, and 1 to the other six classes; it divides summed weighted losses by summed sample weights, matching native PyTorch. The dataset is balanced: these weights emphasize difficult classes rather than correct a count imbalance. Focal loss also changes effective gradient magnitude at the same learning rate; no separate learning-rate sweep is performed. Neither objective guarantees increased recall or unchanged performance on other classes.
+
+    Before seeing results, local-augmentation stacking was made conditional on a loss improving overall validation correct count without reducing Shirt recall, Shirt F1, or either development-half count versus matched CE. Aggressive upper-half crops can destroy useful garment-length evidence; training the shared network on only four classes can cause forgetting. Such changes are not assumed harmless or automatically stacked. The bounded deployment grid still includes the unchanged original cascade.
+    ''')
+    code('''loss_trials=json.loads(Path('results/loss_experiment.json').read_text())
+loss_selection=json.loads(Path('results/loss_summary.json').read_text())
+assert loss_trials['complete'] and loss_selection['complete']
+display(pd.DataFrame([{k:r[k] for k in ['name','correct','accuracy','shirt_precision','shirt_recall','shirt_f1','validation_half_correct']} for r in loss_trials['selected_families']]))
+print('Eligible for local-augmentation stacking:',loss_trials['supported_for_local_augmentation'])
+print('Original / selected deployment correct:',loss_selection['reference_correct'],loss_selection['selected_correct'])
+classes=[0,2,4,6]
+fig,ax=plt.subplots(figsize=(8,4),layout='constrained')
+for row in loss_trials['selected_families']:
+    ax.plot(range(4),[100*row['classes'][i]['recall'] for i in classes],'o-',label=row['name'])
+ax.set(xticks=range(4),xticklabels=['T-shirt','Pullover','Coat','Shirt'],ylabel='Validation recall (%)',title='Recorded paired loss comparison; 600 images per class')
+ax.legend(fontsize=8); ax.grid(alpha=.25); plt.show()
+''')
+    md('''Matched CE gives 5,642 correct, focal gamma 2 gives 5,644, and weighted CE gives 5,641. Focal leaves Shirt recall unchanged at 485/600, while precision improves and F1 changes from 0.824830 to 0.827645. Its development-half correct counts move from [2,808, 2,834] to [2,806, 2,838], failing the predeclared no-regression guard. Weighted CE reduces Shirt correct count to 483. Neither loss qualifies for stacking local augmentation; no such combined run is claimed. All 58 deployment comparisons retain the original 5,721-correct cascade, preserving the original weights, freeze timestamp and 94.42% historical test result. These small validation differences do not establish statistical significance.''')
     md('## References\n\n'+(ROOT/'SOURCES.md').read_text().split('\n',1)[1])
     notebook=nbf.v4.new_notebook(cells=cells,metadata={'kernelspec':{'name':'python3','display_name':'Python 3','language':'python'},'language_info':{'name':'python','version':platform_version()}})
     target=ROOT/'submission'/'Assign01_Cai_Haochen_58561440.ipynb'
