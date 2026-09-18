@@ -1,5 +1,11 @@
 # Experiment journal
 
+## 2026-09-19 — Latency amendment before test access
+
+The 354-candidate compute screen reproduced the references and yielded a balanced candidate with 5,719 correct at 544,297,698 average MACs, and an accuracy candidate with 5,722 correct at 1,678,338,418 average MACs. However, their measured medians were 105.71 ms versus 104.15 ms for the old reference, and 238.77 ms versus 236.11 ms for the current reference. Thus neither demonstrated all requested improvements. The exact initial screen and choices were archived as `hybrid_compute_screen.json` and `hybrid_compute_*_recipe.json` before any new test evaluation.
+
+Amend selection to time all 12 actual recomputed finalists and require at least 5% lower median latency, lower average MACs, and preserved correct count, Shirt F1 and both validation-half counts against the corresponding reference. Rank eligible candidates by correct count, measured latency, MACs, parameters and NLL. This is an explicit validation-driven amendment, not a prospectively registered untouched protocol or independent validation. It adds no architectures, thresholds or test comparisons. Commands: `timeout 1800 python3 hybrid_experiment.py --latency`, then evaluate exactly the two newly frozen endpoints with `python3 hybrid_experiment.py --test`.
+
 ## 2026-09-19 — Accuracy/compute frontier design (feature/37-budget-cascade)
 
 No new weights are fitted. Compare the historical dual 10-view baseline, current cascade, and a previously recorded reduced current ensemble with view counts 2/1/4. Legacy single/dual first stages use 1/2/10 views; dual predictions must agree before exiting. Fixed confidence thresholds are 0.8/0.9/0.95/0.975/0.99/0.995, with either all predicted classes or only classes 1/5/7/8/9 eligible. Each first stage routes uncertain examples to one of the three references. Also compare legacy 1/2-view predictions blended with the reduced current ensemble at weights 0.25/0.5/0.75. All views actually recomputed are charged; there is no unimplemented caching discount.

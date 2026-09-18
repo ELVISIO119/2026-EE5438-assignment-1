@@ -190,6 +190,34 @@ def run():
 
 
 @torch.inference_mode()
+def choose_fast():
+    """Amended before test access: require >=5% measured latency reduction too."""
+    evidence=json.loads((OUT/'hybrid_compute_screen.json').read_text())
+    x,y,vx,vy,_,_=load_data(); del x,y,vy
+    candidates=evidence['actual_finalists']
+    models={n:load_model(n) for r in candidates for n in model_names(r)}
+    timings={r['label']:benchmark(r,vx[:1024],models) for r in candidates}
+    chosen={}
+    for goal,base in (('balanced',evidence['references']['legacy']),('accuracy',evidence['references']['current'])):
+        eligible=[r for r in candidates if r['correct']>=base['correct'] and r['shirt_f1']>=base['shirt_f1'] and
+                  all(a>=b for a,b in zip(r['validation_half_correct'],base['validation_half_correct'])) and
+                  r['macs']<base['macs'] and timings[r['label']]['median_ms']<=.95*timings[base['label']]['median_ms']]
+        assert eligible, f'No simultaneous improvement met {goal} limits; keep existing references.'
+        selected=min(eligible,key=lambda r:(-r['correct'],timings[r['label']]['median_ms'],r['macs'],r['parameters'],r['loss']))
+        chosen[goal]=dict(selected,goal=goal,selection_split='validation_only',seed=SEED,
+                          frozen_at=datetime.now(timezone.utc).isoformat(),
+                          checkpoint_hashes={n:digest(n) for n in sorted(model_names(selected))},
+                          rule='Latency amendment before any new test access. Among the previously recomputed finite shortlist, guard correct count, Shirt F1 and both development halves; require lower average MACs and >=5% faster observed median latency than corresponding reference. Rank correct count, latency, MACs, total parameters, NLL.',
+                          measured_latency=timings[selected['label']],reference_latency=timings[base['label']])
+        (OUT/f'hybrid_{goal}_recipe.json').write_text(json.dumps(chosen[goal],indent=2))
+    evidence.update(selected=chosen,latency_finalists=timings,
+                    latency_amendment='Initial MAC-only selections were 1-2% slower than their references. Before any new test access, require at least 5% lower observed median latency as well as lower average MACs on the same validation sample. Archived compute-screen choices remain available. The amendment reuses validation and is not independent confirmation.',
+                    frozen_at=datetime.now(timezone.utc).isoformat())
+    (OUT/'hybrid_experiment.json').write_text(json.dumps(evidence,indent=2))
+    print(json.dumps({k:{f:r[f] for f in ('label','correct','macs','parameters','measured_latency','reference_latency')} for k,r in chosen.items()},indent=2))
+
+
+@torch.inference_mode()
 def evaluate_frozen():
     from torchvision.datasets import FashionMNIST
     from sklearn.metrics import classification_report, confusion_matrix
@@ -220,6 +248,6 @@ def evaluate_frozen():
 
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser(); parser.add_argument('--check',action='store_true'); parser.add_argument('--test',action='store_true')
+    parser=argparse.ArgumentParser(); parser.add_argument('--check',action='store_true'); parser.add_argument('--test',action='store_true'); parser.add_argument('--latency',action='store_true')
     args=parser.parse_args()
-    self_check() if args.check else evaluate_frozen() if args.test else run()
+    self_check() if args.check else evaluate_frozen() if args.test else choose_fast() if args.latency else run()
