@@ -1,5 +1,5 @@
 {
-  "verified_at": "2026-09-18T15:33:07.951420+00:00",
+  "verified_at": "2026-09-18T15:43:50.256961+00:00",
   "checks": [
     {
       "name": "accuracy_muon_refine",
@@ -140,6 +140,69 @@
       "parameters": 109386,
       "macs": 109184,
       "sha256": "cb9fc6e06da50b705c29a4538d83332f3c42a83800ef1717a8ae3be51748d5e1"
+    },
+    {
+      "name": "features_contrast",
+      "accuracy": 0.94,
+      "parameters": 1306962,
+      "macs": 77674368,
+      "sha256": "7c8bedc2b7c36ca6412fe62d61b9d647356466f47be1f81352776251c5917604"
+    },
+    {
+      "name": "features_contrast_ema",
+      "accuracy": 0.94,
+      "parameters": 1306962,
+      "macs": 77674368,
+      "sha256": "78d2077cc59317b783255a0ef7b692ea8f73ecf16e388ed386f9adc6562cf7be"
+    },
+    {
+      "name": "features_contrast_swa",
+      "accuracy": 0.9395,
+      "parameters": 1306962,
+      "macs": 77674368,
+      "sha256": "dacd88c578e3627f35f11a82e2def02d3cc9a0293e7367466f265fbe0d4d7d78"
+    },
+    {
+      "name": "features_edges",
+      "accuracy": 0.9403333333333334,
+      "parameters": 1303890,
+      "macs": 77523840,
+      "sha256": "0b60b7e33da66a9dd5709d9bbd2f3868f92e676b5361dda9e84ee232321da4b2"
+    },
+    {
+      "name": "features_edges_ema",
+      "accuracy": 0.9403333333333334,
+      "parameters": 1303890,
+      "macs": 77523840,
+      "sha256": "01ce7c7c9bf238cd03a6dd983d5c039e183eee7bf13ae3134261fce27abc25bc"
+    },
+    {
+      "name": "features_edges_swa",
+      "accuracy": 0.9391666666666667,
+      "parameters": 1303890,
+      "macs": 77523840,
+      "sha256": "48845676aec2c3bdd4a6e8b2457a634dae527928eedc68a1b4c0b0ed0ffe4163"
+    },
+    {
+      "name": "features_gray",
+      "accuracy": 0.9403333333333334,
+      "parameters": 1297746,
+      "macs": 77222784,
+      "sha256": "d584abb7effc803d3abbed79fc86306da4893d638d7624e01586373d1a7f8688"
+    },
+    {
+      "name": "features_gray_ema",
+      "accuracy": 0.9401666666666667,
+      "parameters": 1297746,
+      "macs": 77222784,
+      "sha256": "40144bc100aa236c2beff91a32e65a6e4fa4ec02177cca0eabac0722900794c3"
+    },
+    {
+      "name": "features_gray_swa",
+      "accuracy": 0.939,
+      "parameters": 1297746,
+      "macs": 77222784,
+      "sha256": "829e31c08f764819cc33e4048b35d234920750c301e8ece57c369e08de406f61"
     },
     {
       "name": "focal_p2",
@@ -660,7 +723,7 @@
       "sha256": "b45732b56a9429d98f8f123d0bd4955ead0078d0196c488c2a5d0c3c75d09d88"
     }
   ],
-  "check_count": 94,
+  "check_count": 103,
   "frozen_recipe": {
     "correct": 5721,
     "examples": 6000,

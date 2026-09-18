@@ -1,5 +1,15 @@
 # Experiment journal
 
+## 2026-09-18 — Image-feature integration (feature/32-image-feature-integration)
+
+Re-evaluated all 103 saved checkpoints and the unchanged frozen cascade successfully. The portable notebook executed with 11 figures, including garment confusion matrices and grayscale/gradient/contrast views of three difficult validation Shirts. The regenerated two-file ZIP passed execution, archive, metric and credential-history checks. The pre-experiment archive remains in `archives/Assign01_Cai_Haochen_58561440_before_image_features.zip`. The Section A PDF still needs replacement with the student's genuine handwritten scan; no Canvas upload was performed.
+
+## 2026-09-18 — Image-feature outcome
+
+Completed all three matched runs and nine checkpoint variants. Selected grayscale and gradient checkpoints each classify 5,642/6,000 validation images correctly; gradients plus local contrast give 5,640. Shirt correct counts are 485, 484 and 483 of 600. Gradient Shirt F1 rises from 0.824830 to 0.825939 because false positives decline, while recall falls. This provides no support for promoting these fixed features under the tested warm-start and 30-epoch budget.
+
+The 58 bounded standalone/addition/replacement deployment candidates retain the original 5,721-correct cascade; the strongest alternative reaches 5,718. Final weights, deployment recipe and original freeze timestamp remain unchanged. No candidate test evaluation was performed. Detailed confusion matrices and all candidate results are retained in `results/features_details.json` and `results/features_candidates.csv`.
+
 ## 2026-09-18 — Paired fixed-image-feature design (feature/31-image-features)
 
 The user's new hypothesis concerns explicit garment outlines and local intensity structure, rather than further model capacity. Three configurations were committed before running: retained grayscale, grayscale plus signed horizontal/vertical central differences, and those channels plus grayscale minus its 3x3 local mean. Replicate padding avoids constant-background boundary artifacts. Features are generated inside the input path after geometry, so every training/inference view uses the same processing. No labels or fitted feature statistics enter the transform.

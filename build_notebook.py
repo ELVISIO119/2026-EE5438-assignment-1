@@ -28,7 +28,7 @@ def build():
                                   'cascade_experiment.py','benchmark_cascade.py','benchmark_nvfp4.py',
                                   'image_processing_experiment.py','benchmark_awq.py',
                                   'run_yolo.py','select_yolo.py','check_pyramid.py',
-                                  'pil_experiment.py',
+                                  'pil_experiment.py','feature_experiment.py',
                                   'SOURCES.md','requirements.txt')]
     files+=list((ROOT/'configs').glob('*.json'))+list(OUT.glob('*.json'))+list(OUT.glob('*.csv'))
     files += [OUT/f'{name}.pt' for name in sorted({'baseline_sgd_sigmoid'}|{c['name'] for c in recipe['components']})]
@@ -139,7 +139,7 @@ plt.tight_layout(); plt.show()
     for name in ['accuracy_p2','accuracy_wide','accuracy_muon_refine','accuracy_residual','accuracy_p2_clean','accuracy_wide_clean']:
         run(json.loads(Path(f'configs/{name}.json').read_text()))
     from select_final import select
-    select(accuracy_first=True,exclude_prefixes=('garment_','focal_','spatial_','yolo_','pil_'))
+    select(accuracy_first=True,exclude_prefixes=('garment_','focal_','spatial_','yolo_','pil_','features_'))
     from garment_experiment import run as select_refinements
     for name in ['garment_wide','garment_p2','focal_wide','focal_p2']:
         run(json.loads(Path(f'configs/{name}.json').read_text()))
@@ -159,6 +159,10 @@ plt.tight_layout(); plt.show()
     from pil_experiment import run as fit_pil
     fit_pil()
     Path('results/final_recipe.json').write_text(Path('results/pil_recipe.json').read_text())
+    from feature_experiment import run as fit_features
+    Path('results/features_reference.json').write_text(Path('results/final_recipe.json').read_text())
+    fit_features(force=True)
+    Path('results/final_recipe.json').write_text(Path('results/features_recipe.json').read_text())
 else:
     print('Using recorded training evidence and frozen checkpoints; full retraining is disabled.')
 ''')
@@ -408,6 +412,54 @@ check_ridge()
     Squared-error scores have a different confidence scale from cross-entropy logits. Each refitted member therefore selects a post-view temperature from [0.05, 0.1, 0.2, 0.5, 1, 2] by validation NLL; all choose 0.1. The original gate and original members' temperatures remain fixed. The 16 deployment comparisons include the original cascade, three standalone refits with original view counts, nine additions (weights 0.1/0.2/0.35), and three combinations replacing either or both non-gate members. Additional members execute full extra backbones and are counted accordingly; no unsupported feature-sharing speedup is claimed.
 
     The original cascade wins with 5,721/6,000 correct; the best alternative reaches 5,710. Both development-half correct counts and Shirt F1 are guarded. The new heads are retained as experimental checkpoints, while the submitted model, original freeze timestamp and previously measured 94.42% test score stay unchanged. No new candidate test evaluation is used for selection. Repeated validation reuse remains a limitation.''')
+    md('''## 10. Fixed image features for difficult garment classes
+
+    Three paired trials retain grayscale and optionally append signed horizontal/vertical central differences, then grayscale minus its 3x3 local mean. Replicate padding avoids artificial edges on a constant background. These deterministic features are computed after any geometric transformation for each training or inference view. They introduce no fitted statistics or trainable convolution; all trainable feature mixing remains Linear MLP layers.
+
+    All three trials start from the same wide SWA checkpoint and receive 30 clean fine-tuning epochs, AdamW at 5e-5, decay 0.01, identical cosine warmup schedule, seed and dropout/shuffle random stream. Additional input-projection columns start at zero, preserving the grayscale function in real arithmetic. A runnable check verifies feature direction, constant boundaries, initial FP32 logits and finite gradients. BF16 kernels can have shape-dependent rounding, so training is not claimed bitwise identical.
+
+    Ordinary, EMA and SWA checkpoints compete within each family on validation accuracy then NLL. Deployment uses the same bounded 1/10/30-view comparison and Shirt-F1/development-half guards as the detector-inspired trials. Test labels are not used. Dense MACs include the wider input projection; fixed preprocessing adds about 3,136 scalar operations per image for gradients or 10,976 for gradients plus local contrast, excluding memory operations. These counts are not latency measurements.
+    ''')
+    code('''features=json.loads(Path('results/features_summary.json').read_text())
+feature_details=json.loads(Path('results/features_details.json').read_text())
+assert features['complete'] and feature_details['complete']
+display(pd.DataFrame(features['families'])[['family','selected_checkpoint','accuracy','shirt_recall','shirt_f1','parameters','macs']])
+print('Reference / selected cascade validation correct:',features['reference_correct'],features['selected_correct'])
+print('Bounded deployment candidates:',features['candidate_count'])
+from feature_experiment import self_check as check_features
+check_features()
+garments=[0,2,4,6]
+garment_labels=['T-shirt','Pullover','Coat','Shirt']
+fig,axes=plt.subplots(1,3,figsize=(13,4),layout='constrained')
+for ax,row in zip(axes,feature_details['rows']):
+    counts=np.asarray(row['confusion_matrix'])[np.ix_(garments,garments)]
+    ax.imshow(counts,cmap='Blues',vmin=0,vmax=600)
+    for i in range(4):
+        for j in range(4): ax.text(j,i,str(counts[i,j]),ha='center',va='center',color='white' if counts[i,j]>300 else 'black')
+    ax.set(xticks=range(4),yticks=range(4),xticklabels=garment_labels,yticklabels=garment_labels,
+           xlabel='Predicted class',ylabel='True class',title=row['name'].replace('features_',''))
+fig.suptitle('Recorded validation confusion: 600 images per true class; other classes omitted'); plt.show()
+''')
+    code('''from models import image_features
+from train import load_data
+from evaluation import load_model, probabilities
+train_x,train_y,validation_x,validation_y,_,_=load_data()
+del train_x,train_y
+parent_probs=probabilities(load_model('accuracy_wide_clean_swa'),validation_x,1)
+ids=torch.where((validation_y.cpu()==6)&(parent_probs.argmax(1)!=6))[0][:3]
+maps=image_features(validation_x[ids.to(validation_x.device)],'contrast').cpu()
+fig,axes=plt.subplots(len(ids),4,figsize=(9,7),squeeze=False,layout='constrained')
+for i in range(len(ids)):
+    for j,title in enumerate(['Original grayscale','Horizontal gradient','Vertical gradient','Local contrast']):
+        axes[i,j].imshow(maps[i,j],cmap='gray' if j==0 else 'coolwarm',vmin=0 if j==0 else -.5,vmax=1 if j==0 else .5)
+        axes[i,j].set_title(title if i==0 else '',fontsize=10); axes[i,j].axis('off')
+fig.suptitle('First three validation Shirts misclassified by the parent; illustrative, not proof of improvement')
+plt.show()
+del validation_x,validation_y
+''')
+    md('''The grayscale and gradient variants both obtain 5,642/6,000 correct (94.0333%); adding local contrast gives 5,640 (94.00%). Correctly classified Shirts fall from 485/600 to 484 and 483. Gradient Shirt F1 rises slightly because false-positive predictions decrease, not because recall improves. Across 58 deployment candidates, the strongest non-reference alternative reaches 5,718 correct and the original 5,721-correct cascade remains selected. The submitted weights and original freeze timestamp are unchanged; no new candidate test evaluation is performed.
+
+    Explicit gradients highlight outlines and local contrast emphasizes small intensity changes, but neither adds information absent from the pixels. These linear filters can be represented by a sufficiently capable network; their practical effect is to change the available input representation and optimization. They may also amplify noise or remove useful texture if substituted for grayscale, which is why grayscale is retained. This single-seed, short fine-tuning comparison does not settle performance from scratch or under longer training; repeated validation reuse limits generalization claims.''')
     md('## References\n\n'+(ROOT/'SOURCES.md').read_text().split('\n',1)[1])
     notebook=nbf.v4.new_notebook(cells=cells,metadata={'kernelspec':{'name':'python3','display_name':'Python 3','language':'python'},'language_info':{'name':'python','version':platform_version()}})
     target=ROOT/'submission'/'Assign01_Cai_Haochen_58561440.ipynb'
