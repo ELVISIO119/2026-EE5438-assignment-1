@@ -23,8 +23,9 @@ def load_model(name):
 
 
 @torch.no_grad()
-def probabilities(model,x,views=1):
+def probabilities(model,x,views=1,view_batch=1):
     assert views in (1,2,4,10,18,30,50)
+    assert view_batch in (1,2,4)
     outputs=[]
     for batch in x.split(128):
         images=[batch]
@@ -46,7 +47,12 @@ def probabilities(model,x,views=1):
                 shifted=[padded[:,:,radius+dy:radius+dy+28,radius+dx:radius+dx+28] for dy,dx in shifts]
                 images.extend(shifted+[image.flip(-1) for image in shifted])
         assert len(images)==views
-        outputs.append(torch.stack([model(image).softmax(1) for image in images]).mean(0).cpu())
+        per_view=[]
+        for start in range(0,len(images),view_batch):
+            group=images[start:start+view_batch]
+            joined=group[0] if len(group)==1 else torch.cat(group)
+            per_view.extend(model(joined).softmax(1).reshape(len(group),len(batch),10).unbind(0))
+        outputs.append(torch.stack(per_view).mean(0).cpu())
     return torch.cat(outputs)
 
 
@@ -77,11 +83,12 @@ def recipe_probabilities(recipe,x,models=None):
             models[name]=load_model(name)
         return models[name]
     cascade=recipe.get('cascade')
+    view_batch=recipe.get('view_batch',1)
     routed=x
     accepted=0
     if cascade:
         assert 0<cascade['threshold']<=1 and all(0<=c<10 for c in cascade['classes'])
-        cheap=probabilities(model(cascade['name']),x,cascade['views'])
+        cheap=probabilities(model(cascade['name']),x,cascade['views'],view_batch)
         mask=early_mask(cheap,cascade)
         accepted=int(mask.sum())
         routed=x[(~mask).to(x.device)]
@@ -89,7 +96,7 @@ def recipe_probabilities(recipe,x,models=None):
     weights=torch.tensor([c.get('weight',1.) for c in components])
     assert torch.isfinite(weights).all() and (weights>0).all()
     weights=weights/weights.sum()
-    probs=torch.empty(0,10) if len(routed)==0 else sum(w*calibrate(probabilities(model(c['name']),routed,c['views']),c.get('temperature',1.)) for w,c in zip(weights,components))
+    probs=torch.empty(0,10) if len(routed)==0 else sum(w*calibrate(probabilities(model(c['name']),routed,c['views'],view_batch),c.get('temperature',1.)) for w,c in zip(weights,components))
     full_macs=recipe.get('full_macs',recipe['macs'])
     macs=full_macs
     if cascade:
@@ -115,3 +122,13 @@ if __name__=='__main__':
         assert model.calls==views and probs.shape==(3,10)
         assert torch.allclose(probs,torch.full_like(probs,.1),atol=1e-7)
     print('All seven inference view counts preserve shape and normalized probabilities.')
+    class Pixels(torch.nn.Module):
+        def forward(self,x):
+            return x.flatten(1)[:,:10]*4
+    torch.manual_seed(58561440)
+    inputs=torch.rand(131,1,28,28)
+    for views in (1,2,4,10,18,30,50):
+        expected=probabilities(Pixels(),inputs,views)
+        for grouped in (2,4):
+            assert torch.allclose(probabilities(Pixels(),inputs,views,grouped),expected,atol=1e-7)
+    print('Grouped views match sequential probabilities across partial image/view batches.')

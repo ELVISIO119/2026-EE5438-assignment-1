@@ -1,5 +1,11 @@
 # Experiment journal
 
+## 2026-09-19 — Grouped-view runtime follow-up (feature/41-batched-views)
+
+Progressive front exits produced three actual balanced finalists preserving 5,717 validation correct and the class/half guards, but the roughly 2% observed latency saving did not meet the predeclared 5% requirement. No endpoint was promoted or tested. The lowest-cost finalist, clean first at .99 over all predicted classes, uses 460,521,803 average validation MACs instead of 475,266,565. Accuracy-priority candidates did not qualify.
+
+Next test two/four views concatenated per fallback model forward, using only those three actual accuracy/compute-qualified progressive finalists (six candidates, no new thresholds). Fewer kernel launches may improve GPU utilization. View grouping does not reduce mathematical MACs and adds activation memory; progressive skipping supplies the compute reduction. Batch-dependent BF16 rounding may alter predictions, so recompute actual validation for every candidate, preserve the original correct/Shirt-F1/half guards, and retain the same >=1% average-MAC and >=5% latency improvement on both 1,024-image slices. Freeze and commit any selected recipe before test access. Run `python3 evaluation.py`, `python3 hybrid_experiment.py --check`, then `timeout 1800 python3 refine_cascade.py --batched`. The standard view batch defaults to one, preserving existing reference paths.
+
 ## 2026-09-19 — Progressive front-stage hypothesis (feature/40-progressive-front)
 
 The 360 view-budget comparisons produced no cached candidate satisfying the predeclared accuracy/class/half-count and compute guards. Do not test or adopt them. The best accuracy-priority configuration remains its original view budget; reduced views weaken the hard-image fallback.

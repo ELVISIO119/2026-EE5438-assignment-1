@@ -121,6 +121,28 @@ def progressive():
         'No fitting or test access. First-view confidence .975/.99/.995/.999, allowed predicted classes all or 1/5/7/8/9. Balanced first model clean or Muon; accuracy first model Muon, then flip only if needed. Reuse first probabilities in unresolved two-pass mean; do not recompute them. Preserve original outer thresholds, weights and fallback.')
 
 
+@torch.inference_mode()
+def batched():
+    evidence=json.loads((OUT/'progressive_experiment.json').read_text())
+    references=evidence['references']
+    x,y,vx,vy,_,_=load_data(); del x,y
+    models={n:load_model(n) for r in references.values() for n in model_names(r)}
+    rows=[]
+    # Only already evaluated progressive finalists; no new confidence/architecture search.
+    for base in evidence['actual_finalists']:
+        if not guarded(base,references[base['goal']],.99): continue
+        for view_batch in (2,4):
+            recipe={k:base[k] for k in ('front','back','threshold','classes','parameters','goal','pre_exit')}
+            recipe['back']=dict(recipe['back'],view_batch=view_batch)
+            recipe['label']=base['label']+f':view_batch={view_batch}'
+            p,execution=predict(recipe,vx,models)
+            row=dict(recipe,**details(p,vy),macs=execution['macs_per_image'],candidate_id=len(rows))
+            rows.append(row)
+            print('Grouped-view validation:',row['label'],row['correct'],flush=True)
+    select_candidates(rows,references,models,vx,vy,'batched',.99,
+        'Only accuracy/compute-qualified actual progressive finalists, fallback views grouped 2 or 4 in each forward. No new weights, thresholds or view counts. All candidates evaluated on actual routed validation. Grouping preserves mathematical MACs and can change BF16 rounding, which is checked before selection. Require the progressive accuracy/compute/latency guards. View grouping increases activation memory, not stored parameters.')
+
+
 def evaluate(prefix='refine'):
     """Only the validation-qualified, already frozen endpoints receive test evaluation."""
     from hybrid_experiment import evaluate_frozen
@@ -132,6 +154,6 @@ def evaluate(prefix='refine'):
 
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser(); parser.add_argument('--test',action='store_true'); parser.add_argument('--progressive',action='store_true')
+    parser=argparse.ArgumentParser(); parser.add_argument('--test',action='store_true'); parser.add_argument('--progressive',action='store_true'); parser.add_argument('--batched',action='store_true')
     args=parser.parse_args()
-    evaluate('progressive' if args.progressive else 'refine') if args.test else progressive() if args.progressive else run()
+    evaluate('batched' if args.batched else 'progressive' if args.progressive else 'refine') if args.test else batched() if args.batched else progressive() if args.progressive else run()
