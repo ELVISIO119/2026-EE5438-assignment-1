@@ -1,0 +1,187 @@
+{
+  "config": {
+    "name": "moe_control",
+    "model": "moe",
+    "patch": 4,
+    "width": 192,
+    "depth": 8,
+    "dropout": 0.1,
+    "epochs": 30,
+    "lr": 5e-05,
+    "decay": 0.01,
+    "schedule": true,
+    "augmentation": false,
+    "label_smoothing": 0,
+    "bf16": true,
+    "averages": true,
+    "grad_clip": 1,
+    "init": "accuracy_wide_clean_swa",
+    "num_experts": 1,
+    "expert_hidden": 1152,
+    "hypothesis": "Capacity control: one width-1152 residual MLP head versus three width-384 heads. Same parent, 30 clean epochs, seed and trunk dropout/shuffle stream; expert branches use no dropout. Approximately equal total parameters, not equal active MACs. Zero residual output preserves parent initialization."
+  },
+  "seed": 58561440,
+  "parameters": 1741651,
+  "macs": 77665344,
+  "best_epoch": 1,
+  "val_accuracy": 0.9403333067893982,
+  "val_loss": 0.32804134488105774,
+  "history": [
+    {
+      "epoch": 1,
+      "val_loss": 0.32804134488105774,
+      "val_accuracy": 0.9403333067893982
+    },
+    {
+      "epoch": 2,
+      "val_loss": 0.34410059452056885,
+      "val_accuracy": 0.9396666288375854
+    },
+    {
+      "epoch": 3,
+      "val_loss": 0.3685078024864197,
+      "val_accuracy": 0.9388332962989807
+    },
+    {
+      "epoch": 4,
+      "val_loss": 0.3959246873855591,
+      "val_accuracy": 0.9384999871253967
+    },
+    {
+      "epoch": 5,
+      "val_loss": 0.43233710527420044,
+      "val_accuracy": 0.9384999871253967
+    },
+    {
+      "epoch": 6,
+      "val_loss": 0.4604686200618744,
+      "val_accuracy": 0.9383333325386047
+    },
+    {
+      "epoch": 7,
+      "val_loss": 0.49023404717445374,
+      "val_accuracy": 0.9371666312217712
+    },
+    {
+      "epoch": 8,
+      "val_loss": 0.5190297365188599,
+      "val_accuracy": 0.9363332986831665
+    },
+    {
+      "epoch": 9,
+      "val_loss": 0.5404607057571411,
+      "val_accuracy": 0.937333345413208
+    },
+    {
+      "epoch": 10,
+      "val_loss": 0.5600165724754333,
+      "val_accuracy": 0.937333345413208
+    },
+    {
+      "epoch": 11,
+      "val_loss": 0.5820557475090027,
+      "val_accuracy": 0.9369999766349792
+    },
+    {
+      "epoch": 12,
+      "val_loss": 0.592642605304718,
+      "val_accuracy": 0.9354999661445618
+    },
+    {
+      "epoch": 13,
+      "val_loss": 0.5999956727027893,
+      "val_accuracy": 0.9366666674613953
+    },
+    {
+      "epoch": 14,
+      "val_loss": 0.618638813495636,
+      "val_accuracy": 0.9383333325386047
+    },
+    {
+      "epoch": 15,
+      "val_loss": 0.6273418068885803,
+      "val_accuracy": 0.937333345413208
+    },
+    {
+      "epoch": 16,
+      "val_loss": 0.6454940438270569,
+      "val_accuracy": 0.9366666674613953
+    },
+    {
+      "epoch": 17,
+      "val_loss": 0.6641948819160461,
+      "val_accuracy": 0.9363332986831665
+    },
+    {
+      "epoch": 18,
+      "val_loss": 0.6718114614486694,
+      "val_accuracy": 0.9359999895095825
+    },
+    {
+      "epoch": 19,
+      "val_loss": 0.676199734210968,
+      "val_accuracy": 0.937666654586792
+    },
+    {
+      "epoch": 20,
+      "val_loss": 0.6812623143196106,
+      "val_accuracy": 0.9388332962989807
+    },
+    {
+      "epoch": 21,
+      "val_loss": 0.6894159913063049,
+      "val_accuracy": 0.9386666417121887
+    },
+    {
+      "epoch": 22,
+      "val_loss": 0.693731427192688,
+      "val_accuracy": 0.9383333325386047
+    },
+    {
+      "epoch": 23,
+      "val_loss": 0.6972692012786865,
+      "val_accuracy": 0.9383333325386047
+    },
+    {
+      "epoch": 24,
+      "val_loss": 0.7003037333488464,
+      "val_accuracy": 0.937999963760376
+    },
+    {
+      "epoch": 25,
+      "val_loss": 0.7018381953239441,
+      "val_accuracy": 0.937999963760376
+    },
+    {
+      "epoch": 26,
+      "val_loss": 0.7018098831176758,
+      "val_accuracy": 0.9386666417121887
+    },
+    {
+      "epoch": 27,
+      "val_loss": 0.7018412351608276,
+      "val_accuracy": 0.9386666417121887
+    },
+    {
+      "epoch": 28,
+      "val_loss": 0.7019361853599548,
+      "val_accuracy": 0.9384999871253967
+    },
+    {
+      "epoch": 29,
+      "val_loss": 0.7023059725761414,
+      "val_accuracy": 0.9383333325386047
+    },
+    {
+      "epoch": 30,
+      "val_loss": 0.7014999985694885,
+      "val_accuracy": 0.9381666779518127
+    }
+  ],
+  "seconds": 77.67140027694404,
+  "complete": true,
+  "gradient_evaluations": 12660,
+  "completed_at": "2026-09-18T15:55:33.147074+00:00",
+  "averaging": "ema",
+  "shared_training_run": "moe_control"
+}

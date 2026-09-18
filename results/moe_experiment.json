@@ -1,0 +1,315 @@
+{
+  "complete": true,
+  "selected": {
+    "name": "moe_mixer_ema",
+    "correct": 5641,
+    "examples": 6000,
+    "accuracy": 0.9401666666666667,
+    "loss": 0.3248146176338196,
+    "shirt_precision": 0.8461538461538461,
+    "shirt_recall": 0.8066666666666666,
+    "shirt_f1": 0.825938566552901,
+    "macro_f1": 0.9399754372150172,
+    "validation_half_correct": [
+      2805,
+      2836
+    ],
+    "routes": [
+      2308,
+      2330,
+      1362
+    ],
+    "parameters": 1742421,
+    "sparse_macs": 77370816,
+    "soft_training_macs": 77665728,
+    "full_expert_macs": 77665728,
+    "expert_macs": 147456,
+    "dense_metrics": {
+      "correct": 5641,
+      "examples": 6000,
+      "accuracy": 0.9401666666666667,
+      "loss": 0.3245266377925873,
+      "shirt_precision": 0.8461538461538461,
+      "shirt_recall": 0.8066666666666666,
+      "shirt_f1": 0.825938566552901,
+      "macro_f1": 0.9399754372150172,
+      "validation_half_correct": [
+        2805,
+        2836
+      ]
+    }
+  },
+  "control": {
+    "name": "moe_control_ema",
+    "correct": 5642,
+    "examples": 6000,
+    "accuracy": 0.9403333333333334,
+    "loss": 0.3280413746833801,
+    "shirt_precision": 0.8446771378708552,
+    "shirt_recall": 0.8066666666666666,
+    "shirt_f1": 0.8252344416027281,
+    "macro_f1": 0.9401485003129959,
+    "validation_half_correct": [
+      2805,
+      2837
+    ],
+    "routes": [
+      6000
+    ],
+    "parameters": 1741651,
+    "sparse_macs": 77665344,
+    "soft_training_macs": 77665344,
+    "full_expert_macs": 77665344,
+    "expert_macs": 442368
+  },
+  "checkpoints": [
+    {
+      "name": "moe_control",
+      "correct": 5640,
+      "examples": 6000,
+      "accuracy": 0.94,
+      "loss": 0.351360023021698,
+      "shirt_precision": 0.8408304498269896,
+      "shirt_recall": 0.81,
+      "shirt_f1": 0.8251273344651953,
+      "macro_f1": 0.9398418252729661,
+      "validation_half_correct": [
+        2805,
+        2835
+      ],
+      "routes": [
+        6000
+      ],
+      "parameters": 1741651,
+      "sparse_macs": 77665344,
+      "soft_training_macs": 77665344,
+      "full_expert_macs": 77665344,
+      "expert_macs": 442368
+    },
+    {
+      "name": "moe_control_ema",
+      "correct": 5642,
+      "examples": 6000,
+      "accuracy": 0.9403333333333334,
+      "loss": 0.3280413746833801,
+      "shirt_precision": 0.8446771378708552,
+      "shirt_recall": 0.8066666666666666,
+      "shirt_f1": 0.8252344416027281,
+      "macro_f1": 0.9401485003129959,
+      "validation_half_correct": [
+        2805,
+        2837
+      ],
+      "routes": [
+        6000
+      ],
+      "parameters": 1741651,
+      "sparse_macs": 77665344,
+      "soft_training_macs": 77665344,
+      "full_expert_macs": 77665344,
+      "expert_macs": 442368
+    },
+    {
+      "name": "moe_control_swa",
+      "correct": 5634,
+      "examples": 6000,
+      "accuracy": 0.939,
+      "loss": 0.6942012310028076,
+      "shirt_precision": 0.8495575221238938,
+      "shirt_recall": 0.8,
+      "shirt_f1": 0.8240343347639485,
+      "macro_f1": 0.9387410855375059,
+      "validation_half_correct": [
+        2801,
+        2833
+      ],
+      "routes": [
+        6000
+      ],
+      "parameters": 1741651,
+      "sparse_macs": 77665344,
+      "soft_training_macs": 77665344,
+      "full_expert_macs": 77665344,
+      "expert_macs": 442368
+    },
+    {
+      "name": "moe_mixer",
+      "correct": 5639,
+      "examples": 6000,
+      "accuracy": 0.9398333333333333,
+      "loss": 0.32748761773109436,
+      "shirt_precision": 0.8444055944055944,
+      "shirt_recall": 0.805,
+      "shirt_f1": 0.8242320819112628,
+      "macro_f1": 0.9396330018032015,
+      "validation_half_correct": [
+        2804,
+        2835
+      ],
+      "routes": [
+        2299,
+        2327,
+        1374
+      ],
+      "parameters": 1742421,
+      "sparse_macs": 77370816,
+      "soft_training_macs": 77665728,
+      "full_expert_macs": 77665728,
+      "expert_macs": 147456,
+      "dense_metrics": {
+        "correct": 5637,
+        "examples": 6000,
+        "accuracy": 0.9395,
+        "loss": 0.3269008994102478,
+        "shirt_precision": 0.8444055944055944,
+        "shirt_recall": 0.805,
+        "shirt_f1": 0.8242320819112628,
+        "macro_f1": 0.9393058648351506,
+        "validation_half_correct": [
+          2804,
+          2833
+        ]
+      }
+    },
+    {
+      "name": "moe_mixer_ema",
+      "correct": 5641,
+      "examples": 6000,
+      "accuracy": 0.9401666666666667,
+      "loss": 0.3248146176338196,
+      "shirt_precision": 0.8461538461538461,
+      "shirt_recall": 0.8066666666666666,
+      "shirt_f1": 0.825938566552901,
+      "macro_f1": 0.9399754372150172,
+      "validation_half_correct": [
+        2805,
+        2836
+      ],
+      "routes": [
+        2308,
+        2330,
+        1362
+      ],
+      "parameters": 1742421,
+      "sparse_macs": 77370816,
+      "soft_training_macs": 77665728,
+      "full_expert_macs": 77665728,
+      "expert_macs": 147456,
+      "dense_metrics": {
+        "correct": 5641,
+        "examples": 6000,
+        "accuracy": 0.9401666666666667,
+        "loss": 0.3245266377925873,
+        "shirt_precision": 0.8461538461538461,
+        "shirt_recall": 0.8066666666666666,
+        "shirt_f1": 0.825938566552901,
+        "macro_f1": 0.9399754372150172,
+        "validation_half_correct": [
+          2805,
+          2836
+        ]
+      }
+    },
+    {
+      "name": "moe_mixer_swa",
+      "correct": 5624,
+      "examples": 6000,
+      "accuracy": 0.9373333333333334,
+      "loss": 0.7282193899154663,
+      "shirt_precision": 0.8388791593695272,
+      "shirt_recall": 0.7983333333333333,
+      "shirt_f1": 0.8181041844577285,
+      "macro_f1": 0.9371232362619679,
+      "validation_half_correct": [
+        2797,
+        2827
+      ],
+      "routes": [
+        2303,
+        1758,
+        1939
+      ],
+      "parameters": 1742421,
+      "sparse_macs": 77370816,
+      "soft_training_macs": 77665728,
+      "full_expert_macs": 77665728,
+      "expert_macs": 147456,
+      "dense_metrics": {
+        "correct": 5633,
+        "examples": 6000,
+        "accuracy": 0.9388333333333333,
+        "loss": 0.643025815486908,
+        "shirt_precision": 0.8415492957746479,
+        "shirt_recall": 0.7966666666666666,
+        "shirt_f1": 0.8184931506849316,
+        "macro_f1": 0.9385833883896126,
+        "validation_half_correct": [
+          2795,
+          2838
+        ]
+      }
+    }
+  ],
+  "timings": {
+    "accuracy_wide_clean_swa": {
+      "milliseconds": [
+        7.802022621035576,
+        7.808845490217209,
+        7.806770503520966,
+        7.845081388950348,
+        7.811432704329491,
+        7.803400978446007,
+        7.8065115958452225
+      ],
+      "median_ms": 7.806770503520966,
+      "images": 1024,
+      "batch_size": 128
+    },
+    "moe_control_ema": {
+      "milliseconds": [
+        9.280290454626083,
+        9.333372116088867,
+        9.295118972659111,
+        9.279394522309303,
+        9.304162114858627,
+        9.295511990785599,
+        9.274041280150414
+      ],
+      "median_ms": 9.295118972659111,
+      "images": 1024,
+      "batch_size": 128
+    },
+    "moe_mixer_ema": {
+      "milliseconds": [
+        10.898275300860405,
+        10.900354012846947,
+        10.934991762042046,
+        10.946711525321007,
+        10.947542265057564,
+        10.974012315273285,
+        10.924484580755234
+      ],
+      "median_ms": 10.934991762042046,
+      "images": 1024,
+      "batch_size": 128
+    },
+    "moe_mixer_ema_dense": {
+      "milliseconds": [
+        8.647343143820763,
+        8.652221411466599,
+        8.620942011475563,
+        8.652392774820328,
+        8.647171780467033,
+        8.641371503472328,
+        8.640952408313751
+      ],
+      "median_ms": 8.647171780467033,
+      "images": 1024,
+      "batch_size": 128
+    }
+  },
+  "parent": "accuracy_wide_clean_swa",
+  "protocol": "Three experts share a Mixer trunk. Training uses differentiable soft routing; evaluation uses top-1 routing and executes only the selected residual MLP expert per image. The parent trunk/head is warm-started and expert residual output layers start at zero. Validation only; test labels are not evaluated.",
+  "routing_note": "Shared-trunk soft expert training is not independently bootstrap-trained bagging. No explicit balancing loss is used; route counts expose collapse. A route is not a correctness guarantee. Dense metrics diagnose train/eval mismatch; dense checkpoints are not deployment candidates. MACs exclude normalization/activation/routing/memory overhead. Timings are sequential eager measurements on a shared device, not dedicated-device speed claims.",
+  "frozen_at": "2026-09-18T15:56:59.857615+00:00"
+}

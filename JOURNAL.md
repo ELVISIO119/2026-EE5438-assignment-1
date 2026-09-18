@@ -637,3 +637,31 @@ Validation accuracy 94.00% at epoch 1. Same training trajectory as the ordinary 
 ### 2026-09-18T15:42:47.476393+00:00 - features_contrast SWA
 
 Validation accuracy 93.95% at epoch 29. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/features_contrast_swa.json`.
+
+## 2026-09-18T15:55:33.147074+00:00 — moe_control
+
+Hypothesis: Capacity control: one width-1152 residual MLP head versus three width-384 heads. Same parent, 30 clean epochs, seed and trunk dropout/shuffle stream; expert branches use no dropout. Approximately equal total parameters, not equal active MACs. Zero residual output preserves parent initialization.
+
+Measured validation accuracy: 94.00%; checkpoint epoch 2; 1,741,651 parameters; 77,665,344 dense MACs/image; 77.7s training/validation wall time. Configuration and every epoch: `results/moe_control.json`. Test set not evaluated in this run.
+
+### 2026-09-18T15:55:33.147074+00:00 - moe_control EMA
+
+Validation accuracy 94.03% at epoch 1. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/moe_control_ema.json`.
+
+### 2026-09-18T15:55:33.147074+00:00 - moe_control SWA
+
+Validation accuracy 93.90% at epoch 28. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/moe_control_swa.json`.
+
+## 2026-09-18T15:56:57.475704+00:00 — moe_mixer
+
+Hypothesis: Matched 30-epoch clean fine-tuning from the frozen wide SWA parent. A shared MLP-Mixer trunk feeds three residual MLP experts and a learned top-1 router at inference; training uses soft routing. Expert residual outputs start at zero so the initialization matches the parent. Validation selects the ordinary, EMA or SWA checkpoint; no test labels are used.
+
+Measured validation accuracy: 93.98%; checkpoint epoch 1; 1,742,421 parameters; 77,370,816 dense MACs/image; 81.9s training/validation wall time. Configuration and every epoch: `results/moe_mixer.json`. Test set not evaluated in this run.
+
+### 2026-09-18T15:56:57.475704+00:00 - moe_mixer EMA
+
+Validation accuracy 94.02% at epoch 1. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/moe_mixer_ema.json`.
+
+### 2026-09-18T15:56:57.475704+00:00 - moe_mixer SWA
+
+Validation accuracy 93.73% at epoch 26. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/moe_mixer_swa.json`.

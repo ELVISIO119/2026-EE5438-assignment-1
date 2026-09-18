@@ -1,0 +1,67 @@
+{
+  "config": {
+    "name": "moe_control",
+    "model": "moe",
+    "patch": 4,
+    "width": 192,
+    "depth": 8,
+    "dropout": 0.1,
+    "epochs": 30,
+    "lr": 5e-05,
+    "decay": 0.01,
+    "schedule": true,
+    "augmentation": false,
+    "label_smoothing": 0,
+    "bf16": true,
+    "averages": true,
+    "grad_clip": 1,
+    "init": "accuracy_wide_clean_swa",
+    "num_experts": 1,
+    "expert_hidden": 1152,
+    "hypothesis": "Capacity control: one width-1152 residual MLP head versus three width-384 heads. Same parent, 30 clean epochs, seed and trunk dropout/shuffle stream; expert branches use no dropout. Approximately equal total parameters, not equal active MACs. Zero residual output preserves parent initialization."
+  },
+  "seed": 58561440,
+  "parameters": 1741651,
+  "macs": 77665344,
+  "best_epoch": 28,
+  "val_accuracy": 0.9390000104904175,
+  "val_loss": 0.7011774182319641,
+  "history": [
+    {
+      "epoch": 25,
+      "val_loss": 0.7007967829704285,
+      "val_accuracy": 0.9384999871253967
+    },
+    {
+      "epoch": 26,
+      "val_loss": 0.7012059092521667,
+      "val_accuracy": 0.9384999871253967
+    },
+    {
+      "epoch": 27,
+      "val_loss": 0.701184868812561,
+      "val_accuracy": 0.9388332962989807
+    },
+    {
+      "epoch": 28,
+      "val_loss": 0.7011774182319641,
+      "val_accuracy": 0.9390000104904175
+    },
+    {
+      "epoch": 29,
+      "val_loss": 0.7014232873916626,
+      "val_accuracy": 0.9386666417121887
+    },
+    {
+      "epoch": 30,
+      "val_loss": 0.701225996017456,
+      "val_accuracy": 0.9388332962989807
+    }
+  ],
+  "seconds": 77.67140027694404,
+  "complete": true,
+  "gradient_evaluations": 12660,
+  "completed_at": "2026-09-18T15:55:33.147074+00:00",
+  "averaging": "swa",
+  "shared_training_run": "moe_control"
+}
