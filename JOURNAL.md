@@ -437,3 +437,31 @@ After all 67 checkpoints and the actual routed validation pipeline passed verifi
 The test set had 4,913 early exits. Average dense MACs/image were 1,696,912,840, 46.7% below the ungated reference; logical stored parameters remained 2,207,556. Worst-case MACs are 3,261,201,664 and must not be confused with the average. The separately timed 1,024-image validation batch took 235.9 ms for the cascade versus 388.7 ms for the full ensemble (1.65x throughput) on the shared RTX 5090. Evidence: `results/final_test_metrics.json`, `results/cascade_benchmark.json`, and preserved `results/pre_cascade_test_metrics.json` / predictions.
 
 Shirt test recall remains 81.4% and F1 remains 0.828499. The eight targeted post-training/readout trials did not solve that class bottleneck; their negative results are retained. The deployed improvement is efficient conditional inference with slightly higher observed overall accuracy. All fitting stayed within Fashion-MNIST; no MNIST or external pretraining was introduced. The notebook includes the complete follow-up, actual inference and honest limitations; the typed Section A guide still requires replacement by a genuine handwritten scan.
+
+## 2026-09-18T11:37:37.618043+00:00 — yolo_pyramid_control
+
+Hypothesis: Pure MLP hierarchy control: 14x14 fine tokens, adjacent 2x2 concatenation and Linear projection to 7x7 coarse tokens, coarse pooled classification only. Same training budget as the feature-fusion variant; Fashion-MNIST only.
+
+Measured validation accuracy: 93.02%; checkpoint epoch 112; 826,153 parameters; 68,717,952 dense MACs/image; 276.6s training/validation wall time. Configuration and every epoch: `results/yolo_pyramid_control.json`. Test set not evaluated in this run.
+
+### 2026-09-18T11:37:37.618043+00:00 - yolo_pyramid_control EMA
+
+Validation accuracy 92.98% at epoch 112. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/yolo_pyramid_control_ema.json`.
+
+### 2026-09-18T11:37:37.618043+00:00 - yolo_pyramid_control SWA
+
+Validation accuracy 93.07% at epoch 113. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/yolo_pyramid_control_swa.json`.
+
+## 2026-09-18T11:42:35.384828+00:00 — yolo_pyramid_fusion
+
+Hypothesis: Matched to the pyramid coarse-only control except concatenate pooled fine and coarse features before classification. This tests multiscale feature fusion inspired by detector feature pyramids without convolution, attention or detection losses. Backbone initialization and training RNG are matched.
+
+Measured validation accuracy: 92.60%; checkpoint epoch 88; 827,305 parameters; 68,718,912 dense MACs/image; 284.5s training/validation wall time. Configuration and every epoch: `results/yolo_pyramid_fusion.json`. Test set not evaluated in this run.
+
+### 2026-09-18T11:42:35.384828+00:00 - yolo_pyramid_fusion EMA
+
+Validation accuracy 92.83% at epoch 90. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/yolo_pyramid_fusion_ema.json`.
+
+### 2026-09-18T11:42:35.384828+00:00 - yolo_pyramid_fusion SWA
+
+Validation accuracy 92.70% at epoch 100. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/yolo_pyramid_fusion_swa.json`.
