@@ -1,0 +1,1 @@
+{"name":"residual_muon","model":"residual","width":256,"depth":3,"activation":"swiglu","norm":"layer","dropout":0.1,"epochs":40,"lr":0.001,"decay":0.01,"schedule":true,"augmentation":true,"mixup":0.2,"optimizer":"muon","hypothesis":"Change only hidden matrix optimizer to native Muon with RMS-matched updates versus residual_swiglu; input/head/norm/bias stay on AdamW."}

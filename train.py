@@ -88,9 +88,17 @@ def run(cfg):
     x,y,vx,vy,mean,std = load_data()
     model = Model(cfg,mean,std).to(DEVICE)
     params,macs = model_cost(model)
-    optimizer = torch.optim.AdamW([
-        {'params':[p for p in model.parameters() if p.ndim>1],'weight_decay':cfg['decay']},
-        {'params':[p for p in model.parameters() if p.ndim<=1],'weight_decay':0.0}],lr=cfg['lr'])
+    hidden=[p for name,p in model.named_parameters() if '.blocks.' in name and p.ndim==2] if cfg.get('optimizer')=='muon' else []
+    hidden_ids={id(p) for p in hidden}
+    other=[p for p in model.parameters() if id(p) not in hidden_ids]
+    optimizers=[torch.optim.AdamW([
+        {'params':[p for p in other if p.ndim>1],'weight_decay':cfg['decay']},
+        {'params':[p for p in other if p.ndim<=1],'weight_decay':0.0}],lr=cfg['lr'])]
+    if hidden:
+        optimizers.append(torch.optim.Muon(hidden,lr=cfg['lr'],weight_decay=cfg['decay'],
+                                          adjust_lr_fn='match_rms_adamw',momentum=.95,ns_steps=5))
+    grouped=[p for opt in optimizers for g in opt.param_groups for p in g['params']]
+    assert len(grouped)==len({id(p) for p in grouped})==len(list(model.parameters()))
     best = (-1.,-float('inf'))
     history = []
     started = time.perf_counter()
@@ -99,8 +107,9 @@ def run(cfg):
         lr = cfg['lr']
         if cfg.get('schedule'):
             lr *= epoch/5 if epoch<=5 else .01+.99*(1+math.cos(math.pi*(epoch-5)/(cfg['epochs']-5)))/2
-        for group in optimizer.param_groups:
-            group['lr']=lr
+        for optimizer in optimizers:
+            for group in optimizer.param_groups:
+                group['lr']=lr
         total_loss = torch.zeros((),device=DEVICE)
         correct = torch.zeros((),device=DEVICE)
         for ids in torch.randperm(len(x),device=DEVICE).split(128):
@@ -113,9 +122,11 @@ def run(cfg):
                 perm=torch.randperm(len(ids),device=DEVICE)
                 images=lam*images+(1-lam)*images[perm]
                 targets=lam*targets+(1-lam)*targets[perm]
-            optimizer.zero_grad(set_to_none=True)
+            model.zero_grad(set_to_none=True)
             logits=model(images); loss=F.cross_entropy(logits,targets)
-            loss.backward(); optimizer.step()
+            loss.backward()
+            for optimizer in optimizers:
+                optimizer.step()
             total_loss += loss.detach()*len(ids)
             correct += (logits.argmax(1)==y[ids]).sum()
         val_loss,val_acc = evaluate(model,vx,vy)
