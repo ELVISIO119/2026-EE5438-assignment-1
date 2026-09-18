@@ -1,0 +1,123 @@
+"""Training-only fitting and validation selection for the assignment experiments."""
+import argparse
+import json
+import math
+import random
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
+import numpy as np
+import torch
+from torch import nn
+from torch.nn import functional as F
+from torchvision.datasets import FashionMNIST
+from sklearn.model_selection import train_test_split
+
+SEED = 58561440
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+OUT = Path('results')
+torch.set_num_threads(4)
+
+def seed_all():
+    random.seed(SEED)
+    np.random.seed(SEED)
+    torch.manual_seed(SEED)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(SEED)
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True
+
+def load_data():
+    data = FashionMNIST('data', train=True, download=True)
+    train_ids, val_ids = train_test_split(np.arange(len(data)), test_size=6000,
+                                        stratify=data.targets.numpy(), random_state=SEED)
+    assert not set(train_ids) & set(val_ids)
+    assert np.array_equal(np.bincount(data.targets[val_ids]), np.full(10, 600))
+    x = data.data.unsqueeze(1).float() / 255
+    mean, std = x[train_ids].mean().item(), x[train_ids].std().item()
+    return (x[train_ids].to(DEVICE), data.targets[train_ids].to(DEVICE),
+            x[val_ids].to(DEVICE), data.targets[val_ids].to(DEVICE), mean, std)
+
+class Model(nn.Module):
+    def __init__(self, cfg, mean, std):
+        super().__init__()
+        self.mean, self.std = mean, std
+        self.net = nn.Sequential(nn.Flatten(), nn.Linear(784,128), nn.Sigmoid(),
+                                 nn.Linear(128,64), nn.Sigmoid(), nn.Linear(64,10))
+
+    def forward(self, x):
+        return self.net((x-self.mean)/self.std)
+
+def model_cost(model):
+    cost = [0]
+    def count(layer, inputs, output):
+        cost[0] += output.numel() * layer.in_features
+    hooks = [m.register_forward_hook(count) for m in model.modules() if isinstance(m, nn.Linear)]
+    model.eval()
+    with torch.no_grad():
+        model(torch.zeros(1,1,28,28,device=DEVICE))
+    for hook in hooks:
+        hook.remove()
+    return sum(p.numel() for p in model.parameters()), cost[0]
+
+@torch.no_grad()
+def evaluate(model, x, y):
+    model.eval()
+    logits = torch.cat([model(b).float() for b in x.split(128)])
+    return F.cross_entropy(logits, y).item(), (logits.argmax(1)==y).float().mean().item()
+
+def run(cfg):
+    OUT.mkdir(exist_ok=True)
+    seed_all()
+    x,y,vx,vy,mean,std = load_data()
+    model = Model(cfg,mean,std).to(DEVICE)
+    params,macs = model_cost(model)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=cfg['lr'], weight_decay=cfg['decay'])
+    best = (-1.,-float('inf'))
+    history = []
+    started = time.perf_counter()
+    for epoch in range(1,cfg['epochs']+1):
+        model.train()
+        lr = cfg['lr']
+        if cfg.get('schedule'):
+            lr *= epoch/5 if epoch<=5 else .01+.99*(1+math.cos(math.pi*(epoch-5)/(cfg['epochs']-5)))/2
+        for group in optimizer.param_groups:
+            group['lr']=lr
+        total_loss = torch.zeros((),device=DEVICE)
+        correct = torch.zeros((),device=DEVICE)
+        for ids in torch.randperm(len(x),device=DEVICE).split(128):
+            optimizer.zero_grad(set_to_none=True)
+            logits=model(x[ids]); loss=F.cross_entropy(logits,y[ids])
+            loss.backward(); optimizer.step()
+            total_loss += loss.detach()*len(ids)
+            correct += (logits.argmax(1)==y[ids]).sum()
+        val_loss,val_acc = evaluate(model,vx,vy)
+        row=dict(epoch=epoch,train_loss=total_loss.item()/len(x),train_accuracy=correct.item()/len(x),
+                 val_loss=val_loss,val_accuracy=val_acc,lr=lr,seconds=time.perf_counter()-started)
+        history.append(row)
+        if (val_acc,-val_loss)>best:
+            best=(val_acc,-val_loss)
+            best_epoch=epoch
+            torch.save(dict(state_dict=model.state_dict(),config=cfg,mean=mean,std=std),OUT/f"{cfg['name']}.pt")
+        result=dict(config=cfg,seed=SEED,parameters=params,macs=macs,best_epoch=best_epoch,
+                    val_accuracy=best[0],val_loss=-best[1],history=history,
+                    seconds=time.perf_counter()-started,complete=epoch==cfg['epochs'])
+        (OUT/f"{cfg['name']}.json").write_text(json.dumps(result,indent=2))
+        if epoch==1 or epoch%20==0 or epoch==cfg['epochs']:
+            print(cfg['name'],row,flush=True)
+    result['completed_at']=datetime.now(timezone.utc).isoformat()
+    (OUT/f"{cfg['name']}.json").write_text(json.dumps(result,indent=2))
+    with Path('JOURNAL.md').open('a') as journal:
+        journal.write(f"\n## {result['completed_at']} — {cfg['name']}\n\n"
+                      f"Hypothesis: {cfg['hypothesis']}\n\n"
+                      f"Measured validation accuracy: {best[0]:.2%}; checkpoint epoch {best_epoch}; "
+                      f"{params:,} parameters; {macs:,} dense MACs/image; {result['seconds']:.1f}s training/validation wall time. "
+                      f"Configuration and every epoch: `results/{cfg['name']}.json`. Test set not evaluated.\n")
+    return result
+
+if __name__=='__main__':
+    parser=argparse.ArgumentParser()
+    parser.add_argument('config',type=Path)
+    args=parser.parse_args()
+    run(json.loads(args.config.read_text()))

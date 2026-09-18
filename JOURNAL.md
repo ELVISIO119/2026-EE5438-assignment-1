@@ -13,3 +13,9 @@ For every feature, record its hypothesis, the exact comparison, measured outcome
 ## 2026-09-18T07:59:08Z — Correct the baseline split
 
 The first implementation accidentally used an unstratified split. Changed it to 600 validation images per class, added split assertions, saved indices and reran the self-contained notebook. The corrected validation result is **55.22%**, replacing the 54.78% trial as the comparison baseline. No test score was used.
+
+## 2026-09-18T08:00:16.806060+00:00 — adamw_sigmoid
+
+Hypothesis: Changing SGD to AdamW alone should accelerate the fixed sigmoid architecture. Same learning rate, split, seed and 50-epoch budget as baseline.
+
+Measured validation accuracy: 89.78%; checkpoint epoch 28; 109,386 parameters; 109,184 dense MACs/image; 8.3s training/validation wall time. Configuration and every epoch: `results/adamw_sigmoid.json`. Test set not evaluated.

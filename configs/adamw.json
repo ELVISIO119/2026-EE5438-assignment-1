@@ -1,0 +1,1 @@
+{"name":"adamw_sigmoid","model":"baseline","epochs":50,"lr":0.001,"decay":0.0,"schedule":false,"hypothesis":"Changing SGD to AdamW alone should accelerate the fixed sigmoid architecture. Same learning rate, split, seed and 50-epoch budget as baseline."}
