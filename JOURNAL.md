@@ -1,5 +1,15 @@
 # Experiment journal
 
+## 2026-09-18 — Paired fixed-image-feature design (feature/31-image-features)
+
+The user's new hypothesis concerns explicit garment outlines and local intensity structure, rather than further model capacity. Three configurations were committed before running: retained grayscale, grayscale plus signed horizontal/vertical central differences, and those channels plus grayscale minus its 3x3 local mean. Replicate padding avoids constant-background boundary artifacts. Features are generated inside the input path after geometry, so every training/inference view uses the same processing. No labels or fitted feature statistics enter the transform.
+
+All trials initialize from `accuracy_wide_clean_swa` and use 30 clean fine-tuning epochs with the same AdamW, 5e-5 learning rate, 0.01 decay, warmup/cosine schedule, dropout and seed. Extra input columns start at zero. Model construction preserves the control's initialization RNG consumption; the check verifies unchanged FP32 initial logits, gradient directions, constant backgrounds and finite gradients. Shape-dependent BF16 rounding is possible. The original/EMA/SWA checkpoint rule and bounded deployment search reuse existing helpers. Dense MACs include expanded embedding matrices; fixed-filter arithmetic is separately disclosed. Test data are excluded from new fitting and selection.
+
+## 2026-09-18 — PIL integration (feature/30-pil-integration)
+
+All 94 saved checkpoints and the original cascade passed re-evaluation. The portable notebook executed with nine figures, and the regenerated two-file ZIP passed submission checks. The original model and freeze timestamp were preserved. The Section A PDF remains a typed study guide, requiring the student's genuine handwritten scan before submission.
+
 ## 2026-09-18 — PIL-inspired ridge readouts (feature/29-pil-ridge-heads)
 
 Froze all feature-extractor weights in the three selected ensemble members. On 54,000 training images, extracted the BF16 features actually entering each classifier and solved centered ridge regression to ten-class one-hot targets using CPU float64 thin SVD. The intercept is unpenalized; lambda zero is a thresholded pseudoinverse. Tested eight fixed lambdas (0, 1e-6, 1e-5, 1e-4, 1e-3, 0.01, 0.1, 1), selected by actual BF16 validation correct count then NLL. A rank-deficient numerical self-check agrees with augmented least squares; cached classifier evaluation is bitwise identical to the full model, and every non-head checkpoint tensor remains exactly unchanged.
@@ -567,3 +577,45 @@ Validation accuracy 93.33% at epoch 4. Same training trajectory as the ordinary 
 ### 2026-09-18T11:57:25.149024+00:00 - yolo_pyramid_csp_clean SWA
 
 Validation accuracy 92.67% at epoch 25. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/yolo_pyramid_csp_clean_swa.json`.
+
+## 2026-09-18T15:40:17.558232+00:00 — features_gray
+
+Hypothesis: Matched 30-epoch clean refinement from the same wide SWA parent. gray: retain grayscale; edges add signed central differences, contrast additionally adds grayscale minus replicate-padded 3x3 mean. Identical seed and training budget; new input weights start at zero. Select on validation, without accessing test.
+
+Measured validation accuracy: 94.03%; checkpoint epoch 2; 1,297,746 parameters; 77,222,784 dense MACs/image; 72.2s training/validation wall time. Configuration and every epoch: `results/features_gray.json`. Test set not evaluated in this run.
+
+### 2026-09-18T15:40:17.558232+00:00 - features_gray EMA
+
+Validation accuracy 94.02% at epoch 1. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/features_gray_ema.json`.
+
+### 2026-09-18T15:40:17.558232+00:00 - features_gray SWA
+
+Validation accuracy 93.90% at epoch 27. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/features_gray_swa.json`.
+
+## 2026-09-18T15:41:32.608443+00:00 — features_edges
+
+Hypothesis: Matched 30-epoch clean refinement from the same wide SWA parent. edges: retain grayscale; edges add signed central differences, contrast additionally adds grayscale minus replicate-padded 3x3 mean. Identical seed and training budget; new input weights start at zero. Select on validation, without accessing test.
+
+Measured validation accuracy: 94.03%; checkpoint epoch 2; 1,303,890 parameters; 77,523,840 dense MACs/image; 72.7s training/validation wall time. Configuration and every epoch: `results/features_edges.json`. Test set not evaluated in this run.
+
+### 2026-09-18T15:41:32.608443+00:00 - features_edges EMA
+
+Validation accuracy 94.03% at epoch 1. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/features_edges_ema.json`.
+
+### 2026-09-18T15:41:32.608443+00:00 - features_edges SWA
+
+Validation accuracy 93.92% at epoch 30. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/features_edges_swa.json`.
+
+## 2026-09-18T15:42:47.476393+00:00 — features_contrast
+
+Hypothesis: Matched 30-epoch clean refinement from the same wide SWA parent. contrast: retain grayscale; edges add signed central differences, contrast additionally adds grayscale minus replicate-padded 3x3 mean. Identical seed and training budget; new input weights start at zero. Select on validation, without accessing test.
+
+Measured validation accuracy: 94.00%; checkpoint epoch 2; 1,306,962 parameters; 77,674,368 dense MACs/image; 72.5s training/validation wall time. Configuration and every epoch: `results/features_contrast.json`. Test set not evaluated in this run.
+
+### 2026-09-18T15:42:47.476393+00:00 - features_contrast EMA
+
+Validation accuracy 94.00% at epoch 1. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/features_contrast_ema.json`.
+
+### 2026-09-18T15:42:47.476393+00:00 - features_contrast SWA
+
+Validation accuracy 93.95% at epoch 29. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/features_contrast_swa.json`.

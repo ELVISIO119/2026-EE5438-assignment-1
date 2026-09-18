@@ -1,0 +1,66 @@
+{
+  "config": {
+    "model": "mixer",
+    "patch": 4,
+    "width": 192,
+    "depth": 8,
+    "dropout": 0.1,
+    "epochs": 30,
+    "lr": 5e-05,
+    "decay": 0.01,
+    "schedule": true,
+    "augmentation": false,
+    "label_smoothing": 0,
+    "bf16": true,
+    "averages": true,
+    "grad_clip": 1,
+    "init": "accuracy_wide_clean_swa",
+    "name": "features_gray",
+    "image_features": "gray",
+    "hypothesis": "Matched 30-epoch clean refinement from the same wide SWA parent. gray: retain grayscale; edges add signed central differences, contrast additionally adds grayscale minus replicate-padded 3x3 mean. Identical seed and training budget; new input weights start at zero. Select on validation, without accessing test."
+  },
+  "seed": 58561440,
+  "parameters": 1297746,
+  "macs": 77222784,
+  "best_epoch": 27,
+  "val_accuracy": 0.9390000104904175,
+  "val_loss": 0.4297920763492584,
+  "history": [
+    {
+      "epoch": 25,
+      "val_loss": 0.4295727610588074,
+      "val_accuracy": 0.9381666779518127
+    },
+    {
+      "epoch": 26,
+      "val_loss": 0.42919331789016724,
+      "val_accuracy": 0.9388332962989807
+    },
+    {
+      "epoch": 27,
+      "val_loss": 0.4297920763492584,
+      "val_accuracy": 0.9390000104904175
+    },
+    {
+      "epoch": 28,
+      "val_loss": 0.4293951392173767,
+      "val_accuracy": 0.9388332962989807
+    },
+    {
+      "epoch": 29,
+      "val_loss": 0.4296019971370697,
+      "val_accuracy": 0.9384999871253967
+    },
+    {
+      "epoch": 30,
+      "val_loss": 0.4292833209037781,
+      "val_accuracy": 0.9383333325386047
+    }
+  ],
+  "seconds": 72.20741179771721,
+  "complete": true,
+  "gradient_evaluations": 12660,
+  "completed_at": "2026-09-18T15:40:17.558232+00:00",
+  "averaging": "swa",
+  "shared_training_run": "features_gray"
+}

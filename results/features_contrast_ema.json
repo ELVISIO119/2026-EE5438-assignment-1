@@ -1,0 +1,186 @@
+{
+  "config": {
+    "model": "mixer",
+    "patch": 4,
+    "width": 192,
+    "depth": 8,
+    "dropout": 0.1,
+    "epochs": 30,
+    "lr": 5e-05,
+    "decay": 0.01,
+    "schedule": true,
+    "augmentation": false,
+    "label_smoothing": 0,
+    "bf16": true,
+    "averages": true,
+    "grad_clip": 1,
+    "init": "accuracy_wide_clean_swa",
+    "name": "features_contrast",
+    "image_features": "contrast",
+    "hypothesis": "Matched 30-epoch clean refinement from the same wide SWA parent. contrast: retain grayscale; edges add signed central differences, contrast additionally adds grayscale minus replicate-padded 3x3 mean. Identical seed and training budget; new input weights start at zero. Select on validation, without accessing test."
+  },
+  "seed": 58561440,
+  "parameters": 1306962,
+  "macs": 77674368,
+  "best_epoch": 1,
+  "val_accuracy": 0.9399999976158142,
+  "val_loss": 0.322293221950531,
+  "history": [
+    {
+      "epoch": 1,
+      "val_loss": 0.322293221950531,
+      "val_accuracy": 0.9399999976158142
+    },
+    {
+      "epoch": 2,
+      "val_loss": 0.32591596245765686,
+      "val_accuracy": 0.9398333430290222
+    },
+    {
+      "epoch": 3,
+      "val_loss": 0.3294026553630829,
+      "val_accuracy": 0.9390000104904175
+    },
+    {
+      "epoch": 4,
+      "val_loss": 0.3330652117729187,
+      "val_accuracy": 0.9391666650772095
+    },
+    {
+      "epoch": 5,
+      "val_loss": 0.3437347710132599,
+      "val_accuracy": 0.9388332962989807
+    },
+    {
+      "epoch": 6,
+      "val_loss": 0.34896641969680786,
+      "val_accuracy": 0.9391666650772095
+    },
+    {
+      "epoch": 7,
+      "val_loss": 0.3564831614494324,
+      "val_accuracy": 0.9393333196640015
+    },
+    {
+      "epoch": 8,
+      "val_loss": 0.3665177524089813,
+      "val_accuracy": 0.937666654586792
+    },
+    {
+      "epoch": 9,
+      "val_loss": 0.371802419424057,
+      "val_accuracy": 0.9383333325386047
+    },
+    {
+      "epoch": 10,
+      "val_loss": 0.37853866815567017,
+      "val_accuracy": 0.937833309173584
+    },
+    {
+      "epoch": 11,
+      "val_loss": 0.38734132051467896,
+      "val_accuracy": 0.937666654586792
+    },
+    {
+      "epoch": 12,
+      "val_loss": 0.3914731740951538,
+      "val_accuracy": 0.937833309173584
+    },
+    {
+      "epoch": 13,
+      "val_loss": 0.394662082195282,
+      "val_accuracy": 0.937666654586792
+    },
+    {
+      "epoch": 14,
+      "val_loss": 0.39853325486183167,
+      "val_accuracy": 0.9386666417121887
+    },
+    {
+      "epoch": 15,
+      "val_loss": 0.40224170684814453,
+      "val_accuracy": 0.9396666288375854
+    },
+    {
+      "epoch": 16,
+      "val_loss": 0.406696617603302,
+      "val_accuracy": 0.9383333325386047
+    },
+    {
+      "epoch": 17,
+      "val_loss": 0.41125935316085815,
+      "val_accuracy": 0.937333345413208
+    },
+    {
+      "epoch": 18,
+      "val_loss": 0.4131999611854553,
+      "val_accuracy": 0.937333345413208
+    },
+    {
+      "epoch": 19,
+      "val_loss": 0.4163797199726105,
+      "val_accuracy": 0.9381666779518127
+    },
+    {
+      "epoch": 20,
+      "val_loss": 0.4174635410308838,
+      "val_accuracy": 0.9388332962989807
+    },
+    {
+      "epoch": 21,
+      "val_loss": 0.4187409579753876,
+      "val_accuracy": 0.9391666650772095
+    },
+    {
+      "epoch": 22,
+      "val_loss": 0.42010244727134705,
+      "val_accuracy": 0.9386666417121887
+    },
+    {
+      "epoch": 23,
+      "val_loss": 0.4232284426689148,
+      "val_accuracy": 0.9388332962989807
+    },
+    {
+      "epoch": 24,
+      "val_loss": 0.4246145784854889,
+      "val_accuracy": 0.9386666417121887
+    },
+    {
+      "epoch": 25,
+      "val_loss": 0.42596235871315,
+      "val_accuracy": 0.9381666779518127
+    },
+    {
+      "epoch": 26,
+      "val_loss": 0.4254162609577179,
+      "val_accuracy": 0.9381666779518127
+    },
+    {
+      "epoch": 27,
+      "val_loss": 0.4260956943035126,
+      "val_accuracy": 0.9390000104904175
+    },
+    {
+      "epoch": 28,
+      "val_loss": 0.42635297775268555,
+      "val_accuracy": 0.9393333196640015
+    },
+    {
+      "epoch": 29,
+      "val_loss": 0.42611145973205566,
+      "val_accuracy": 0.9393333196640015
+    },
+    {
+      "epoch": 30,
+      "val_loss": 0.4254870116710663,
+      "val_accuracy": 0.9390000104904175
+    }
+  ],
+  "seconds": 72.45608405768871,
+  "complete": true,
+  "gradient_evaluations": 12660,
+  "completed_at": "2026-09-18T15:42:47.476393+00:00",
+  "averaging": "ema",
+  "shared_training_run": "features_contrast"
+}
