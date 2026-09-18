@@ -47,3 +47,11 @@ assert model.net.embed.weight.grad.abs().sum()>0
 assert model.net.merge[1].weight.grad is None, 'Fine auxiliary loss must not traverse the coarse stage.'
 assert not any('auxiliary' in n for n in model.state_dict())
 print('Auxiliary gradient reaches fine features; training head is absent from deployment state.')
+
+cfg=dict(model='pyramid',width=16,depth=1,dropout=0.,partial_channel=True)
+partial=Model(cfg,.28,.35)
+partial(x).square().mean().backward()
+assert all(p.grad is not None and torch.isfinite(p.grad).all() for p in partial.parameters())
+assert model_cost(partial)[0]<model_cost(model)[0]
+assert model_cost(partial)[1]<model_cost(model)[1]
+print('Partial channel processing has finite gradients and fewer actual parameters/MACs.')

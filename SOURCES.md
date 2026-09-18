@@ -1,5 +1,7 @@
 # Sources and implementation notes
 
+- Detector-inspired follow-up: official [CSPNet repository](https://github.com/WongKinYiu/CrossStagePartialNetworks) and [YOLOv9 repository](https://github.com/WongKinYiu/yolov9), README titles and linked papers checked 2026-09-18. The assignment experiments borrow partial-channel aggregation, multiscale feature fusion and training-only supervision as design ideas. They are newly constructed dense MLPs, not reproductions of CSPNet, a YOLO detector, its feature-pyramid neck, or the full PGI method. No detector weights or external training images are used.
+
 - Native AWQ implementation used here: torchao 0.16.0 [AWQ API](https://github.com/pytorch/ao/blob/v0.16.0/torchao/prototype/awq/api.py), [activation-aware scale search](https://github.com/pytorch/ao/blob/v0.16.0/torchao/prototype/awq/core.py), and [tile-packed INT4 backend](https://github.com/pytorch/ao/blob/v0.16.0/torchao/quantization/quantize_/workflows/int4/int4_tile_packed_to_4d_tensor.py). Installed source inspected 2026-09-18. This uses native activation-aware scaling with group-32 INT4 and BF16 activations, not a reproduction of every component of the original LLM AWQ pipeline. The backend pads input dimensions to multiples of 1,024, which matters for these small MLP matrices.
 
 - Assignment: https://eelmpo.github.io/ee5438/pdf/2026_EE5438_Ass01.pdf
