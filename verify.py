@@ -12,7 +12,7 @@ import nbformat
 import numpy as np
 from sklearn.metrics import accuracy_score,precision_recall_fscore_support
 from train import OUT,load_data,model_cost
-from evaluation import load_model,probabilities,probability_metrics,digest,calibrate
+from evaluation import load_model,probabilities,probability_metrics,digest,calibrate,recipe_probabilities
 
 
 def checkpoints():
@@ -49,9 +49,21 @@ def checkpoints():
             count,cost=model_cost(model)
             params+=count; macs+=cost*component['views']
             del model
+        if recipe.get('cascade'):
+            gate=recipe['cascade']
+            assert any(c['name']==gate['name'] for c in components), 'First-stage model must reuse stored ensemble weights.'
+            assert digest(gate['name'])==gate['sha256']
+            model=load_model(gate['name'])
+            _,cost=model_cost(model)
+            assert cost*gate['views']==gate['macs']
+            assert macs==recipe['full_macs']
+            del model
+            total,execution=recipe_probabilities(recipe,vx)
+            macs=execution['macs_per_image']
+            assert execution==recipe['validation_execution']
         measured=probability_metrics(total,vy)
         assert measured['correct']==recipe['correct'],(measured,recipe['correct'])
-        assert (params,macs)==(recipe['parameters'],recipe['macs'])
+        assert params==recipe['parameters'] and abs(macs-recipe['macs'])<1e-5
         result['frozen_recipe']=dict(**measured,parameters=params,macs=macs)
         print('Verified frozen ensemble:',measured,flush=True)
     (OUT/'checkpoint_verification.json').write_text(json.dumps(result,indent=2))

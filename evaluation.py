@@ -63,6 +63,43 @@ def calibrate(probs,temperature=1.):
     return probs if temperature==1. else (probs.clamp_min(1e-12).log()/temperature).softmax(1)
 
 
+def early_mask(probs,cascade):
+    confidence,predicted=probs.max(1)
+    return (confidence>=cascade['threshold']) & torch.isin(predicted,torch.tensor(cascade['classes'],device=predicted.device))
+
+
+@torch.no_grad()
+def recipe_probabilities(recipe,x,models=None):
+    """Evaluate a frozen ensemble, optionally with a confidence-gated cheap first stage."""
+    models={} if models is None else models
+    def model(name):
+        if name not in models:
+            models[name]=load_model(name)
+        return models[name]
+    cascade=recipe.get('cascade')
+    routed=x
+    accepted=0
+    if cascade:
+        assert 0<cascade['threshold']<=1 and all(0<=c<10 for c in cascade['classes'])
+        cheap=probabilities(model(cascade['name']),x,cascade['views'])
+        mask=early_mask(cheap,cascade)
+        accepted=int(mask.sum())
+        routed=x[(~mask).to(x.device)]
+    components=recipe['components']
+    weights=torch.tensor([c.get('weight',1.) for c in components])
+    assert torch.isfinite(weights).all() and (weights>0).all()
+    weights=weights/weights.sum()
+    probs=torch.empty(0,10) if len(routed)==0 else sum(w*calibrate(probabilities(model(c['name']),routed,c['views']),c.get('temperature',1.)) for w,c in zip(weights,components))
+    full_macs=recipe.get('full_macs',recipe['macs'])
+    macs=full_macs
+    if cascade:
+        cheap[~mask]=probs
+        probs=cheap
+        macs=cascade['macs']+(len(x)-accepted)/len(x)*full_macs
+    return probs,dict(examples=len(x),early_exit=accepted,full_ensemble=len(x)-accepted,
+                      macs_per_image=macs,worst_case_macs=full_macs+(cascade['macs'] if cascade else 0))
+
+
 if __name__=='__main__':
     class Constant(torch.nn.Module):
         def __init__(self):
