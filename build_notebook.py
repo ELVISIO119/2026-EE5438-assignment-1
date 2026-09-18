@@ -169,6 +169,18 @@ plt.tight_layout(); plt.show()
 display(pareto[pareto.pareto].sort_values('macs'))
 ''')
     md('Pareto dominance is defined jointly over validation accuracy (higher), physical parameters (lower) and dense MACs (lower). A model with fewer parameters is not necessarily cheaper: Mixer weights are reused over tokens. FLOPs are approximately twice dense MACs, excluding nonlinearities, normalization, memory traffic and augmentation. This chart describes single-model, single-view checkpoints, not ensemble cost.')
+    code('''candidates=pd.read_csv('results/validation_candidates.csv')
+raw_views=candidates[candidates['name'].str.match(r'^[A-Za-z0-9_]+:[0-9]+$')].copy()
+raw_views[['model','views']]=raw_views['name'].str.rsplit(':',n=1,expand=True)
+raw_views['views']=raw_views['views'].astype(int)
+selected_names={c['name'] for c in json.loads(Path('results/final_recipe.json').read_text())['components']}
+fig,ax=plt.subplots(figsize=(10,4))
+for name,group in raw_views[raw_views['model'].isin(selected_names)].groupby('model'):
+    group=group.sort_values('views')
+    ax.plot(group['views'].astype(str),100*group['accuracy'],marker='o',label=name)
+ax.set(xlabel='Inference views per model',ylabel='Validation accuracy (%)',title='View ablation for the selected ensemble members')
+ax.grid(alpha=.2); ax.legend(fontsize=8); plt.tight_layout(); plt.show()
+''')
     md('''## 4. Frozen final evaluation
 
     The accuracy-first search evaluates 1/2/4/10/18/30/50-view inference for completed models within 3.5 percentage points of the best raw validation score. The ten best distinct checkpoints contribute raw equal-weight pairs/triples; calibrated prefixes and greedy combinations can use every eligible checkpoint. Up to three starting models undergo eight greedy convex-weight additions, with fixed candidate weights 0.1/0.2/0.35/0.5. Each accepted greedy step must avoid reducing correct count on either fixed 3,000-image validation half. Both halves remain development data; this guard is not an independent test or a significance claim. All attempted weight settings are counted in `weighted_search.json`, including rejected ones.
