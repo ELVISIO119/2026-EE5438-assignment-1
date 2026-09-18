@@ -139,10 +139,11 @@ def load_initial_state(model, initial):
         state.update({key:current[key] for key in extra})
     model.load_state_dict(state)
 
-def run(cfg):
-    OUT.mkdir(exist_ok=True)
+def run(cfg, data=None, output_dir=OUT, last_epoch=False):
+    out=Path(output_dir); out.mkdir(parents=True,exist_ok=True)
+    assert not (last_epoch and cfg.get('averages')), 'Fixed-epoch evaluation cannot select averaged checkpoints.'
     seed_all()
-    x,y,vx,vy,mean,std = load_data()
+    x,y,vx,vy,mean,std = load_data() if data is None else data
     model = Model(cfg,mean,std).to(DEVICE)
     if cfg.get('init'):
         initial=torch.load(OUT/f"{cfg['init']}.pt",map_location=DEVICE,weights_only=True)
@@ -255,17 +256,19 @@ def run(cfg):
             if (av_acc,-av_loss)>average_best[key]:
                 average_best[key]=(av_acc,-av_loss)
                 average_epochs[key]=epoch
-                torch.save(dict(state_dict=average.module.state_dict(),config=cfg,mean=mean,std=std),OUT/f"{cfg['name']}_{key}.pt")
+                torch.save(dict(state_dict=average.module.state_dict(),config=cfg,mean=mean,std=std),out/f"{cfg['name']}_{key}.pt")
         row=dict(epoch=epoch,train_loss=total_loss.item()/len(x),train_accuracy=correct.item()/len(x),
                  val_loss=val_loss,val_accuracy=val_acc,lr=lr,seconds=time.perf_counter()-started)
         history.append(row)
-        if (val_acc,-val_loss)>best:
+        if (val_acc,-val_loss)>best or last_epoch:
             best=(val_acc,-val_loss)
             best_epoch=epoch
-            torch.save(dict(state_dict=model.state_dict(),config=cfg,mean=mean,std=std),OUT/f"{cfg['name']}.pt")
+            if not last_epoch or epoch==cfg['epochs']:
+                torch.save(dict(state_dict=model.state_dict(),config=cfg,mean=mean,std=std),out/f"{cfg['name']}.pt")
         result=dict(config=cfg,seed=SEED,parameters=params,macs=macs,best_epoch=best_epoch,
                     val_accuracy=best[0],val_loss=-best[1],history=history,
-                    seconds=time.perf_counter()-started,complete=epoch==cfg['epochs'])
+                    seconds=time.perf_counter()-started,complete=epoch==cfg['epochs'],
+                    checkpoint_selection='fixed_last_epoch' if last_epoch else 'best_validation')
         result['gradient_evaluations']=epoch*math.ceil(len(x)/128)*(2 if cfg.get('sam') else 1)
         if auxiliary is not None:
             result.update(training_only_parameters=sum(p.numel() for p in auxiliary.parameters()),
@@ -274,22 +277,22 @@ def run(cfg):
         if teacher is not None:
             result.update(teacher_parameters=teacher_params,teacher_macs=teacher_macs,
                           teacher_training_cost_included=False,teacher_forward_passes=epoch*len(x))
-        (OUT/f"{cfg['name']}.json").write_text(json.dumps(result,indent=2))
+        (out/f"{cfg['name']}.json").write_text(json.dumps(result,indent=2))
         if epoch==1 or epoch%20==0 or epoch==cfg['epochs']:
             print(cfg['name'],row,flush=True)
     result['completed_at']=datetime.now(timezone.utc).isoformat()
-    (OUT/f"{cfg['name']}.json").write_text(json.dumps(result,indent=2))
+    (out/f"{cfg['name']}.json").write_text(json.dumps(result,indent=2))
     with Path('JOURNAL.md').open('a') as journal:
         journal.write(f"\n## {result['completed_at']} — {cfg['name']}\n\n"
                       f"Hypothesis: {cfg['hypothesis']}\n\n"
                       f"Measured validation accuracy: {best[0]:.2%}; checkpoint epoch {best_epoch}; "
                       f"{params:,} parameters; {macs:,} dense MACs/image; {result['seconds']:.1f}s training/validation wall time. "
-                      f"Configuration and every epoch: `results/{cfg['name']}.json`. Test set not evaluated in this run.\n")
+                      f"Configuration and every epoch: `{out}/{cfg['name']}.json`. Test set not evaluated in this run.\n")
     for key in averages:
         averaged=dict(result,history=average_history[key],val_accuracy=average_best[key][0],
                       val_loss=-average_best[key][1],best_epoch=average_epochs[key],
                       averaging=key,shared_training_run=cfg['name'])
-        (OUT/f"{cfg['name']}_{key}.json").write_text(json.dumps(averaged,indent=2))
+        (out/f"{cfg['name']}_{key}.json").write_text(json.dumps(averaged,indent=2))
         with Path('JOURNAL.md').open('a') as journal:
             journal.write(f"\n### {result['completed_at']} - {cfg['name']} {key.upper()}\n\n"
                           f"Validation accuracy {averaged['val_accuracy']:.2%} at epoch {averaged['best_epoch']}. "
