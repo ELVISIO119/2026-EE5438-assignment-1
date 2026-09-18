@@ -17,6 +17,10 @@ def build():
     recipe=json.loads((OUT/'final_recipe.json').read_text())
     metrics=json.loads((OUT/'final_test_metrics.json').read_text())
     evidence={p.stem:json.loads(p.read_text()) for p in OUT.glob('*.json')}
+    class_metrics={name:row for name,row in metrics['classification_report'].items() if isinstance(row,dict) and 'avg' not in name}
+    weakest=min(class_metrics,key=lambda name:class_metrics[name]['f1-score'])
+    classes=list(class_metrics)
+    confusions=sorted([(count,classes[i],classes[j]) for i,row in enumerate(metrics['confusion_matrix']) for j,count in enumerate(row) if i!=j],reverse=True)[:3]
     files=[ROOT/name for name in ('models.py','train.py','baseline.py','sharpness.py','prune.py',
                                   'evaluation.py','select_final.py','evaluate_final.py','SOURCES.md','requirements.txt')]
     files+=list((ROOT/'configs').glob('*.json'))+list(OUT.glob('*.json'))+list(OUT.glob('*.csv'))
@@ -173,6 +177,9 @@ for ax,idx in zip(axes.flat,errors):
     ax.set_title(f'True: {test_data.classes[labels[idx]]}\\nPred: {test_data.classes[predicted[idx]]}',fontsize=8)
 plt.suptitle('First 12 errors in test-index order (not cherry-picked)'); plt.tight_layout(); plt.show()
 ''')
+    md(f"The lowest class F1 is **{weakest}: {class_metrics[weakest]['f1-score']:.4f}**. The largest directed confusions are "
+       +'; '.join(f'**{true} -> {pred}: {count} images**' for count,true,pred in confusions)
+       +'. These results describe the frozen classifier; they are not used to introduce another model change. Similar garment silhouettes remain a challenge at 28x28 resolution.')
     def acc(name):
         return f"{evidence[name]['val_accuracy']:.2%}"
     md(f'''## 5. Technical summary and conclusions
@@ -187,6 +194,8 @@ plt.suptitle('First 12 errors in test-index order (not cherry-picked)'); plt.tig
 
     Clean fine-tuning gives ordinary weights {acc('mixer_average')}, EMA {acc('mixer_average_ema')} and SWA {acc('mixer_average_swa')}. Late clean-training accuracy approaches 100% while validation loss grows; checkpoint selection and EMA limit this overfitting, whereas SWA is not automatically better. The matched small student obtains {acc('student_control')} without distillation and {acc('student_distill')} with distillation, using 90,525 parameters and 4,867,712 dense MACs per image. Distillation adds the teacher's pretraining and forward-pass costs; student-only deployment avoids them.
 
+    The student control and distilled student tie on best validation accuracy. This trial therefore does not demonstrate an accuracy benefit from distillation at the tested setting, despite its additional training cost.
+
     ### Regularization and model efficiency
 
     The 2x2 control yields neither dropout nor decay {acc('regularization_none')}, dropout only {acc('regularization_dropout')}, decay only {acc('regularization_decay')}, and both {acc('residual_gelu')}. These results describe one fixed architecture and seed; they do not establish a universally optimal regularizer.
@@ -198,6 +207,8 @@ plt.suptitle('First 12 errors in test-index order (not cherry-picked)'); plt.tig
     The frozen recipe is **{recipe['name']}**. It obtains **{metrics['correct']}/10,000 correct ({metrics['accuracy']:.2%})** on the official test split, compared with **{metrics['baseline']['accuracy']:.2%}** for the fixed sigmoid/SGD reference. Macro precision is **{metrics['macro_precision']:.4f}**, macro recall **{metrics['macro_recall']:.4f}**, macro F1 **{metrics['macro_f1']:.4f}**, and weighted F1 **{metrics['weighted_f1']:.4f}**. The confusion matrix and per-class table identify remaining class-specific errors.
 
     Deployment requires **{recipe['parameters']:,} total stored parameters** and **{recipe['macs']:,} dense MACs per image**, approximately **{2*recipe['macs']:,} dense FLOPs**. These totals include all ensemble members and every inference view. They must not be presented as the cost of one single-pass model. Averaged weights themselves add no deployment model beyond the resulting checkpoint.
+
+    The two-member SWA/Muon alternative achieves 5,679/6,000 validation correct (94.65%) at 957,280 parameters and 232,024,064 MACs/image. The selected three-member recipe adds only **one validation-correct image**, while increasing both costs by 50%. The prespecified accuracy-first rule chooses it, but this tiny gain is not convincing evidence of a generalization advantage; the two-member alternative is a more economical candidate if deployment cost is prioritized. It was not selected or retuned using test results.
 
     ### Limits and next steps
 
