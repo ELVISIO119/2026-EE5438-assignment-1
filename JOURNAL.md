@@ -109,3 +109,15 @@ Validation accuracy 94.02% at epoch 4. Same training trajectory as the ordinary 
 ### 2026-09-18T08:20:18.694771+00:00 - mixer_average SWA
 
 Validation accuracy 93.67% at epoch 26. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/mixer_average_swa.json`.
+
+## 2026-09-18T08:22:42.695836+00:00 — student_control
+
+Hypothesis: Small dense Mixer with hard labels provides a same-initialization control for distillation; compare accuracy and inference MACs with the larger teacher. The 80-epoch student budget differs from the 120-epoch teacher.
+
+Measured validation accuracy: 92.32%; checkpoint epoch 70; 90,525 parameters; 4,867,712 dense MACs/image; 71.8s training/validation wall time. Configuration and every epoch: `results/student_control.json`. Test set not evaluated.
+
+## 2026-09-18T08:24:28.351214+00:00 — student_distill
+
+Hypothesis: Compare the same small student's control with 50% smoothed-label CE plus 50% teacher KL at temperature 3 (including T squared scaling). The frozen teacher is an in-scope MLP trained only on the training partition; teacher inference adds training cost, not student inference cost.
+
+Measured validation accuracy: 92.32%; checkpoint epoch 77; 90,525 parameters; 4,867,712 dense MACs/image; 103.2s training/validation wall time. Configuration and every epoch: `results/student_distill.json`. Test set not evaluated.
