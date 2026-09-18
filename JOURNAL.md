@@ -121,3 +121,23 @@ Measured validation accuracy: 92.32%; checkpoint epoch 70; 90,525 parameters; 4,
 Hypothesis: Compare the same small student's control with 50% smoothed-label CE plus 50% teacher KL at temperature 3 (including T squared scaling). The frozen teacher is an in-scope MLP trained only on the training partition; teacher inference adds training cost, not student inference cost.
 
 Measured validation accuracy: 92.32%; checkpoint epoch 77; 90,525 parameters; 4,867,712 dense MACs/image; 103.2s training/validation wall time. Configuration and every epoch: `results/student_distill.json`. Test set not evaluated.
+
+## 2026-09-18T08:24:43.330101+00:00 - mixer_pruned_75 before fine-tuning
+
+Keep 75% of channel neurons: validation 91.47%; 379,952 parameters; 24,186,112 MACs/image. Weights, not validation labels, determine neuron ranking. Evidence: `results/mixer_pruned_75_initial.json`.
+
+## 2026-09-18T08:25:20.537611+00:00 — mixer_pruned_75
+
+Hypothesis: Physically retain 75% of channel-MLP neurons ranked by incoming/outgoing weight norms, then clean fine-tune. Compare pre- and post-fine-tuning validation accuracy and real matrix dimensions. Source: mixer_adamw.
+
+Measured validation accuracy: 93.70%; checkpoint epoch 4; 379,952 parameters; 24,186,112 dense MACs/image; 37.0s training/validation wall time. Configuration and every epoch: `results/mixer_pruned_75.json`. Test set not evaluated.
+
+## 2026-09-18T08:25:20.583967+00:00 - mixer_pruned_50 before fine-tuning
+
+Keep 50% of channel neurons: validation 81.23%; 281,264 parameters; 19,369,216 MACs/image. Weights, not validation labels, determine neuron ranking. Evidence: `results/mixer_pruned_50_initial.json`.
+
+## 2026-09-18T08:25:59.042585+00:00 — mixer_pruned_50
+
+Hypothesis: Physically retain 50% of channel-MLP neurons ranked by incoming/outgoing weight norms, then clean fine-tune. Compare pre- and post-fine-tuning validation accuracy and real matrix dimensions. Source: mixer_adamw.
+
+Measured validation accuracy: 93.47%; checkpoint epoch 12; 281,264 parameters; 19,369,216 dense MACs/image; 38.3s training/validation wall time. Configuration and every epoch: `results/mixer_pruned_50.json`. Test set not evaluated.
