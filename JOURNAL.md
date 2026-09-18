@@ -1,5 +1,13 @@
 # Experiment journal
 
+## 2026-09-18 — Shared-trunk sparse expert design (feature/33-moe-routing)
+
+Test three width-384 residual MLP experts after the wide Mixer's pooled features, with a learned Linear router and original classifier. Train a soft weighted feature mixture and deploy top-1 dispatch to genuinely skip unselected expert rows. A single width-1152 residual MLP is the approximately total-parameter-matched control. Both start from the same wide SWA parent and receive 30 clean epochs with the existing AdamW schedule. Expert output layers start at zero; extra initialization preserves the parent's RNG stream. Expert branches use no dropout, keeping the shared-trunk dropout and shuffle stream matched. All layers, including the trunk, are fine-tuned. This changes readout capacity rather than sparsifying expensive trunk blocks.
+
+Ordinary/EMA/SWA checkpoints are selected by actual top-1 validation accuracy then NLL. Diagnose the train/eval mismatch using dense soft inference on those same checkpoints. There is no balancing penalty; record route occupancy instead of assuming balanced experts. This is shared-trunk MoE-inspired training, not independent bootstrap bagging, a class-specialist experiment, or token generation/speculative decoding. Six checkpoint evaluations, two selected-family deployment grids (39 candidates), and fixed 1,024-image latency comparisons use validation data only. The existing champion remains a candidate with both development-half counts and Shirt F1 guarded. Report full stored parameters, sparse and dense forward MACs, and three-warmup/seven-repeat batch-128 eager timings on the shared GPU. Expert selection/memory overhead is not represented by dense Linear MACs.
+
+Commands: `python3 moe_experiment.py --check`, then `python3 moe_experiment.py`. Existing matching completed training outputs are reused; each newly trained configuration has a 1,800-second hard timeout. The experiment is a single-seed short fine-tuning test, not a statistical superiority claim.
+
 ## 2026-09-18 — Image-feature integration (feature/32-image-feature-integration)
 
 Re-evaluated all 103 saved checkpoints and the unchanged frozen cascade successfully. The portable notebook executed with 11 figures, including garment confusion matrices and grayscale/gradient/contrast views of three difficult validation Shirts. The regenerated two-file ZIP passed execution, archive, metric and credential-history checks. The pre-experiment archive remains in `archives/Assign01_Cai_Haochen_58561440_before_image_features.zip`. The Section A PDF still needs replacement with the student's genuine handwritten scan; no Canvas upload was performed.

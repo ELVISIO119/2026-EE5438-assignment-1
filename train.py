@@ -49,7 +49,8 @@ class Model(nn.Module):
                                      nn.Linear(128,64), nn.Sigmoid(), nn.Linear(64,10))
         else:
             from models import ResidualMLP,MLPMixer,PyramidMLP
-            architectures={'mixer':MLPMixer,'pyramid':PyramidMLP}
+            from models import SparseMoEMixer
+            architectures={'mixer':MLPMixer,'pyramid':PyramidMLP,'moe':SparseMoEMixer}
             self.net = architectures.get(cfg['model'],ResidualMLP)(cfg)
 
     def forward(self, x, return_features=False):
@@ -123,6 +124,12 @@ def load_initial_state(model, initial):
             tokens=target.shape[1]//old.shape[1]
             # A repeated 1/tokens head exactly implements mean pooling in real arithmetic.
             state['net.head.weight']=old.repeat(1,tokens)/tokens
+    if getattr(model.net,'num_experts',0) and not any(k.startswith('net.experts.') for k in state):
+        # Warm-start the shared trunk/head; zero residual experts keep the parent logits.
+        current=model.state_dict()
+        extra={key for key in current if key.startswith(('net.experts.','net.router.'))}
+        assert set(state)==set(current)-extra, 'MoE warm start requires an exact trunk and classifier match.'
+        state.update({key:current[key] for key in extra})
     model.load_state_dict(state)
 
 def run(cfg):

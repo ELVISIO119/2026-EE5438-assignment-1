@@ -91,12 +91,52 @@ class MLPMixer(nn.Module):
         self.spatial_head=cfg.get('spatial_head',False)
         self.head=nn.Linear(tokens*width if self.spatial_head else width,10)
 
-    def forward(self,x):
+    def features(self,x):
         n=len(x); p=self.patch; side=28//p
         x=image_features(x,self.image_features)
         x=x.reshape(n,self.channels,side,p,side,p).permute(0,2,4,1,3,5).reshape(n,side*side,self.channels*p*p)
         x=self.norm(self.blocks(self.embed(x)))
-        return self.head(x.flatten(1) if self.spatial_head else x.mean(1))
+        return x.flatten(1) if self.spatial_head else x.mean(1)
+
+    def forward(self,x):
+        return self.head(self.features(x))
+
+
+class SparseMoEMixer(MLPMixer):
+    """Shared Mixer trunk with top-1 routed residual MLP experts."""
+    def __init__(self,cfg):
+        super().__init__(cfg)
+        assert not self.spatial_head, 'MoE trial uses pooled features only.'
+        self.num_experts=cfg.get('num_experts',3)
+        assert self.num_experts>=1
+        hidden=cfg.get('expert_hidden',self.head.in_features*2)
+        with torch.random.fork_rng(devices=[]):
+            self.router=nn.Linear(self.head.in_features,self.num_experts)
+            self.experts=nn.ModuleList([nn.Sequential(nn.Linear(self.head.in_features,hidden),nn.GELU(),
+                                                      nn.Linear(hidden,self.head.in_features))
+                                        for _ in range(self.num_experts)])
+        # Zero residual output preserves the parent's function at initialization.
+        for expert in self.experts:
+            nn.init.zeros_(expert[-1].weight)
+            nn.init.zeros_(expert[-1].bias)
+        self.last_router_probs=None
+        self.dense_inference=cfg.get('dense_inference',False)
+
+    def forward(self,x):
+        features=self.features(x)
+        weights=self.router(features).softmax(1)
+        self.last_router_probs=weights.detach()
+        if self.training or self.dense_inference:
+            transformed=torch.stack([features+expert(features) for expert in self.experts],1)
+            chosen=(weights.unsqueeze(-1)*transformed).sum(1)
+        else:
+            chosen=torch.empty_like(features)
+            indices=weights.argmax(1)
+            for index,expert in enumerate(self.experts):
+                mask=indices==index
+                if mask.any():
+                    chosen[mask]=features[mask]+expert(features[mask])
+        return self.head(chosen)
 
 
 class PyramidMLP(nn.Module):

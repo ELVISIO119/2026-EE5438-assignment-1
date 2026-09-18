@@ -1,0 +1,21 @@
+{
+  "name": "moe_mixer",
+  "model": "moe",
+  "patch": 4,
+  "width": 192,
+  "depth": 8,
+  "dropout": 0.1,
+  "epochs": 30,
+  "lr": 5e-05,
+  "decay": 0.01,
+  "schedule": true,
+  "augmentation": false,
+  "label_smoothing": 0.0,
+  "bf16": true,
+  "averages": true,
+  "grad_clip": 1.0,
+  "init": "accuracy_wide_clean_swa",
+  "num_experts": 3,
+  "expert_hidden": 384,
+  "hypothesis": "Matched 30-epoch clean fine-tuning from the frozen wide SWA parent. A shared MLP-Mixer trunk feeds three residual MLP experts and a learned top-1 router at inference; training uses soft routing. Expert residual outputs start at zero so the initialization matches the parent. Validation selects the ordinary, EMA or SWA checkpoint; no test labels are used."
+}
