@@ -827,3 +827,49 @@ Candidate 4072 was selected by validation correct count then average MACs: 5,720
 The endpoint was committed in `4d9b07e` before new test access. Frozen test evaluation (`70069ec`) gives 9,455/10,000 correct (94.55%) versus 9,449, with 301,330,871 average MACs versus 339,421,241 (11.2% lower). Ten old errors are fixed and four new errors appear. Stored parameters (3,164,836) and worst-case MACs (3,319,207,680) are unchanged. No configuration was adjusted from this result. Validation and public test have been repeatedly observed; the gain does not establish statistical significance or the class bonus.
 
 Branch `feature/49-latent-search-integration` adds the executed notebook section, full candidate evidence and submission verification for the frozen endpoint. Section A remains a typed study guide requiring replacement with the student's genuine handwritten scan before Canvas submission.
+
+## 2026-09-18T17:25:29.339520+00:00 — cv_adamw_fold1
+
+Hypothesis: Three stratified folds of the official 60,000 training images: 40,000 fitting and 20,000 held out per fold. Split RNG and every fresh training RNG use student ID 58561440, never seed+fold. Compare the existing compact Mixer AdamW and Muon+AdamW configurations at their fixed 120 epochs. Report the final epoch, without early stopping or held-out checkpoint selection. Normalize using only each fitting fold. No warm start, teacher or inherited weights. Report both predeclared one-view and ten-view OOF predictions. No test access or deployment replacement. Architectures were previously developed on a subset of these images: this is development cross-validation, not nested unbiased assessment or independent-seed replication. Fold models are not an inference ensemble.
+
+Measured validation accuracy: 92.83%; checkpoint epoch 120; 478,640 parameters; 29,003,008 dense MACs/image; 148.7s training/validation wall time. Configuration and every epoch: `results/cross_validation/cv_adamw_fold1.json`. Test set not evaluated in this run.
+
+## 2026-09-18T17:29:56.099550+00:00 — cv_muon_fold1
+
+Hypothesis: Three stratified folds of the official 60,000 training images: 40,000 fitting and 20,000 held out per fold. Split RNG and every fresh training RNG use student ID 58561440, never seed+fold. Compare the existing compact Mixer AdamW and Muon+AdamW configurations at their fixed 120 epochs. Report the final epoch, without early stopping or held-out checkpoint selection. Normalize using only each fitting fold. No warm start, teacher or inherited weights. Report both predeclared one-view and ten-view OOF predictions. No test access or deployment replacement. Architectures were previously developed on a subset of these images: this is development cross-validation, not nested unbiased assessment or independent-seed replication. Fold models are not an inference ensemble.
+
+Measured validation accuracy: 92.95%; checkpoint epoch 120; 478,640 parameters; 29,003,008 dense MACs/image; 266.0s training/validation wall time. Configuration and every epoch: `results/cross_validation/cv_muon_fold1.json`. Test set not evaluated in this run.
+
+## 2026-09-18T17:32:28.512301+00:00 — cv_adamw_fold2
+
+Hypothesis: Three stratified folds of the official 60,000 training images: 40,000 fitting and 20,000 held out per fold. Split RNG and every fresh training RNG use student ID 58561440, never seed+fold. Compare the existing compact Mixer AdamW and Muon+AdamW configurations at their fixed 120 epochs. Report the final epoch, without early stopping or held-out checkpoint selection. Normalize using only each fitting fold. No warm start, teacher or inherited weights. Report both predeclared one-view and ten-view OOF predictions. No test access or deployment replacement. Architectures were previously developed on a subset of these images: this is development cross-validation, not nested unbiased assessment or independent-seed replication. Fold models are not an inference ensemble.
+
+Measured validation accuracy: 92.91%; checkpoint epoch 120; 478,640 parameters; 29,003,008 dense MACs/image; 151.6s training/validation wall time. Configuration and every epoch: `results/cross_validation/cv_adamw_fold2.json`. Test set not evaluated in this run.
+
+## 2026-09-18T17:36:56.403296+00:00 — cv_muon_fold2
+
+Hypothesis: Three stratified folds of the official 60,000 training images: 40,000 fitting and 20,000 held out per fold. Split RNG and every fresh training RNG use student ID 58561440, never seed+fold. Compare the existing compact Mixer AdamW and Muon+AdamW configurations at their fixed 120 epochs. Report the final epoch, without early stopping or held-out checkpoint selection. Normalize using only each fitting fold. No warm start, teacher or inherited weights. Report both predeclared one-view and ten-view OOF predictions. No test access or deployment replacement. Architectures were previously developed on a subset of these images: this is development cross-validation, not nested unbiased assessment or independent-seed replication. Fold models are not an inference ensemble.
+
+Measured validation accuracy: 93.14%; checkpoint epoch 120; 478,640 parameters; 29,003,008 dense MACs/image; 267.2s training/validation wall time. Configuration and every epoch: `results/cross_validation/cv_muon_fold2.json`. Test set not evaluated in this run.
+
+## 2026-09-18T17:39:31.276396+00:00 — cv_adamw_fold3
+
+Hypothesis: Three stratified folds of the official 60,000 training images: 40,000 fitting and 20,000 held out per fold. Split RNG and every fresh training RNG use student ID 58561440, never seed+fold. Compare the existing compact Mixer AdamW and Muon+AdamW configurations at their fixed 120 epochs. Report the final epoch, without early stopping or held-out checkpoint selection. Normalize using only each fitting fold. No warm start, teacher or inherited weights. Report both predeclared one-view and ten-view OOF predictions. No test access or deployment replacement. Architectures were previously developed on a subset of these images: this is development cross-validation, not nested unbiased assessment or independent-seed replication. Fold models are not an inference ensemble.
+
+Measured validation accuracy: 92.71%; checkpoint epoch 120; 478,640 parameters; 29,003,008 dense MACs/image; 154.1s training/validation wall time. Configuration and every epoch: `results/cross_validation/cv_adamw_fold3.json`. Test set not evaluated in this run.
+
+## 2026-09-18T17:43:57.060542+00:00 — cv_muon_fold3
+
+Hypothesis: Three stratified folds of the official 60,000 training images: 40,000 fitting and 20,000 held out per fold. Split RNG and every fresh training RNG use student ID 58561440, never seed+fold. Compare the existing compact Mixer AdamW and Muon+AdamW configurations at their fixed 120 epochs. Report the final epoch, without early stopping or held-out checkpoint selection. Normalize using only each fitting fold. No warm start, teacher or inherited weights. Report both predeclared one-view and ten-view OOF predictions. No test access or deployment replacement. Architectures were previously developed on a subset of these images: this is development cross-validation, not nested unbiased assessment or independent-seed replication. Fold models are not an inference ensemble.
+
+Measured validation accuracy: 93.15%; checkpoint epoch 120; 478,640 parameters; 29,003,008 dense MACs/image; 265.1s training/validation wall time. Configuration and every epoch: `results/cross_validation/cv_muon_fold3.json`. Test set not evaluated in this run.
+
+## 2026-09-18 - Fixed-student-seed cross-validation outcome
+
+The official starter explicitly requires the student number as the random seed for every experiment. The protocol and implementation were committed in `c212bda` before training. Python, NumPy, PyTorch CPU/CUDA and stratified splitting all use 58561440; every fold resets the same seed. Six fresh compact Mixers compare AdamW and Muon+AdamW on three 40,000/20,000 fitting/held-out partitions of the official training split. Initial parameter hashes match across all six runs. Normalization uses the fitting partition only. Every scored checkpoint is the fixed final epoch 120; held-out curves do not select checkpoints or learning rates.
+
+All 60,000 examples have exactly one OOF prediction per optimizer/view policy. AdamW single-view accuracy is 92.820% with fold sample SD 0.100 percentage points; Muon+AdamW gives 93.083% with SD 0.111. Muon wins all three single-view comparisons, improving pooled accuracy by 0.263 percentage points. Ten-view accuracy is 93.585% and 93.760%, respectively; Muon wins two folds, while AdamW is ahead by 0.030 percentage points on fold three. The result supports a modest fixed-budget accuracy benefit, not lower fold variability or universal dominance.
+
+The two configurations share 478,640 parameters and 29,003,008 dense MACs per view. Recorded training/epoch-evaluation time totals 454.4 seconds for AdamW and 798.3 seconds for Muon+AdamW (1.76 times as long); total 1,252.7 seconds. Shared-GPU wall time is descriptive, and the protocol matches epochs rather than time budgets. OOF coverage, class metrics, fixed-epoch metadata, seeds, initial hashes and final checkpoint hashes were verified. A temporary non-monotonic validation check confirmed that ordinary training selects the best epoch while CV retains the last epoch.
+
+These recipes were chosen during previous development on part of the same data, so this is development CV, not nested validation or independent-seed replication. No new candidate accessed the official test set; the 94.55% deployment recipe, weights and stored predictions remain unchanged. The notebook's independent-seed recommendation is corrected, and the integration includes recorded OOF predictions with metric checks and a fold comparison figure. Section A still requires the student's genuine handwritten scan.

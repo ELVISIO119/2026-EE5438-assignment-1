@@ -1,0 +1,42 @@
+{
+  "seed": 58561440,
+  "folds": 3,
+  "configs": {
+    "adamw": {
+      "name": "mixer_adamw",
+      "model": "mixer",
+      "patch": 4,
+      "width": 128,
+      "depth": 6,
+      "dropout": 0.05,
+      "epochs": 120,
+      "lr": 0.001,
+      "decay": 0.02,
+      "schedule": true,
+      "augmentation": true,
+      "label_smoothing": 0.05,
+      "bf16": true,
+      "hypothesis": "Pure dense token/channel mixing may exploit image layout without convolution or attention. This longer-budget architecture trial is not a one-variable optimizer ablation; no Mixup, mild geometry and label smoothing 0.05."
+    },
+    "muon": {
+      "name": "mixer_muon",
+      "model": "mixer",
+      "patch": 4,
+      "width": 128,
+      "depth": 6,
+      "dropout": 0.05,
+      "epochs": 120,
+      "lr": 0.001,
+      "decay": 0.02,
+      "schedule": true,
+      "augmentation": true,
+      "label_smoothing": 0.05,
+      "bf16": true,
+      "optimizer": "muon",
+      "hypothesis": "Change only hidden-matrix optimization relative to mixer_adamw, retaining matched epochs, seed, architecture and regularization. Patch embedding, head, normalization and bias stay on AdamW. Measure actual time rather than transferring an LLM efficiency claim."
+    }
+  },
+  "code_sha256": "83501d6b33f24f2ffde1d71f6001c4c78674573e0d6974dbb51a451c6e323cfd",
+  "dataset_sha256": "1f243a60b4b748a44c48b9a6f6907be2a08bee3e4e226f0e86fbde8e147b745a",
+  "protocol": "Three stratified folds of the official 60,000 training images: 40,000 fitting and 20,000 held out per fold. Split RNG and every fresh training RNG use student ID 58561440, never seed+fold. Compare the existing compact Mixer AdamW and Muon+AdamW configurations at their fixed 120 epochs. Report the final epoch, without early stopping or held-out checkpoint selection. Normalize using only each fitting fold. No warm start, teacher or inherited weights. Report both predeclared one-view and ten-view OOF predictions. No test access or deployment replacement. Architectures were previously developed on a subset of these images: this is development cross-validation, not nested unbiased assessment or independent-seed replication. Fold models are not an inference ensemble."
+}
