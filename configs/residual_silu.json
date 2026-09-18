@@ -1,0 +1,1 @@
+{"name":"residual_silu","model":"residual","width":256,"depth":3,"activation":"silu","norm":"layer","dropout":0.1,"epochs":40,"lr":0.001,"decay":0.01,"schedule":true,"hypothesis":"Change GELU to SiLU only relative to residual_gelu."}

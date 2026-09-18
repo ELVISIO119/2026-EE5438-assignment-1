@@ -43,8 +43,12 @@ class Model(nn.Module):
     def __init__(self, cfg, mean, std):
         super().__init__()
         self.mean, self.std = mean, std
-        self.net = nn.Sequential(nn.Flatten(), nn.Linear(784,128), nn.Sigmoid(),
-                                 nn.Linear(128,64), nn.Sigmoid(), nn.Linear(64,10))
+        if cfg['model']=='baseline':
+            self.net = nn.Sequential(nn.Flatten(), nn.Linear(784,128), nn.Sigmoid(),
+                                     nn.Linear(128,64), nn.Sigmoid(), nn.Linear(64,10))
+        else:
+            from models import ResidualMLP
+            self.net = ResidualMLP(cfg)
 
     def forward(self, x):
         return self.net((x-self.mean)/self.std)
@@ -73,7 +77,9 @@ def run(cfg):
     x,y,vx,vy,mean,std = load_data()
     model = Model(cfg,mean,std).to(DEVICE)
     params,macs = model_cost(model)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=cfg['lr'], weight_decay=cfg['decay'])
+    optimizer = torch.optim.AdamW([
+        {'params':[p for p in model.parameters() if p.ndim>1],'weight_decay':cfg['decay']},
+        {'params':[p for p in model.parameters() if p.ndim<=1],'weight_decay':0.0}],lr=cfg['lr'])
     best = (-1.,-float('inf'))
     history = []
     started = time.perf_counter()
