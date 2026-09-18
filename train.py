@@ -107,6 +107,14 @@ def training_loss(logits, targets, cfg):
 def load_initial_state(model, initial):
     assert abs(initial['mean']-model.mean)<1e-7 and abs(initial['std']-model.std)<1e-7
     state=dict(initial['state_dict'])
+    if getattr(model.net,'channels',1)>1:
+        old=state['net.embed.weight']
+        target=model.net.embed.weight
+        if old.shape!=target.shape:
+            assert old.shape==(target.shape[0],model.net.patch**2)
+            expanded=torch.zeros_like(target)
+            expanded[:,:old.shape[1]]=old
+            state['net.embed.weight']=expanded
     if getattr(model.net,'spatial_head',False):
         old=state['net.head.weight']
         target=model.net.head.weight

@@ -1,0 +1,20 @@
+{
+  "model": "mixer",
+  "patch": 4,
+  "width": 192,
+  "depth": 8,
+  "dropout": 0.1,
+  "epochs": 30,
+  "lr": 0.00005,
+  "decay": 0.01,
+  "schedule": true,
+  "augmentation": false,
+  "label_smoothing": 0,
+  "bf16": true,
+  "averages": true,
+  "grad_clip": 1,
+  "init": "accuracy_wide_clean_swa",
+  "name": "features_contrast",
+  "image_features": "contrast",
+  "hypothesis": "Matched 30-epoch clean refinement from the same wide SWA parent. contrast: retain grayscale; edges add signed central differences, contrast additionally adds grayscale minus replicate-padded 3x3 mean. Identical seed and training budget; new input weights start at zero. Select on validation, without accessing test."
+}

@@ -1,5 +1,19 @@
 import torch
 from torch import nn
+from torch.nn import functional as F
+
+def image_features(x, mode):
+    """Fixed signed derivatives and local contrast; keep original grayscale."""
+    if mode=='gray':
+        return x
+    assert mode in ('edges','contrast')
+    padded=F.pad(x,(1,1,1,1),mode='replicate')
+    gx=(padded[:,:,1:-1,2:]-padded[:,:,1:-1,:-2])*.5
+    gy=(padded[:,:,2:,1:-1]-padded[:,:,:-2,1:-1])*.5
+    channels=[x,gx,gy]
+    if mode=='contrast':
+        channels.append(x-F.avg_pool2d(padded,3,stride=1))
+    return torch.cat(channels,dim=1)
 
 class ResidualBlock(nn.Module):
     def __init__(self,width,activation,norm,dropout):
@@ -64,7 +78,13 @@ class MLPMixer(nn.Module):
         self.patch=cfg.get('patch',4)
         assert 28%self.patch==0
         width=cfg['width']; tokens=(28//self.patch)**2
+        self.image_features=cfg.get('image_features','gray')
+        self.channels={'gray':1,'edges':3,'contrast':4}[self.image_features]
         self.embed=nn.Linear(self.patch**2,width)
+        if self.channels>1:
+            # Consume the same initialization RNG as the grayscale control.
+            with torch.random.fork_rng(devices=[]):
+                self.embed=nn.Linear(self.patch**2*self.channels,width)
         hidden=cfg.get('channel_hidden',2*width)
         self.blocks=nn.Sequential(*[MixerBlock(tokens,width,hidden,cfg['dropout']) for _ in range(cfg['depth'])])
         self.norm=nn.LayerNorm(width)
@@ -73,7 +93,8 @@ class MLPMixer(nn.Module):
 
     def forward(self,x):
         n=len(x); p=self.patch; side=28//p
-        x=x.reshape(n,1,side,p,side,p).permute(0,2,4,1,3,5).reshape(n,side*side,p*p)
+        x=image_features(x,self.image_features)
+        x=x.reshape(n,self.channels,side,p,side,p).permute(0,2,4,1,3,5).reshape(n,side*side,self.channels*p*p)
         x=self.norm(self.blocks(self.embed(x)))
         return self.head(x.flatten(1) if self.spatial_head else x.mean(1))
 

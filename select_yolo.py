@@ -12,8 +12,9 @@ from train import OUT, SEED, load_data
 
 
 @torch.inference_mode()
-def run(stems):
-    reference_path=OUT/'yolo_reference.json'
+def run(stems,prefix='yolo'):
+    assert prefix in ('yolo','features')
+    reference_path=OUT/f'{prefix}_reference.json'
     if not reference_path.exists():
         reference_path.write_text((OUT/'final_recipe.json').read_text())
     reference=json.loads(reference_path.read_text())
@@ -92,10 +93,10 @@ def run(stems):
                   rule='Guard both validation half counts and Shirt F1; rank correct count, average MACs, parameters, NLL. Fixed gate; one best raw checkpoint per family, views 1/10/30, additions 0.1/0.2/0.35 or replacement of either non-gate member.',
                   benchmark_status='Exploratory continuation on a previously observed public test benchmark.',
                   validation_execution=execution)
-    (OUT/'yolo_recipe.json').write_text(json.dumps(chosen,indent=2))
-    (OUT/'yolo_summary.json').write_text(json.dumps(dict(complete=True,families=summary,reference_correct=base['correct'],selected_correct=chosen['correct'],candidate_count=len(rows),selected_components=chosen['components'],frozen_at=chosen['frozen_at']),indent=2))
-    pd.DataFrame([{**{k:v for k,v in r.items() if k not in ('components','cascade')},'components':json.dumps(r['components'])} for r in rows]).to_csv(OUT/'yolo_candidates.csv',index=False)
-    torch.save(actual,OUT/'yolo_validation.pt')
+    (OUT/f'{prefix}_recipe.json').write_text(json.dumps(chosen,indent=2))
+    (OUT/f'{prefix}_summary.json').write_text(json.dumps(dict(complete=True,families=summary,reference_correct=base['correct'],selected_correct=chosen['correct'],candidate_count=len(rows),selected_components=chosen['components'],frozen_at=chosen['frozen_at']),indent=2))
+    pd.DataFrame([{**{k:v for k,v in r.items() if k not in ('components','cascade')},'components':json.dumps(r['components'])} for r in rows]).to_csv(OUT/f'{prefix}_candidates.csv',index=False)
+    torch.save(actual,OUT/f'{prefix}_validation.pt')
     print(json.dumps(chosen,indent=2),flush=True)
 
 
