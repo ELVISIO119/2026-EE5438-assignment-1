@@ -193,3 +193,31 @@ Validation accuracy 93.40% at epoch 174. Same training trajectory as the ordinar
 ### 2026-09-18T10:04:18.879379+00:00 - accuracy_p2 SWA
 
 Validation accuracy 93.50% at epoch 145. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/accuracy_p2_swa.json`.
+
+## 2026-09-18T10:11:51.463921+00:00 — accuracy_wide
+
+Hypothesis: Accuracy-first capacity trial: wider and deeper dense Mixer, with geometry, global gradient-norm clipping at 1 and longer training. This compares complete recipes, not a one-factor architectural effect; validation only selects weights and averaging.
+
+Measured validation accuracy: 93.47%; checkpoint epoch 101; 1,297,746 parameters; 77,222,784 dense MACs/image; 450.1s training/validation wall time. Configuration and every epoch: `results/accuracy_wide.json`. Test set not evaluated.
+
+### 2026-09-18T10:11:51.463921+00:00 - accuracy_wide EMA
+
+Validation accuracy 93.78% at epoch 102. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/accuracy_wide_ema.json`.
+
+### 2026-09-18T10:11:51.463921+00:00 - accuracy_wide SWA
+
+Validation accuracy 93.30% at epoch 172. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/accuracy_wide_swa.json`.
+
+## 2026-09-18T10:13:01.790854+00:00 — accuracy_muon_refine
+
+Hypothesis: Refine the validation-selected Muon-trained Mixer using AdamW, unsmoothed labels and continued mild geometry. EMA/SWA are measured along the same trajectory. Retain augmentation to reduce the overfitting seen in clean fine-tuning.
+
+Measured validation accuracy: 93.85%; checkpoint epoch 2; 478,640 parameters; 29,003,008 dense MACs/image; 67.9s training/validation wall time. Configuration and every epoch: `results/accuracy_muon_refine.json`. Test set not evaluated in this run.
+
+### 2026-09-18T10:13:01.790854+00:00 - accuracy_muon_refine EMA
+
+Validation accuracy 93.80% at epoch 10. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/accuracy_muon_refine_ema.json`.
+
+### 2026-09-18T10:13:01.790854+00:00 - accuracy_muon_refine SWA
+
+Validation accuracy 93.70% at epoch 34. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/accuracy_muon_refine_swa.json`.
