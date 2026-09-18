@@ -1,5 +1,13 @@
 # Experiment journal
 
+## 2026-09-18 — PIL-inspired ridge readouts (feature/29-pil-ridge-heads)
+
+Froze all feature-extractor weights in the three selected ensemble members. On 54,000 training images, extracted the BF16 features actually entering each classifier and solved centered ridge regression to ten-class one-hot targets using CPU float64 thin SVD. The intercept is unpenalized; lambda zero is a thresholded pseudoinverse. Tested eight fixed lambdas (0, 1e-6, 1e-5, 1e-4, 1e-3, 0.01, 0.1, 1), selected by actual BF16 validation correct count then NLL. A rank-deficient numerical self-check agrees with augmented least squares; cached classifier evaluation is bitwise identical to the full model, and every non-head checkpoint tensor remains exactly unchanged.
+
+Single-view validation correct counts: wide 5,642 -> 5,651 (94.1833%, lambda 1e-4), fine-patch 5,631 -> 5,634 (93.90%, lambda 0.1), pruned 5,622 -> 5,622 (93.70%, lambda 0.01). Wide-model Shirt F1 slightly decreased despite the overall gain. These are small single-split observations, not significant generalization claims. Each head keeps the same dimensions, parameters and dense MACs. The feature extractors still required their original gradient-based training; this is not full-network PIL reproduction or training from scratch in one step.
+
+Calibrated each refitted member on validation after its original TTA views using temperatures [0.05, 0.1, 0.2, 0.5, 1, 2]; all selected 0.1. Compared the original cascade, three standalone refits, nine additions and three combinations replacing non-gate members (16 deployment candidates). The original gate remains unchanged and shares the original wide member. Added models are conservatively counted/executed as complete extra backbones. Original cascade: 5,721 correct; best non-reference candidate: 5,710. Original recipe and 94.42% historical test outcome are retained, with no test-driven selection. Evidence: `results/pil_experiment.json`, `results/pil_candidates.csv`, `results/pil_recipe.json`; exact timings and timestamps are in JSON.
+
 ## 2026-09-18 — Detector-inspired experiment integration
 
 The updated portable notebook includes all four architecture comparisons, training/refinement configurations, the bounded validation selector, and a new accuracy-versus-MAC figure. All 91 saved checkpoints and the original cascade were re-evaluated successfully; the final recipe is unchanged. Default Run All executed successfully with eight figures, and the two-file ZIP passed the submission/credential checks. The pre-experiment ZIP remains in `archives/Assign01_Cai_Haochen_58561440_before_yolo.zip`. The typed Section A PDF still requires replacement with the student's genuine handwritten scan.
