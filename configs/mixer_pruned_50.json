@@ -1,0 +1,19 @@
+{
+  "name": "mixer_pruned_50",
+  "model": "mixer",
+  "patch": 4,
+  "width": 128,
+  "depth": 6,
+  "dropout": 0.05,
+  "epochs": 25,
+  "lr": 0.0001,
+  "decay": 0.01,
+  "schedule": true,
+  "augmentation": false,
+  "label_smoothing": 0.0,
+  "bf16": true,
+  "hypothesis": "Physically retain 50% of channel-MLP neurons ranked by incoming/outgoing weight norms, then clean fine-tune. Compare pre- and post-fine-tuning validation accuracy and real matrix dimensions. Source: mixer_adamw.",
+  "channel_hidden": 128,
+  "init": "mixer_pruned_50_initial",
+  "optimizer": "adamw"
+}
