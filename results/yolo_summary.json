@@ -1,0 +1,104 @@
+{
+  "complete": true,
+  "families": [
+    {
+      "family": "yolo_pyramid_control",
+      "selected_checkpoint": "yolo_pyramid_control_clean",
+      "available_checkpoints": [
+        "yolo_pyramid_control",
+        "yolo_pyramid_control_ema",
+        "yolo_pyramid_control_swa",
+        "yolo_pyramid_control_clean",
+        "yolo_pyramid_control_clean_ema",
+        "yolo_pyramid_control_clean_swa"
+      ],
+      "accuracy": 0.935,
+      "correct": 5610,
+      "shirt_recall": 0.7933333333333333,
+      "shirt_f1": 0.8171673819742489,
+      "parameters": 826153,
+      "macs": 68717952
+    },
+    {
+      "family": "yolo_pyramid_fusion",
+      "selected_checkpoint": "yolo_pyramid_fusion_clean",
+      "available_checkpoints": [
+        "yolo_pyramid_fusion",
+        "yolo_pyramid_fusion_ema",
+        "yolo_pyramid_fusion_swa",
+        "yolo_pyramid_fusion_clean",
+        "yolo_pyramid_fusion_clean_ema",
+        "yolo_pyramid_fusion_clean_swa"
+      ],
+      "accuracy": 0.933,
+      "correct": 5598,
+      "shirt_recall": 0.7966666666666666,
+      "shirt_f1": 0.8101694915254237,
+      "parameters": 827305,
+      "macs": 68718912
+    },
+    {
+      "family": "yolo_pyramid_aux",
+      "selected_checkpoint": "yolo_pyramid_aux_clean",
+      "available_checkpoints": [
+        "yolo_pyramid_aux",
+        "yolo_pyramid_aux_ema",
+        "yolo_pyramid_aux_swa",
+        "yolo_pyramid_aux_clean",
+        "yolo_pyramid_aux_clean_ema",
+        "yolo_pyramid_aux_clean_swa"
+      ],
+      "accuracy": 0.932,
+      "correct": 5592,
+      "shirt_recall": 0.795,
+      "shirt_f1": 0.8084745762711865,
+      "parameters": 827305,
+      "macs": 68718912
+    },
+    {
+      "family": "yolo_pyramid_csp",
+      "selected_checkpoint": "yolo_pyramid_csp_clean_ema",
+      "available_checkpoints": [
+        "yolo_pyramid_csp",
+        "yolo_pyramid_csp_ema",
+        "yolo_pyramid_csp_swa",
+        "yolo_pyramid_csp_clean",
+        "yolo_pyramid_csp_clean_ema",
+        "yolo_pyramid_csp_clean_swa"
+      ],
+      "accuracy": 0.9333333333333333,
+      "correct": 5600,
+      "shirt_recall": 0.7916666666666666,
+      "shirt_f1": 0.8023648648648649,
+      "parameters": 550393,
+      "macs": 47042880
+    }
+  ],
+  "reference_correct": 5721,
+  "selected_correct": 5721,
+  "candidate_count": 77,
+  "selected_components": [
+    {
+      "name": "accuracy_wide_clean_swa",
+      "views": 10,
+      "temperature": 1.5,
+      "weight": 0.325,
+      "sha256": "0aa9d82bef91689cc3b4b76c97b385153e325887adf376d641f082358aabea0f"
+    },
+    {
+      "name": "accuracy_p2_clean_swa",
+      "views": 30,
+      "temperature": 1.25,
+      "weight": 0.325,
+      "sha256": "31e66eb705618c067df9d65c5a5cb991addbb4f567a7c5dbab408f87859d6227"
+    },
+    {
+      "name": "mixer_pruned_75",
+      "views": 10,
+      "temperature": 1.0,
+      "weight": 0.35,
+      "sha256": "c0b7eafe5070b3985442bfdf729ab2955c7340a172dc5b817150cc02771d5f53"
+    }
+  ],
+  "frozen_at": "2026-09-18T11:57:52.425576+00:00"
+}
