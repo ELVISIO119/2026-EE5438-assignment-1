@@ -94,7 +94,7 @@ Muon/AdamW reaches 91.43%, versus 91.10% for the matched AdamW configuration, bu
 
 The Mixer trial uses 120 instead of 40 epochs and adds label smoothing while removing Mixup. It tests a complete architecture/training recipe, not a causal architecture-only effect. Its 478,640 parameters are fewer than the residual model's, but its 29,003,008 dense MACs per image are substantially higher because weights are reused across tokens. Report both costs.
 
-## Final evaluation record
+## Initial frozen evaluation record
 
 The validation-only search froze `mixer_average:4 + mixer_average_swa:4 + mixer_muon:4` at 2026-09-18T08:28:40Z. It selected 5,680/6,000 validation examples correctly (94.67%) under the prespecified accuracy-first rule. Each of the three checkpoints was hash-checked before reading test labels.
 
