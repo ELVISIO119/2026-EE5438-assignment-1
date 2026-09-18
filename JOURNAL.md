@@ -349,3 +349,63 @@ Validation accuracy 93.70% at epoch 25. Same training trajectory as the ordinary
 ## 2026-09-18T10:36:42.903406+00:00 - Garment refinement and scoring-rule selection
 
 Validation: 5717 -> 5717/6000 correct; Shirt F1 0.859589 -> 0.859589. Dense MACs/image 3,183,978,880 -> 3,183,978,880. Searched 583 recorded recipes; accuracy ranks first, with lower MACs/parameters breaking ties. Both validation halves and Shirt F1 were guarded. No new test evaluation was used for this selection. Evidence: `results/garment_recipe.json`, `results/garment_candidates.csv`.
+
+## 2026-09-18T10:44:23.902436+00:00 — spatial_wide
+
+Hypothesis: Replace mean pooling with a location-specific linear classifier, initialized to reproduce the old mean-pooled classifier. Matched to accuracy_wide_clean except this spatial readout; learn neckline/sleeve/body distinctions without CNN or attention.
+
+Measured validation accuracy: 93.88%; checkpoint epoch 18; 1,389,906 parameters; 77,314,944 dense MACs/image; 71.6s training/validation wall time. Configuration and every epoch: `results/spatial_wide.json`. Test set not evaluated in this run.
+
+### 2026-09-18T10:44:23.902436+00:00 - spatial_wide EMA
+
+Validation accuracy 93.93% at epoch 6. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/spatial_wide_ema.json`.
+
+### 2026-09-18T10:44:23.902436+00:00 - spatial_wide SWA
+
+Validation accuracy 93.72% at epoch 27. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/spatial_wide_swa.json`.
+
+## 2026-09-18T10:45:30.841363+00:00 — spatial_p2
+
+Hypothesis: Matched to accuracy_p2_clean except a spatial linear readout initialized from repeated average-pooling classifier weights. Test whether retaining fine patch positions improves garment discrimination.
+
+Measured validation accuracy: 93.72%; checkpoint epoch 16; 717,058 parameters; 72,516,864 dense MACs/image; 64.5s training/validation wall time. Configuration and every epoch: `results/spatial_p2.json`. Test set not evaluated in this run.
+
+### 2026-09-18T10:45:30.841363+00:00 - spatial_p2 EMA
+
+Validation accuracy 93.78% at epoch 8. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/spatial_p2_ema.json`.
+
+### 2026-09-18T10:45:30.841363+00:00 - spatial_p2 SWA
+
+Validation accuracy 93.72% at epoch 26. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/spatial_p2_swa.json`.
+
+## 2026-09-18T10:46:23.472102+00:00 — spatial_pruned
+
+Hypothesis: Add a spatial readout to the compact pruned model and clean fine-tune. This is an architecture-plus-extra-training recipe trial; compare with spatial_pruned_garment for the isolated auxiliary-loss effect.
+
+Measured validation accuracy: 93.67%; checkpoint epoch 2; 441,392 parameters; 24,247,552 dense MACs/image; 50.2s training/validation wall time. Configuration and every epoch: `results/spatial_pruned.json`. Test set not evaluated in this run.
+
+### 2026-09-18T10:46:23.472102+00:00 - spatial_pruned EMA
+
+Validation accuracy 93.62% at epoch 2. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/spatial_pruned_ema.json`.
+
+### 2026-09-18T10:46:23.472102+00:00 - spatial_pruned SWA
+
+Validation accuracy 93.37% at epoch 25. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/spatial_pruned_swa.json`.
+
+## 2026-09-18T10:47:17.290909+00:00 — spatial_pruned_garment
+
+Hypothesis: Matched to spatial_pruned except auxiliary garment conditional cross-entropy. Retain all ten training classes during targeted post-training to avoid forgetting other categories.
+
+Measured validation accuracy: 93.67%; checkpoint epoch 1; 441,392 parameters; 24,247,552 dense MACs/image; 51.2s training/validation wall time. Configuration and every epoch: `results/spatial_pruned_garment.json`. Test set not evaluated in this run.
+
+### 2026-09-18T10:47:17.290909+00:00 - spatial_pruned_garment EMA
+
+Validation accuracy 93.62% at epoch 1. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/spatial_pruned_garment_ema.json`.
+
+### 2026-09-18T10:47:17.290909+00:00 - spatial_pruned_garment SWA
+
+Validation accuracy 93.43% at epoch 26. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/spatial_pruned_garment_swa.json`.
+
+## 2026-09-18T10:47:58.530022+00:00 - Spatial refinement and scoring-rule selection
+
+Validation: 5717 -> 5717/6000 correct; Shirt F1 0.859589 -> 0.859589. Dense MACs/image 3,183,978,880 -> 3,183,978,880. Searched 583 recorded recipes; accuracy ranks first, with lower MACs/parameters breaking ties. Both validation halves and Shirt F1 were guarded. No new test evaluation was used for this selection. Evidence: `results/spatial_recipe.json`, `results/spatial_candidates.csv`.

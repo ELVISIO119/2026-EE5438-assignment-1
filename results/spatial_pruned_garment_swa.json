@@ -1,0 +1,67 @@
+{
+  "config": {
+    "name": "spatial_pruned_garment",
+    "model": "mixer",
+    "patch": 4,
+    "width": 128,
+    "depth": 6,
+    "channel_hidden": 192,
+    "dropout": 0.05,
+    "epochs": 30,
+    "lr": 5e-05,
+    "decay": 0.01,
+    "schedule": true,
+    "augmentation": false,
+    "label_smoothing": 0.0,
+    "bf16": true,
+    "averages": true,
+    "init": "mixer_pruned_75",
+    "spatial_head": true,
+    "garment_loss_weight": 0.5,
+    "hypothesis": "Matched to spatial_pruned except auxiliary garment conditional cross-entropy. Retain all ten training classes during targeted post-training to avoid forgetting other categories."
+  },
+  "seed": 58561440,
+  "parameters": 441392,
+  "macs": 24247552,
+  "best_epoch": 26,
+  "val_accuracy": 0.934333324432373,
+  "val_loss": 0.34113597869873047,
+  "history": [
+    {
+      "epoch": 25,
+      "val_loss": 0.34085407853126526,
+      "val_accuracy": 0.9340000152587891
+    },
+    {
+      "epoch": 26,
+      "val_loss": 0.34113597869873047,
+      "val_accuracy": 0.934333324432373
+    },
+    {
+      "epoch": 27,
+      "val_loss": 0.3416459560394287,
+      "val_accuracy": 0.9338333010673523
+    },
+    {
+      "epoch": 28,
+      "val_loss": 0.3422718048095703,
+      "val_accuracy": 0.9334999918937683
+    },
+    {
+      "epoch": 29,
+      "val_loss": 0.34276196360588074,
+      "val_accuracy": 0.9333333373069763
+    },
+    {
+      "epoch": 30,
+      "val_loss": 0.3427812159061432,
+      "val_accuracy": 0.9334999918937683
+    }
+  ],
+  "seconds": 51.151197504252195,
+  "complete": true,
+  "gradient_evaluations": 12660,
+  "completed_at": "2026-09-18T10:47:17.290909+00:00",
+  "averaging": "swa",
+  "shared_training_run": "spatial_pruned_garment"
+}
