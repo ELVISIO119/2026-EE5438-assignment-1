@@ -12,6 +12,11 @@ from evaluation import load_model,probabilities,probability_metrics,digest
 
 
 def select(accuracy_first=False):
+    if accuracy_first:
+        for path in Path('configs').glob('accuracy_*.json'):
+            cfg=json.loads(path.read_text())
+            result=json.loads((OUT/f"{cfg['name']}.json").read_text())
+            assert result.get('complete'), f"Finish {cfg['name']} before accuracy-first selection."
     rows=[]
     for path in sorted(OUT.glob('*.json')):
         result=json.loads(path.read_text())
