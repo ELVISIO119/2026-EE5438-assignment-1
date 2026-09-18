@@ -1,5 +1,9 @@
 # Experiment journal
 
+## 2026-09-18 — Input processing follow-up (feature/21-image-processing)
+
+Compared six prespecified pipelines using the same frozen cascade and all 6,000 validation images. Original: 5,721 correct (95.35%); gamma 0.95: 5,713; gamma 1.05: 5,716; intensity gain 0.95: 5,702; intensity gain 1.05: 5,689; center-of-intensity alignment bounded to half a pixel: 5,631. Neither validation accuracy nor Shirt F1 improved. All transformations precede the existing geometric TTA; the intensity-gain trials are multiplicative brightness/contrast adjustments with a fixed zero background. No candidate was adopted and no test labels were accessed. Evidence and actual timestamps: `results/image_processing.json`. The executable includes a direction/blank-image check for the alignment operation.
+
 ## Accuracy-first extension — objective set before new experiments
 
 The final objective is now validation accuracy without a parameter or MAC budget. Retain the existing 54,000/6,000 stratified split and assignment seed. Add a finer-patch Mixer, a wider/deeper Mixer, augmented refinement of the Muon-trained Mixer, and a larger flat-input residual MLP. Compare ordinary, EMA and SWA checkpoints. Expand deterministic inference to 10 and 18 views, including flips and both image axes. Select ensembles on validation data, tie-breaking by validation negative log-likelihood, with no compute penalty.
