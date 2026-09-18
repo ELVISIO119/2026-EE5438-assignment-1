@@ -1,5 +1,15 @@
 # Experiment journal
 
+## Accuracy-first extension — objective set before new experiments
+
+The final objective is now validation accuracy without a parameter or MAC budget. Retain the existing 54,000/6,000 stratified split and assignment seed. Add a finer-patch Mixer, a wider/deeper Mixer, augmented refinement of the Muon-trained Mixer, and a larger flat-input residual MLP. Compare ordinary, EMA and SWA checkpoints. Expand deterministic inference to 10 and 18 views, including flips and both image axes. Select ensembles on validation data, tie-breaking by validation negative log-likelihood, with no compute penalty.
+
+The public benchmark has already been evaluated in this project. This is an exploratory continuation, not a newly blinded test. Existing test scores are historical context only; new candidate fitting, selection and stopping decisions use training/validation evidence. Freeze the new recipe before its test evaluation, and do not use that result to revise it. The previous delivery remains recoverable in Git and in a local archive.
+
+### Inference-view check while new models train
+
+Using the fixed `mixer_muon` checkpoint, 4 views yield 5,645/6,000 validation correct (94.08%), 10 views yield 5,663 (94.38%), and 18 views yield 5,661 (94.35%). Thus, the expanded view search has a measured benefit, but more views are not monotonically better. The final search will compare all predefined view settings rather than automatically using the most expensive one. A synthetic impulse check confirms that the 10 and 18 views are distinct zero-padded translations/flips, and a complementary-error check validates convex ensemble weighting.
+
 ## Project setup
 
 Objective: improve Fashion-MNIST classification using only MLPs while keeping a clear record of architecture, optimizer, regularization and inference costs.
@@ -169,3 +179,87 @@ Measured validation accuracy: 90.68%; checkpoint epoch 17; 994,314 parameters; 9
 ## 2026-09-18T08:28:40.312871+00:00 - Freeze final recipe
 
 Selected `mixer_average:4 + mixer_average_swa:4 + mixer_muon:4` from 31 validation-only candidates: 5680/6000 correct (94.67%). Total stored parameters 1,435,920; dense MACs/image 348,036,096, including all members and views. Checkpoint hashes and the selection rule are in `results/final_recipe.json`. No test labels were loaded by selection.
+
+## 2026-09-18T10:04:18.879379+00:00 — accuracy_p2
+
+Hypothesis: Accuracy-first extension: finer two-pixel patches retain spatial detail and diversify the four-pixel Mixer. Train from scratch with a longer budget and compare ordinary/EMA/SWA validation checkpoints. Cost is measured but not a selection penalty.
+
+Measured validation accuracy: 93.50%; checkpoint epoch 145; 529,858 parameters; 72,329,664 dense MACs/image; 400.1s training/validation wall time. Configuration and every epoch: `results/accuracy_p2.json`. Test set not evaluated.
+
+### 2026-09-18T10:04:18.879379+00:00 - accuracy_p2 EMA
+
+Validation accuracy 93.40% at epoch 174. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/accuracy_p2_ema.json`.
+
+### 2026-09-18T10:04:18.879379+00:00 - accuracy_p2 SWA
+
+Validation accuracy 93.50% at epoch 145. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/accuracy_p2_swa.json`.
+
+## 2026-09-18T10:11:51.463921+00:00 — accuracy_wide
+
+Hypothesis: Accuracy-first capacity trial: wider and deeper dense Mixer, with geometry, global gradient-norm clipping at 1 and longer training. This compares complete recipes, not a one-factor architectural effect; validation only selects weights and averaging.
+
+Measured validation accuracy: 93.47%; checkpoint epoch 101; 1,297,746 parameters; 77,222,784 dense MACs/image; 450.1s training/validation wall time. Configuration and every epoch: `results/accuracy_wide.json`. Test set not evaluated.
+
+### 2026-09-18T10:11:51.463921+00:00 - accuracy_wide EMA
+
+Validation accuracy 93.78% at epoch 102. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/accuracy_wide_ema.json`.
+
+### 2026-09-18T10:11:51.463921+00:00 - accuracy_wide SWA
+
+Validation accuracy 93.30% at epoch 172. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/accuracy_wide_swa.json`.
+
+## 2026-09-18T10:13:01.790854+00:00 — accuracy_muon_refine
+
+Hypothesis: Refine the validation-selected Muon-trained Mixer using AdamW, unsmoothed labels and continued mild geometry. EMA/SWA are measured along the same trajectory. Retain augmentation to reduce the overfitting seen in clean fine-tuning.
+
+Measured validation accuracy: 93.85%; checkpoint epoch 2; 478,640 parameters; 29,003,008 dense MACs/image; 67.9s training/validation wall time. Configuration and every epoch: `results/accuracy_muon_refine.json`. Test set not evaluated in this run.
+
+### 2026-09-18T10:13:01.790854+00:00 - accuracy_muon_refine EMA
+
+Validation accuracy 93.80% at epoch 10. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/accuracy_muon_refine_ema.json`.
+
+### 2026-09-18T10:13:01.790854+00:00 - accuracy_muon_refine SWA
+
+Validation accuracy 93.70% at epoch 34. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/accuracy_muon_refine_swa.json`.
+
+## 2026-09-18T10:14:58.859333+00:00 — accuracy_residual
+
+Hypothesis: Train a larger flat-input residual SwiGLU MLP as a structurally different ensemble candidate. Accuracy-first selection may benefit from complementary errors, even when standalone accuracy is lower; no convolution or attention.
+
+Measured validation accuracy: 91.93%; checkpoint epoch 115; 10,066,698 parameters; 10,046,976 dense MACs/image; 114.6s training/validation wall time. Configuration and every epoch: `results/accuracy_residual.json`. Test set not evaluated in this run.
+
+### 2026-09-18T10:14:58.859333+00:00 - accuracy_residual EMA
+
+Validation accuracy 91.87% at epoch 84. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/accuracy_residual_ema.json`.
+
+### 2026-09-18T10:14:58.859333+00:00 - accuracy_residual SWA
+
+Validation accuracy 91.80% at epoch 120. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/accuracy_residual_swa.json`.
+
+## 2026-09-18T10:16:18.307306+00:00 — accuracy_p2_clean
+
+Hypothesis: Following the measured gain from clean fine-tuning in the four-pixel Mixer, test clean unsmoothed fine-tuning of the new finer-patch model with a smaller learning rate. Compare ordinary/EMA/SWA and retain the original checkpoint as a candidate; improvement is not assumed.
+
+Measured validation accuracy: 93.95%; checkpoint epoch 10; 529,858 parameters; 72,329,664 dense MACs/image; 63.9s training/validation wall time. Configuration and every epoch: `results/accuracy_p2_clean.json`. Test set not evaluated in this run.
+
+### 2026-09-18T10:16:18.307306+00:00 - accuracy_p2_clean EMA
+
+Validation accuracy 93.98% at epoch 13. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/accuracy_p2_clean_ema.json`.
+
+### 2026-09-18T10:16:18.307306+00:00 - accuracy_p2_clean SWA
+
+Validation accuracy 93.85% at epoch 28. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/accuracy_p2_clean_swa.json`.
+
+## 2026-09-18T10:17:32.750223+00:00 — accuracy_wide_clean
+
+Hypothesis: Test low-learning-rate clean fine-tuning of the wider Mixer after its augmented training. Compare ordinary/EMA/SWA on validation and preserve the parent checkpoint; this combined data/loss change is not an isolated causal ablation.
+
+Measured validation accuracy: 94.10%; checkpoint epoch 20; 1,297,746 parameters; 77,222,784 dense MACs/image; 72.0s training/validation wall time. Configuration and every epoch: `results/accuracy_wide_clean.json`. Test set not evaluated in this run.
+
+### 2026-09-18T10:17:32.750223+00:00 - accuracy_wide_clean EMA
+
+Validation accuracy 94.08% at epoch 17. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/accuracy_wide_clean_ema.json`.
+
+### 2026-09-18T10:17:32.750223+00:00 - accuracy_wide_clean SWA
+
+Validation accuracy 94.03% at epoch 26. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/accuracy_wide_clean_swa.json`.

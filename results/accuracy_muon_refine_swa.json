@@ -1,0 +1,74 @@
+{
+  "config": {
+    "name": "accuracy_muon_refine",
+    "model": "mixer",
+    "patch": 4,
+    "width": 128,
+    "depth": 6,
+    "dropout": 0.05,
+    "epochs": 40,
+    "lr": 8e-05,
+    "decay": 0.01,
+    "schedule": true,
+    "augmentation": true,
+    "label_smoothing": 0.0,
+    "bf16": true,
+    "init": "mixer_muon",
+    "averages": true,
+    "hypothesis": "Refine the validation-selected Muon-trained Mixer using AdamW, unsmoothed labels and continued mild geometry. EMA/SWA are measured along the same trajectory. Retain augmentation to reduce the overfitting seen in clean fine-tuning."
+  },
+  "seed": 58561440,
+  "parameters": 478640,
+  "macs": 29003008,
+  "best_epoch": 34,
+  "val_accuracy": 0.9369999766349792,
+  "val_loss": 0.21952910721302032,
+  "history": [
+    {
+      "epoch": 33,
+      "val_loss": 0.21935828030109406,
+      "val_accuracy": 0.9363332986831665
+    },
+    {
+      "epoch": 34,
+      "val_loss": 0.21952910721302032,
+      "val_accuracy": 0.9369999766349792
+    },
+    {
+      "epoch": 35,
+      "val_loss": 0.2195318192243576,
+      "val_accuracy": 0.9366666674613953
+    },
+    {
+      "epoch": 36,
+      "val_loss": 0.21951590478420258,
+      "val_accuracy": 0.9358333349227905
+    },
+    {
+      "epoch": 37,
+      "val_loss": 0.21948204934597015,
+      "val_accuracy": 0.9359999895095825
+    },
+    {
+      "epoch": 38,
+      "val_loss": 0.21948185563087463,
+      "val_accuracy": 0.9358333349227905
+    },
+    {
+      "epoch": 39,
+      "val_loss": 0.21957892179489136,
+      "val_accuracy": 0.9351666569709778
+    },
+    {
+      "epoch": 40,
+      "val_loss": 0.2195911705493927,
+      "val_accuracy": 0.9358333349227905
+    }
+  ],
+  "seconds": 67.91238013654947,
+  "complete": true,
+  "gradient_evaluations": 16880,
+  "completed_at": "2026-09-18T10:13:01.790854+00:00",
+  "averaging": "swa",
+  "shared_training_run": "accuracy_muon_refine"
+}
