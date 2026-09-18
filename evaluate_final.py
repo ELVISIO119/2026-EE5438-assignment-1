@@ -24,7 +24,10 @@ def evaluate_final():
         model=load_model(component['name'])
         predictions.append(probabilities(model,x,component['views']))
         del model
-    probs=torch.stack(predictions).mean(0)
+    weights=torch.tensor([c.get('weight',1.) for c in recipe['components']])
+    assert torch.isfinite(weights).all() and (weights>0).all()
+    weights=weights/weights.sum()
+    probs=(torch.stack(predictions)*weights[:,None,None]).sum(0)
     pred=probs.argmax(1)
     report=classification_report(y,pred,target_names=data.classes,output_dict=True,zero_division=0)
     scores=probability_metrics(probs,y)
