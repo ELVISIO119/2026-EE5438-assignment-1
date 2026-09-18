@@ -43,15 +43,17 @@ class Model(nn.Module):
     def __init__(self, cfg, mean, std):
         super().__init__()
         self.mean, self.std = mean, std
+        self.bf16=cfg.get('bf16',False)
         if cfg['model']=='baseline':
             self.net = nn.Sequential(nn.Flatten(), nn.Linear(784,128), nn.Sigmoid(),
                                      nn.Linear(128,64), nn.Sigmoid(), nn.Linear(64,10))
         else:
-            from models import ResidualMLP
-            self.net = ResidualMLP(cfg)
+            from models import ResidualMLP,MLPMixer
+            self.net = MLPMixer(cfg) if cfg['model']=='mixer' else ResidualMLP(cfg)
 
     def forward(self, x):
-        return self.net((x-self.mean)/self.std)
+        with torch.autocast(device_type=x.device.type,dtype=torch.bfloat16,enabled=self.bf16 and x.is_cuda):
+            return self.net((x-self.mean)/self.std).float()
 
 def model_cost(model):
     cost = [0]
@@ -117,6 +119,8 @@ def run(cfg):
             if cfg.get('augmentation'):
                 images=augment(images)
             targets=F.one_hot(labels,10).float()
+            smoothing=cfg.get('label_smoothing',0.)
+            targets=targets*(1-smoothing)+smoothing/10
             if cfg.get('mixup',0)>0:
                 lam=float(np.random.beta(cfg['mixup'],cfg['mixup']))
                 perm=torch.randperm(len(ids),device=DEVICE)
