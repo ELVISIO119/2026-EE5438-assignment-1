@@ -1,10 +1,12 @@
 """Fresh sigmoid/SGD reference run for EE5438 Assignment 1."""
 import copy, json, random, time
+from datetime import datetime, timezone
 from pathlib import Path
 import numpy as np
 import torch
 from torch import nn
 from torchvision.datasets import FashionMNIST
+from sklearn.model_selection import train_test_split
 
 SEED=58561440
 DEVICE=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -12,8 +14,10 @@ OUT=Path('results'); OUT.mkdir(exist_ok=True)
 random.seed(SEED); np.random.seed(SEED); torch.manual_seed(SEED)
 if DEVICE.type=='cuda': torch.cuda.manual_seed_all(SEED)
 raw=FashionMNIST('data',train=True,download=True)
-rng=np.random.default_rng(SEED); indices=rng.permutation(len(raw))
-val_idx, train_idx=indices[:6000], indices[6000:]
+train_idx,val_idx=train_test_split(np.arange(len(raw)),test_size=6000,stratify=raw.targets.numpy(),random_state=SEED)
+assert len(set(train_idx)&set(val_idx))==0
+assert np.array_equal(np.bincount(raw.targets[val_idx].numpy()),np.full(10,600))
+np.savez_compressed(OUT/'split_indices.npz',train=train_idx,validation=val_idx)
 x=raw.data.unsqueeze(1).float().div(255)
 mean=x[train_idx].mean(); std=x[train_idx].std()
 x_train=((x[train_idx]-mean)/std).to(DEVICE).flatten(1); y_train=raw.targets[train_idx].to(DEVICE)
@@ -35,5 +39,5 @@ for epoch in range(1,51):
     row={'epoch':epoch,'train_loss':loss_sum/seen,'train_accuracy':correct/seen,'val_loss':val_loss,'val_accuracy':val_acc,'seconds':time.perf_counter()-start}; history.append(row)
     if (val_acc,-val_loss)>(best[0],best[1] or -float('inf')): best=(val_acc,-val_loss,epoch); torch.save({'state_dict':copy.deepcopy(model.state_dict()),'seed':SEED,'mean':mean.item(),'std':std.item()},OUT/'baseline_sgd_sigmoid.pt')
     if epoch==1 or epoch%10==0: print(row,flush=True)
-result={'name':'baseline_sgd_sigmoid','seed':SEED,'device':str(DEVICE),'train_examples':len(train_idx),'validation_examples':len(val_idx),'best_epoch':best[2],'val_accuracy':best[0],'val_loss':-best[1],'history':history}
+result={'name':'baseline_sgd_sigmoid','seed':SEED,'device':str(DEVICE),'completed_at':datetime.now(timezone.utc).isoformat(),'train_examples':len(train_idx),'validation_examples':len(val_idx),'best_epoch':best[2],'val_accuracy':best[0],'val_loss':-best[1],'history':history}
 (OUT/'baseline_sgd_sigmoid.json').write_text(json.dumps(result,indent=2)); print(json.dumps({k:v for k,v in result.items() if k!='history'},indent=2))
