@@ -84,6 +84,22 @@ def evaluate(model, x, y):
     logits = torch.cat([model(b).float() for b in x.split(128)])
     return F.cross_entropy(logits, y).item(), (logits.argmax(1)==y).float().mean().item()
 
+def training_loss(logits, targets, cfg):
+    """Optional hard-example or upper-garment objectives; validation stays ordinary CE."""
+    losses=-(targets*F.log_softmax(logits,dim=1)).sum(1)
+    gamma=cfg.get('focal_gamma',0.)
+    if gamma:
+        assert gamma>0 and not cfg.get('mixup',0) and not cfg.get('label_smoothing',0)
+        losses=losses*(1-(targets*logits.softmax(1)).sum(1)).pow(gamma)
+    loss=losses.mean()
+    weight=cfg.get('garment_loss_weight',0.)
+    if weight:
+        assert weight>0
+        # Conditional CE discriminates garment classes without directly raising Shirt's prior.
+        group=[0,2,3,4,6]
+        loss=loss-weight*(targets[:,group]*F.log_softmax(logits[:,group],dim=1)).sum(1).mean()
+    return loss
+
 def run(cfg):
     OUT.mkdir(exist_ok=True)
     seed_all()
@@ -153,7 +169,7 @@ def run(cfg):
                 images=lam*images+(1-lam)*images[perm]
                 targets=lam*targets+(1-lam)*targets[perm]
             model.zero_grad(set_to_none=True)
-            logits=model(images); loss=F.cross_entropy(logits,targets)
+            logits=model(images); loss=training_loss(logits,targets,cfg)
             if teacher is not None:
                 temperature=cfg['temperature']
                 with torch.no_grad():
@@ -167,7 +183,7 @@ def run(cfg):
                 saved=perturb(model,cfg['rho'],cfg['sam']=='asam')
                 model.zero_grad(set_to_none=True)
                 try:
-                    F.cross_entropy(model(images),targets).backward()
+                    training_loss(model(images),targets,cfg).backward()
                 finally:
                     restore(saved)
             if cfg.get('grad_clip'):

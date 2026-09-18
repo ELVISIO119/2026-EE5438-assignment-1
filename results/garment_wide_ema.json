@@ -1,0 +1,186 @@
+{
+  "config": {
+    "name": "garment_wide",
+    "model": "mixer",
+    "patch": 4,
+    "width": 192,
+    "depth": 8,
+    "dropout": 0.1,
+    "epochs": 30,
+    "lr": 5e-05,
+    "decay": 0.01,
+    "schedule": true,
+    "augmentation": false,
+    "label_smoothing": 0.0,
+    "bf16": true,
+    "averages": true,
+    "grad_clip": 1.0,
+    "init": "accuracy_wide",
+    "garment_loss_weight": 0.5,
+    "hypothesis": "Matched to accuracy_wide_clean except an auxiliary conditional cross-entropy among T-shirt, Pullover, Dress, Coat and Shirt. Test whether training attention to garment distinctions improves validation without changing class priors."
+  },
+  "seed": 58561440,
+  "parameters": 1297746,
+  "macs": 77222784,
+  "best_epoch": 20,
+  "val_accuracy": 0.940833330154419,
+  "val_loss": 0.3141125440597534,
+  "history": [
+    {
+      "epoch": 1,
+      "val_loss": 0.21536004543304443,
+      "val_accuracy": 0.937666654586792
+    },
+    {
+      "epoch": 2,
+      "val_loss": 0.20647993683815002,
+      "val_accuracy": 0.9381666779518127
+    },
+    {
+      "epoch": 3,
+      "val_loss": 0.20486421883106232,
+      "val_accuracy": 0.937333345413208
+    },
+    {
+      "epoch": 4,
+      "val_loss": 0.20838327705860138,
+      "val_accuracy": 0.9399999976158142
+    },
+    {
+      "epoch": 5,
+      "val_loss": 0.21417675912380219,
+      "val_accuracy": 0.9386666417121887
+    },
+    {
+      "epoch": 6,
+      "val_loss": 0.22077389061450958,
+      "val_accuracy": 0.9391666650772095
+    },
+    {
+      "epoch": 7,
+      "val_loss": 0.2289872169494629,
+      "val_accuracy": 0.9386666417121887
+    },
+    {
+      "epoch": 8,
+      "val_loss": 0.23654881119728088,
+      "val_accuracy": 0.9390000104904175
+    },
+    {
+      "epoch": 9,
+      "val_loss": 0.24482427537441254,
+      "val_accuracy": 0.9398333430290222
+    },
+    {
+      "epoch": 10,
+      "val_loss": 0.2533581554889679,
+      "val_accuracy": 0.9394999742507935
+    },
+    {
+      "epoch": 11,
+      "val_loss": 0.26185205578804016,
+      "val_accuracy": 0.9396666288375854
+    },
+    {
+      "epoch": 12,
+      "val_loss": 0.26920822262763977,
+      "val_accuracy": 0.9386666417121887
+    },
+    {
+      "epoch": 13,
+      "val_loss": 0.27516934275627136,
+      "val_accuracy": 0.9390000104904175
+    },
+    {
+      "epoch": 14,
+      "val_loss": 0.27993738651275635,
+      "val_accuracy": 0.9399999976158142
+    },
+    {
+      "epoch": 15,
+      "val_loss": 0.28712213039398193,
+      "val_accuracy": 0.9396666288375854
+    },
+    {
+      "epoch": 16,
+      "val_loss": 0.29310816526412964,
+      "val_accuracy": 0.9398333430290222
+    },
+    {
+      "epoch": 17,
+      "val_loss": 0.29979562759399414,
+      "val_accuracy": 0.9394999742507935
+    },
+    {
+      "epoch": 18,
+      "val_loss": 0.3063583970069885,
+      "val_accuracy": 0.9386666417121887
+    },
+    {
+      "epoch": 19,
+      "val_loss": 0.31091544032096863,
+      "val_accuracy": 0.9388332962989807
+    },
+    {
+      "epoch": 20,
+      "val_loss": 0.3141125440597534,
+      "val_accuracy": 0.940833330154419
+    },
+    {
+      "epoch": 21,
+      "val_loss": 0.31615251302719116,
+      "val_accuracy": 0.9401666522026062
+    },
+    {
+      "epoch": 22,
+      "val_loss": 0.3195841610431671,
+      "val_accuracy": 0.9399999976158142
+    },
+    {
+      "epoch": 23,
+      "val_loss": 0.3225766122341156,
+      "val_accuracy": 0.9394999742507935
+    },
+    {
+      "epoch": 24,
+      "val_loss": 0.3244841396808624,
+      "val_accuracy": 0.9398333430290222
+    },
+    {
+      "epoch": 25,
+      "val_loss": 0.3263417184352875,
+      "val_accuracy": 0.9393333196640015
+    },
+    {
+      "epoch": 26,
+      "val_loss": 0.3262494206428528,
+      "val_accuracy": 0.9391666650772095
+    },
+    {
+      "epoch": 27,
+      "val_loss": 0.32705262303352356,
+      "val_accuracy": 0.9398333430290222
+    },
+    {
+      "epoch": 28,
+      "val_loss": 0.3269791603088379,
+      "val_accuracy": 0.9393333196640015
+    },
+    {
+      "epoch": 29,
+      "val_loss": 0.3276679515838623,
+      "val_accuracy": 0.9393333196640015
+    },
+    {
+      "epoch": 30,
+      "val_loss": 0.3276340365409851,
+      "val_accuracy": 0.9394999742507935
+    }
+  ],
+  "seconds": 74.03609405644238,
+  "complete": true,
+  "gradient_evaluations": 12660,
+  "completed_at": "2026-09-18T10:31:38.090198+00:00",
+  "averaging": "ema",
+  "shared_training_run": "garment_wide"
+}

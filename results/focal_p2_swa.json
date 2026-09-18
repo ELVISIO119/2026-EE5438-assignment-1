@@ -1,0 +1,65 @@
+{
+  "config": {
+    "name": "focal_p2",
+    "model": "mixer",
+    "patch": 2,
+    "width": 96,
+    "depth": 6,
+    "dropout": 0.05,
+    "epochs": 30,
+    "lr": 5e-05,
+    "decay": 0.01,
+    "schedule": true,
+    "augmentation": false,
+    "label_smoothing": 0.0,
+    "bf16": true,
+    "averages": true,
+    "init": "accuracy_p2",
+    "focal_gamma": 1.0,
+    "hypothesis": "Matched to accuracy_p2_clean except gamma-one focal loss. Test whether harder-example emphasis transfers to finer patches; select checkpoints using unchanged global validation accuracy and CE."
+  },
+  "seed": 58561440,
+  "parameters": 529858,
+  "macs": 72329664,
+  "best_epoch": 25,
+  "val_accuracy": 0.9369999766349792,
+  "val_loss": 0.23680804669857025,
+  "history": [
+    {
+      "epoch": 25,
+      "val_loss": 0.23680804669857025,
+      "val_accuracy": 0.9369999766349792
+    },
+    {
+      "epoch": 26,
+      "val_loss": 0.23707106709480286,
+      "val_accuracy": 0.9366666674613953
+    },
+    {
+      "epoch": 27,
+      "val_loss": 0.23726552724838257,
+      "val_accuracy": 0.9368333220481873
+    },
+    {
+      "epoch": 28,
+      "val_loss": 0.23730461299419403,
+      "val_accuracy": 0.9369999766349792
+    },
+    {
+      "epoch": 29,
+      "val_loss": 0.23740477859973907,
+      "val_accuracy": 0.9368333220481873
+    },
+    {
+      "epoch": 30,
+      "val_loss": 0.23742356896400452,
+      "val_accuracy": 0.9368333220481873
+    }
+  ],
+  "seconds": 64.33345017395914,
+  "complete": true,
+  "gradient_evaluations": 12660,
+  "completed_at": "2026-09-18T10:35:55.556835+00:00",
+  "averaging": "swa",
+  "shared_training_run": "focal_p2"
+}
