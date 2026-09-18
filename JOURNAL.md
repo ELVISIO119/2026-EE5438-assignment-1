@@ -1,5 +1,9 @@
 # Experiment journal
 
+## 2026-09-18 — Detector-inspired experiment integration
+
+The updated portable notebook includes all four architecture comparisons, training/refinement configurations, the bounded validation selector, and a new accuracy-versus-MAC figure. All 91 saved checkpoints and the original cascade were re-evaluated successfully; the final recipe is unchanged. Default Run All executed successfully with eight figures, and the two-file ZIP passed the submission/credential checks. The pre-experiment ZIP remains in `archives/Assign01_Cai_Haochen_58561440_before_yolo.zip`. The typed Section A PDF still requires replacement with the student's genuine handwritten scan.
+
 ## 2026-09-18T11:57:52.425576+00:00 — Detector-inspired MLP selection
 
 Completed four paired architecture recipes, each with 120 initial epochs plus 30 clean-refinement epochs (eight runs, 24 ordinary/EMA/SWA checkpoints). Best single-view validation results: coarse-only hierarchy 93.50%, fine/coarse feature fusion 93.30%, auxiliary-supervised fusion 93.20%, partial-channel fusion 93.3333%. Partial-channel processing reduced deployment parameters from 827,305 to 550,393 and MACs from 68,718,912 to 47,042,880 relative to full-channel fusion. This small observed accuracy difference does not establish a general advantage; Shirt F1 was lower. Auxiliary supervision added 970 training-only parameters, excluded from deployment checkpoints. Clean refinement recreated that auxiliary head because only deployment state was retained.

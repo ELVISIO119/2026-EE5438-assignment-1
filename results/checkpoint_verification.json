@@ -1,5 +1,5 @@
 {
-  "verified_at": "2026-09-18T10:49:28.136679+00:00",
+  "verified_at": "2026-09-18T11:58:14.198822+00:00",
   "checks": [
     {
       "name": "accuracy_muon_refine",
@@ -469,9 +469,177 @@
       "parameters": 90525,
       "macs": 4867712,
       "sha256": "1350e2e4e8bf3fbb571fea6fd4e611908cf4c7e725967c51b702d04f75361443"
+    },
+    {
+      "name": "yolo_pyramid_aux",
+      "accuracy": 0.9245,
+      "parameters": 827305,
+      "macs": 68718912,
+      "sha256": "143a559ee5d36dab66f85a382a998490667e8fe2ca5ed8a0d553cb186f4970b3"
+    },
+    {
+      "name": "yolo_pyramid_aux_clean",
+      "accuracy": 0.932,
+      "parameters": 827305,
+      "macs": 68718912,
+      "sha256": "0cbd7736c4318ac9d491add91c61afc9e61482a4683cc8ccf2187aaef542849e"
+    },
+    {
+      "name": "yolo_pyramid_aux_clean_ema",
+      "accuracy": 0.9315,
+      "parameters": 827305,
+      "macs": 68718912,
+      "sha256": "ad6aeda932abd109d633d35d338badb826e9e0a779df1ebd7a289f4c11f5b5cf"
+    },
+    {
+      "name": "yolo_pyramid_aux_clean_swa",
+      "accuracy": 0.9303333333333333,
+      "parameters": 827305,
+      "macs": 68718912,
+      "sha256": "6dc5d4e099817fd68edf620784db27d099c2d340b8edcc9200109c00a230d854"
+    },
+    {
+      "name": "yolo_pyramid_aux_ema",
+      "accuracy": 0.927,
+      "parameters": 827305,
+      "macs": 68718912,
+      "sha256": "95ae6e10519c3adde64d0e36b4b5572a27bf8af6d1016f8028bb9b7cce8b40b1"
+    },
+    {
+      "name": "yolo_pyramid_aux_swa",
+      "accuracy": 0.9241666666666667,
+      "parameters": 827305,
+      "macs": 68718912,
+      "sha256": "e2e0fa728d9fa0038960cc8c90c91c8a120e7417d87b34dc129976b2811155c6"
+    },
+    {
+      "name": "yolo_pyramid_control",
+      "accuracy": 0.9301666666666667,
+      "parameters": 826153,
+      "macs": 68717952,
+      "sha256": "ece120853bdb9362d8c0ef0cadb6ddc8bbec6af432e7a7d039e8819ed1476a9a"
+    },
+    {
+      "name": "yolo_pyramid_control_clean",
+      "accuracy": 0.935,
+      "parameters": 826153,
+      "macs": 68717952,
+      "sha256": "823f5e03c0936d169742183549f3311d187f9acafbe7b23d9a37a04f446acf08"
+    },
+    {
+      "name": "yolo_pyramid_control_clean_ema",
+      "accuracy": 0.9343333333333333,
+      "parameters": 826153,
+      "macs": 68717952,
+      "sha256": "b5e8eaf7d1f0bb1f3bbace758616e31681eb8eb32909cf01ef92abd2f854f844"
+    },
+    {
+      "name": "yolo_pyramid_control_clean_swa",
+      "accuracy": 0.9315,
+      "parameters": 826153,
+      "macs": 68717952,
+      "sha256": "af62e7d47962fde711716fc78aa22e509bb558a45fade5a43ad3bcb891ff74da"
+    },
+    {
+      "name": "yolo_pyramid_control_ema",
+      "accuracy": 0.9298333333333333,
+      "parameters": 826153,
+      "macs": 68717952,
+      "sha256": "6669f197cb77f152da31e9486df9e7391c69afd287045e1d75455226102c68ce"
+    },
+    {
+      "name": "yolo_pyramid_control_swa",
+      "accuracy": 0.9306666666666666,
+      "parameters": 826153,
+      "macs": 68717952,
+      "sha256": "5ae1da8f6b921cabe47f8df86aa31a656b4b0ce0b7e845853a73ab39e15e51d0"
+    },
+    {
+      "name": "yolo_pyramid_csp",
+      "accuracy": 0.928,
+      "parameters": 550393,
+      "macs": 47042880,
+      "sha256": "fbb823b8a25d14240654a48efe21b0ef5df57fe9e212f7b389a06bed61f4fe84"
+    },
+    {
+      "name": "yolo_pyramid_csp_clean",
+      "accuracy": 0.933,
+      "parameters": 550393,
+      "macs": 47042880,
+      "sha256": "5218e99f06b6d4b8943e7fb19dd4bf119e5853bec059911114db4a929c276e7f"
+    },
+    {
+      "name": "yolo_pyramid_csp_clean_ema",
+      "accuracy": 0.9333333333333333,
+      "parameters": 550393,
+      "macs": 47042880,
+      "sha256": "542ae36eba72e145928c9112947c698d0af25b0646e1d0f934ee1eba75dbddba"
+    },
+    {
+      "name": "yolo_pyramid_csp_clean_swa",
+      "accuracy": 0.9266666666666666,
+      "parameters": 550393,
+      "macs": 47042880,
+      "sha256": "362c55b370db7e42df69ee6cb1fde76aab48b4dea4327743f15a8dc5a3da8978"
+    },
+    {
+      "name": "yolo_pyramid_csp_ema",
+      "accuracy": 0.9291666666666667,
+      "parameters": 550393,
+      "macs": 47042880,
+      "sha256": "19836fa1891d9deb580027a6fa00b510a8f34c9e0953e7ce8b4d9de91d32663e"
+    },
+    {
+      "name": "yolo_pyramid_csp_swa",
+      "accuracy": 0.9266666666666666,
+      "parameters": 550393,
+      "macs": 47042880,
+      "sha256": "0b5ee81804ed5e3ee00215ddb1cdc24cedfee465f53e762879d57a0b60fb2507"
+    },
+    {
+      "name": "yolo_pyramid_fusion",
+      "accuracy": 0.926,
+      "parameters": 827305,
+      "macs": 68718912,
+      "sha256": "8982910efcd8f787442759e8a5d49228426ee1d45ed0688bc7033392c43f8744"
+    },
+    {
+      "name": "yolo_pyramid_fusion_clean",
+      "accuracy": 0.933,
+      "parameters": 827305,
+      "macs": 68718912,
+      "sha256": "b85df462d574d167af86da9d2ea7a0cbdf1ec317482aaf3e088f75b752e17399"
+    },
+    {
+      "name": "yolo_pyramid_fusion_clean_ema",
+      "accuracy": 0.9326666666666666,
+      "parameters": 827305,
+      "macs": 68718912,
+      "sha256": "fb4f5d9a64354afed3e2dcc4b45249a1d8b5ab67f503f99b1f648751b99d85da"
+    },
+    {
+      "name": "yolo_pyramid_fusion_clean_swa",
+      "accuracy": 0.9311666666666667,
+      "parameters": 827305,
+      "macs": 68718912,
+      "sha256": "bdc2fcce6c50a12a539bb10d023f041138887bbb68f76fb893bfa6f3892f8eaf"
+    },
+    {
+      "name": "yolo_pyramid_fusion_ema",
+      "accuracy": 0.9283333333333333,
+      "parameters": 827305,
+      "macs": 68718912,
+      "sha256": "aec8d2dff9ddb8e810b3ad63a46ca02cda1162027ecedc1305ad3ff8d5049377"
+    },
+    {
+      "name": "yolo_pyramid_fusion_swa",
+      "accuracy": 0.927,
+      "parameters": 827305,
+      "macs": 68718912,
+      "sha256": "b45732b56a9429d98f8f123d0bd4955ead0078d0196c488c2a5d0c3c75d09d88"
     }
   ],
-  "check_count": 67,
+  "check_count": 91,
   "frozen_recipe": {
     "correct": 5721,
     "examples": 6000,
