@@ -89,6 +89,11 @@ def run(cfg):
     seed_all()
     x,y,vx,vy,mean,std = load_data()
     model = Model(cfg,mean,std).to(DEVICE)
+    if cfg.get('init'):
+        initial=torch.load(OUT/f"{cfg['init']}.pt",map_location=DEVICE,weights_only=True)
+        assert abs(initial['mean']-mean)<1e-7 and abs(initial['std']-std)<1e-7
+        model.load_state_dict(initial['state_dict'])
+        del initial
     params,macs = model_cost(model)
     hidden=[p for name,p in model.named_parameters() if '.blocks.' in name and p.ndim==2] if cfg.get('optimizer')=='muon' else []
     hidden_ids={id(p) for p in hidden}
@@ -103,6 +108,15 @@ def run(cfg):
     assert len(grouped)==len({id(p) for p in grouped})==len(list(model.parameters()))
     best = (-1.,-float('inf'))
     history = []
+    averages={}
+    if cfg.get('averages'):
+        from torch.optim.swa_utils import AveragedModel,get_ema_multi_avg_fn
+        assert not any(isinstance(m,nn.BatchNorm1d) for m in model.modules())
+        averages={'ema':AveragedModel(model,multi_avg_fn=get_ema_multi_avg_fn(.995)),
+                  'swa':AveragedModel(model)}
+    average_best={key:(-1.,-float('inf')) for key in averages}
+    average_history={key:[] for key in averages}
+    average_epochs={}
     started = time.perf_counter()
     for epoch in range(1,cfg['epochs']+1):
         model.train()
@@ -140,9 +154,22 @@ def run(cfg):
                     restore(saved)
             for optimizer in optimizers:
                 optimizer.step()
+            if averages:
+                averages['ema'].update_parameters(model)
             total_loss += loss.detach()*len(ids)
             correct += (logits.argmax(1)==y[ids]).sum()
         val_loss,val_acc = evaluate(model,vx,vy)
+        if averages and epoch>math.floor(.8*cfg['epochs']):
+            averages['swa'].update_parameters(model)
+        for key,average in averages.items():
+            if int(average.n_averaged)==0:
+                continue
+            av_loss,av_acc=evaluate(average,vx,vy)
+            average_history[key].append(dict(epoch=epoch,val_loss=av_loss,val_accuracy=av_acc))
+            if (av_acc,-av_loss)>average_best[key]:
+                average_best[key]=(av_acc,-av_loss)
+                average_epochs[key]=epoch
+                torch.save(dict(state_dict=average.module.state_dict(),config=cfg,mean=mean,std=std),OUT/f"{cfg['name']}_{key}.pt")
         row=dict(epoch=epoch,train_loss=total_loss.item()/len(x),train_accuracy=correct.item()/len(x),
                  val_loss=val_loss,val_accuracy=val_acc,lr=lr,seconds=time.perf_counter()-started)
         history.append(row)
@@ -165,6 +192,17 @@ def run(cfg):
                       f"Measured validation accuracy: {best[0]:.2%}; checkpoint epoch {best_epoch}; "
                       f"{params:,} parameters; {macs:,} dense MACs/image; {result['seconds']:.1f}s training/validation wall time. "
                       f"Configuration and every epoch: `results/{cfg['name']}.json`. Test set not evaluated.\n")
+    for key in averages:
+        averaged=dict(result,history=average_history[key],val_accuracy=average_best[key][0],
+                      val_loss=-average_best[key][1],best_epoch=average_epochs[key],
+                      averaging=key,shared_training_run=cfg['name'])
+        (OUT/f"{cfg['name']}_{key}.json").write_text(json.dumps(averaged,indent=2))
+        with Path('JOURNAL.md').open('a') as journal:
+            journal.write(f"\n### {result['completed_at']} - {cfg['name']} {key.upper()}\n\n"
+                          f"Validation accuracy {averaged['val_accuracy']:.2%} at epoch {averaged['best_epoch']}. "
+                          f"Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. "
+                          f"EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. "
+                          f"LayerNorm needs no BatchNorm recalibration. Evidence: `results/{cfg['name']}_{key}.json`.\n")
     return result
 
 if __name__=='__main__':
