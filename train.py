@@ -125,6 +125,15 @@ def run(cfg):
             model.zero_grad(set_to_none=True)
             logits=model(images); loss=F.cross_entropy(logits,targets)
             loss.backward()
+            if cfg.get('sam'):
+                from sharpness import perturb,restore
+                assert cfg['norm']=='layer', 'SAM trials require LayerNorm to avoid updating BatchNorm statistics twice.'
+                saved=perturb(model,cfg['rho'],cfg['sam']=='asam')
+                model.zero_grad(set_to_none=True)
+                try:
+                    F.cross_entropy(model(images),targets).backward()
+                finally:
+                    restore(saved)
             for optimizer in optimizers:
                 optimizer.step()
             total_loss += loss.detach()*len(ids)
@@ -140,6 +149,7 @@ def run(cfg):
         result=dict(config=cfg,seed=SEED,parameters=params,macs=macs,best_epoch=best_epoch,
                     val_accuracy=best[0],val_loss=-best[1],history=history,
                     seconds=time.perf_counter()-started,complete=epoch==cfg['epochs'])
+        result['gradient_evaluations']=epoch*math.ceil(len(x)/128)*(2 if cfg.get('sam') else 1)
         (OUT/f"{cfg['name']}.json").write_text(json.dumps(result,indent=2))
         if epoch==1 or epoch%20==0 or epoch==cfg['epochs']:
             print(cfg['name'],row,flush=True)
