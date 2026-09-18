@@ -1,0 +1,240 @@
+{
+  "complete": true,
+  "selected": {
+    "balanced": {
+      "correct": 9449,
+      "examples": 10000,
+      "accuracy": 0.9449,
+      "loss": 0.19164523482322693,
+      "shirt_precision": 0.8464730290456431,
+      "shirt_recall": 0.816,
+      "shirt_f1": 0.8309572301425662,
+      "macro_f1": 0.9447319882184392,
+      "parameters": 3164836,
+      "execution": {
+        "examples": 10000,
+        "early_exit": 8552,
+        "full_ensemble": 1448,
+        "macs_per_image": 475709805.7856,
+        "worst_case_macs": 3319207680,
+        "fallback_execution": {
+          "examples": 1448,
+          "early_exit": 135,
+          "full_ensemble": 1313,
+          "macs_per_image": 2964352804.3314915,
+          "worst_case_macs": 3261201664
+        },
+        "pre_exit": 3977,
+        "front_macs_per_image": 46471519.7184
+      },
+      "classification_report": {
+        "T-shirt/top": {
+          "precision": 0.8876847290640394,
+          "recall": 0.901,
+          "f1-score": 0.8942928039702234,
+          "support": 1000.0
+        },
+        "Trouser": {
+          "precision": 0.9959718026183283,
+          "recall": 0.989,
+          "f1-score": 0.9924736578023081,
+          "support": 1000.0
+        },
+        "Pullover": {
+          "precision": 0.9259259259259259,
+          "recall": 0.925,
+          "f1-score": 0.9254627313656828,
+          "support": 1000.0
+        },
+        "Dress": {
+          "precision": 0.9414101290963257,
+          "recall": 0.948,
+          "f1-score": 0.9446935724962631,
+          "support": 1000.0
+        },
+        "Coat": {
+          "precision": 0.9207920792079208,
+          "recall": 0.93,
+          "f1-score": 0.9253731343283582,
+          "support": 1000.0
+        },
+        "Sandal": {
+          "precision": 0.989010989010989,
+          "recall": 0.99,
+          "f1-score": 0.9895052473763118,
+          "support": 1000.0
+        },
+        "Shirt": {
+          "precision": 0.8464730290456431,
+          "recall": 0.816,
+          "f1-score": 0.8309572301425662,
+          "support": 1000.0
+        },
+        "Sneaker": {
+          "precision": 0.9723320158102767,
+          "recall": 0.984,
+          "f1-score": 0.9781312127236581,
+          "support": 1000.0
+        },
+        "Bag": {
+          "precision": 0.9841584158415841,
+          "recall": 0.994,
+          "f1-score": 0.9890547263681592,
+          "support": 1000.0
+        },
+        "Ankle boot": {
+          "precision": 0.9828109201213346,
+          "recall": 0.972,
+          "f1-score": 0.9773755656108597,
+          "support": 1000.0
+        },
+        "accuracy": 0.9449,
+        "macro avg": {
+          "precision": 0.9446570035742369,
+          "recall": 0.9449,
+          "f1-score": 0.9447319882184392,
+          "support": 10000.0
+        },
+        "weighted avg": {
+          "precision": 0.9446570035742367,
+          "recall": 0.9449,
+          "f1-score": 0.9447319882184391,
+          "support": 10000.0
+        }
+      },
+      "confusion_matrix": [
+        [
+          901,
+          0,
+          11,
+          9,
+          3,
+          1,
+          69,
+          0,
+          6,
+          0
+        ],
+        [
+          0,
+          989,
+          0,
+          6,
+          1,
+          0,
+          2,
+          0,
+          2,
+          0
+        ],
+        [
+          18,
+          1,
+          925,
+          8,
+          20,
+          0,
+          27,
+          0,
+          1,
+          0
+        ],
+        [
+          6,
+          2,
+          7,
+          948,
+          16,
+          0,
+          19,
+          0,
+          2,
+          0
+        ],
+        [
+          1,
+          0,
+          22,
+          16,
+          930,
+          0,
+          31,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          990,
+          0,
+          5,
+          0,
+          5
+        ],
+        [
+          87,
+          1,
+          33,
+          20,
+          39,
+          0,
+          816,
+          0,
+          4,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          4,
+          0,
+          984,
+          0,
+          12
+        ],
+        [
+          2,
+          0,
+          1,
+          0,
+          1,
+          1,
+          0,
+          1,
+          994,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          5,
+          0,
+          22,
+          1,
+          972
+        ]
+      ],
+      "recipe_label": "balanced:legacy_clean:0.99:10:view_batch=4",
+      "recipe_frozen_at": "2026-09-18T16:35:14.082165+00:00",
+      "checkpoint_hashes": {
+        "accuracy_p2_clean_swa": "31e66eb705618c067df9d65c5a5cb991addbb4f567a7c5dbab408f87859d6227",
+        "accuracy_wide_clean_swa": "0aa9d82bef91689cc3b4b76c97b385153e325887adf376d641f082358aabea0f",
+        "legacy_clean": "22c279271de81701c3fad15cae8a160101635f5ee9c45afcfc8155141ccdb879",
+        "legacy_muon": "8a663a348ccefb3b60b9fb9abcd2281d8956ce2719a6bbfba7615a83fe357bd0",
+        "mixer_pruned_75": "c0b7eafe5070b3985442bfdf729ab2955c7340a172dc5b817150cc02771d5f53"
+      }
+    }
+  },
+  "evaluated_at": "2026-09-18T16:35:28.538648+00:00",
+  "protocol": "Exactly 1 endpoints frozen by validation before this test access. No recipe, threshold or checkpoint is changed from these outcomes. Previously observed public benchmark, not an independent blinded test."
+}
