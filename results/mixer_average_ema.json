@@ -1,0 +1,184 @@
+{
+  "config": {
+    "name": "mixer_average",
+    "model": "mixer",
+    "patch": 4,
+    "width": 128,
+    "depth": 6,
+    "dropout": 0.05,
+    "epochs": 30,
+    "lr": 0.0001,
+    "decay": 0.01,
+    "schedule": true,
+    "augmentation": false,
+    "label_smoothing": 0.0,
+    "bf16": true,
+    "init": "mixer_adamw",
+    "averages": true,
+    "hypothesis": "Fine-tune the validation-selected AdamW Mixer on clean training images, comparing ordinary weights, batchwise EMA and late-epoch SWA on exactly the same optimization trajectory. Clean fine-tuning itself changes the recipe; averaging effects use the within-run control."
+  },
+  "seed": 58561440,
+  "parameters": 478640,
+  "macs": 29003008,
+  "best_epoch": 4,
+  "val_accuracy": 0.9401666522026062,
+  "val_loss": 0.18766950070858002,
+  "history": [
+    {
+      "epoch": 1,
+      "val_loss": 0.20072659850120544,
+      "val_accuracy": 0.9386666417121887
+    },
+    {
+      "epoch": 2,
+      "val_loss": 0.1897137463092804,
+      "val_accuracy": 0.9393333196640015
+    },
+    {
+      "epoch": 3,
+      "val_loss": 0.1871601939201355,
+      "val_accuracy": 0.9391666650772095
+    },
+    {
+      "epoch": 4,
+      "val_loss": 0.18766950070858002,
+      "val_accuracy": 0.9401666522026062
+    },
+    {
+      "epoch": 5,
+      "val_loss": 0.1920914351940155,
+      "val_accuracy": 0.9384999871253967
+    },
+    {
+      "epoch": 6,
+      "val_loss": 0.19837796688079834,
+      "val_accuracy": 0.9365000128746033
+    },
+    {
+      "epoch": 7,
+      "val_loss": 0.2049083709716797,
+      "val_accuracy": 0.9365000128746033
+    },
+    {
+      "epoch": 8,
+      "val_loss": 0.21187140047550201,
+      "val_accuracy": 0.9354999661445618
+    },
+    {
+      "epoch": 9,
+      "val_loss": 0.22253859043121338,
+      "val_accuracy": 0.9361666440963745
+    },
+    {
+      "epoch": 10,
+      "val_loss": 0.23167915642261505,
+      "val_accuracy": 0.9356666803359985
+    },
+    {
+      "epoch": 11,
+      "val_loss": 0.23845264315605164,
+      "val_accuracy": 0.9375
+    },
+    {
+      "epoch": 12,
+      "val_loss": 0.24665209650993347,
+      "val_accuracy": 0.937333345413208
+    },
+    {
+      "epoch": 13,
+      "val_loss": 0.2548083961009979,
+      "val_accuracy": 0.937666654586792
+    },
+    {
+      "epoch": 14,
+      "val_loss": 0.26501327753067017,
+      "val_accuracy": 0.9375
+    },
+    {
+      "epoch": 15,
+      "val_loss": 0.2732877731323242,
+      "val_accuracy": 0.9356666803359985
+    },
+    {
+      "epoch": 16,
+      "val_loss": 0.2814309597015381,
+      "val_accuracy": 0.9366666674613953
+    },
+    {
+      "epoch": 17,
+      "val_loss": 0.28905725479125977,
+      "val_accuracy": 0.9351666569709778
+    },
+    {
+      "epoch": 18,
+      "val_loss": 0.29405874013900757,
+      "val_accuracy": 0.9356666803359985
+    },
+    {
+      "epoch": 19,
+      "val_loss": 0.2988964915275574,
+      "val_accuracy": 0.9358333349227905
+    },
+    {
+      "epoch": 20,
+      "val_loss": 0.3045886754989624,
+      "val_accuracy": 0.9368333220481873
+    },
+    {
+      "epoch": 21,
+      "val_loss": 0.30809229612350464,
+      "val_accuracy": 0.9358333349227905
+    },
+    {
+      "epoch": 22,
+      "val_loss": 0.3115272521972656,
+      "val_accuracy": 0.9369999766349792
+    },
+    {
+      "epoch": 23,
+      "val_loss": 0.3152676224708557,
+      "val_accuracy": 0.9368333220481873
+    },
+    {
+      "epoch": 24,
+      "val_loss": 0.3169739842414856,
+      "val_accuracy": 0.9359999895095825
+    },
+    {
+      "epoch": 25,
+      "val_loss": 0.3185756802558899,
+      "val_accuracy": 0.9366666674613953
+    },
+    {
+      "epoch": 26,
+      "val_loss": 0.3198498785495758,
+      "val_accuracy": 0.9359999895095825
+    },
+    {
+      "epoch": 27,
+      "val_loss": 0.32120150327682495,
+      "val_accuracy": 0.9361666440963745
+    },
+    {
+      "epoch": 28,
+      "val_loss": 0.3220914602279663,
+      "val_accuracy": 0.9356666803359985
+    },
+    {
+      "epoch": 29,
+      "val_loss": 0.3228500485420227,
+      "val_accuracy": 0.9359999895095825
+    },
+    {
+      "epoch": 30,
+      "val_loss": 0.3225524127483368,
+      "val_accuracy": 0.9366666674613953
+    }
+  ],
+  "seconds": 50.17799003049731,
+  "complete": true,
+  "gradient_evaluations": 12660,
+  "completed_at": "2026-09-18T08:20:18.694771+00:00",
+  "averaging": "ema",
+  "shared_training_run": "mixer_average"
+}
