@@ -28,6 +28,7 @@ def build():
                                   'cascade_experiment.py','benchmark_cascade.py','benchmark_nvfp4.py',
                                   'image_processing_experiment.py','benchmark_awq.py',
                                   'run_yolo.py','select_yolo.py','check_pyramid.py',
+                                  'pil_experiment.py',
                                   'SOURCES.md','requirements.txt')]
     files+=list((ROOT/'configs').glob('*.json'))+list(OUT.glob('*.json'))+list(OUT.glob('*.csv'))
     files += [OUT/f'{name}.pt' for name in sorted({'baseline_sgd_sigmoid'}|{c['name'] for c in recipe['components']})]
@@ -138,7 +139,7 @@ plt.tight_layout(); plt.show()
     for name in ['accuracy_p2','accuracy_wide','accuracy_muon_refine','accuracy_residual','accuracy_p2_clean','accuracy_wide_clean']:
         run(json.loads(Path(f'configs/{name}.json').read_text()))
     from select_final import select
-    select(accuracy_first=True,exclude_prefixes=('garment_','focal_','spatial_','yolo_'))
+    select(accuracy_first=True,exclude_prefixes=('garment_','focal_','spatial_','yolo_','pil_'))
     from garment_experiment import run as select_refinements
     for name in ['garment_wide','garment_p2','focal_wide','focal_p2']:
         run(json.loads(Path(f'configs/{name}.json').read_text()))
@@ -155,6 +156,9 @@ plt.tight_layout(); plt.show()
     from select_yolo import run as select_yolo
     select_yolo(STEMS)
     Path('results/final_recipe.json').write_text(Path('results/yolo_recipe.json').read_text())
+    from pil_experiment import run as fit_pil
+    fit_pil()
+    Path('results/final_recipe.json').write_text(Path('results/pil_recipe.json').read_text())
 else:
     print('Using recorded training evidence and frozen checkpoints; full retraining is disabled.')
 ''')
@@ -166,7 +170,7 @@ for name,r in records.items():
     cfg=r.get('config',{})
     rows.append({'experiment':name,'val_accuracy_%':100*r['val_accuracy'],
                  'parameters':r.get('parameters',109386),'dense_MACs':r.get('macs',109184),
-                 'epochs':cfg.get('epochs',50),'best_epoch':r.get('best_epoch'),
+                 'epochs':0 if 'pil_parent' in cfg else cfg.get('epochs',50),'best_epoch':r.get('best_epoch'),
                  'seconds':r.get('seconds'),'averaging':r.get('averaging',''),
                  'shared_training_run':r.get('shared_training_run','')})
 table=pd.DataFrame(rows).sort_values('val_accuracy_%',ascending=False)
@@ -372,6 +376,38 @@ display(pd.DataFrame(yolo['selected_components']))
 ''')
     md('''Deployment selection keeps the original confidence gate fixed. One raw-validation checkpoint per architecture enters a bounded comparison of 1/10/30 views, standalone inference, additions with weights 0.1/0.2/0.35, and replacement of either non-gate ensemble member. Selection prioritizes correct count, then average MACs, parameters and NLL; neither development-half correct count nor Shirt F1 may regress. The chosen recipe is recomputed with actual routing before freezing. The halves are reused development data, not independent holdouts. Small gains after many validation comparisons are exploratory and do not establish statistical significance. Only individually supported changes should be combined; negative comparisons remain visible.''')
     md('''The original 5,721/6,000-correct cascade wins all 77 comparisons; the best non-reference candidate obtains 5,714. Therefore the final submission remains the previously frozen 94.42% test model. Feature fusion and auxiliary supervision do not improve the coarse-only control in this experiment. Partial-channel fusion is smaller and slightly more accurate than full-channel fusion, but its Shirt F1 is lower and it does not improve the existing deployment. Auxiliary supervision did not justify stacking it with the partial-channel variant, so that additional combination was not run. All 91 saved project checkpoints, including the 24 new ones, were reloaded and their recorded validation accuracy and deployment costs verified. These negative results apply to this configuration, budget and seed; they do not invalidate the broader design ideas.''')
+    md('''## 9. PIL-inspired closed-form classification heads
+
+    Motivated by Guo et al.'s pseudoinverse-learning review, this trial freezes each selected MLP's features and refits only its existing Linear classifier. It is a hybrid of gradient-trained features and a closed-form readout, not a reproduction of full-network PIL or a claim that all network weights have a one-step global solution.
+
+    The objective is `mean(||H W + b - one_hot(y)||^2) + lambda * ||W||^2`, where the mean is over training images and the squared norm sums over classes. Centering features and targets gives an unpenalized intercept. CPU float64 thin SVD solves the problem without explicitly forming a pseudoinverse or normal equations. Lambda zero uses a standard dimension-scaled singular-value tolerance. Eight fixed penalties [0, 1e-6, 1e-5, 1e-4, 1e-3, 0.01, 0.1, 1] are compared; all coefficients are fitted on 54,000 training images only. Validation correct count, then NLL, selects the head. One-hot targets use a linear output; no arctanh is applied.
+
+    Features are rounded to the BF16 input dtype actually used by the classifier. Cached head predictions must match full-model predictions exactly, and every non-head saved tensor must remain bitwise unchanged. Deployment parameters and MACs are unchanged for a replacement head. Readout fitting has zero gradient epochs, but the original backbone-training cost is still required and is excluded from the recorded fitting time.
+    ''')
+    code('''pil=json.loads(Path('results/pil_experiment.json').read_text())
+assert pil['complete']
+pil_rows=[{'model':h['parent'],'original_accuracy_%':100*h['original']['accuracy'],
+           'ridge_accuracy_%':100*h['selected']['accuracy'],'lambda':h['selected']['penalty'],
+           'original_Shirt_F1':h['original']['shirt_f1'],'ridge_Shirt_F1':h['selected']['shirt_f1'],
+           'parameters':h['parameters'],'MACs':h['macs']} for h in pil['heads']]
+display(pd.DataFrame(pil_rows).round(5))
+fig,ax=plt.subplots(figsize=(9,4),layout='constrained')
+for h in pil['heads']:
+    ax.plot([r['penalty'] for r in h['candidates']],
+            [100*r['accuracy'] for r in h['candidates']],'o-',label=h['parent'])
+ax.set(xscale='symlog',xlabel='Ridge penalty (0 = pseudoinverse)',ylabel='Single-view validation accuracy (%)')
+ax.set_xscale('symlog',linthresh=1e-6); ax.legend(fontsize=8); ax.grid(alpha=.25)
+ax.set_title('Recorded validation comparison; coefficients fitted on training data only'); plt.show()
+print('Deployment candidates:',pil['deployment_candidates'])
+print('Reference / selected validation correct:',pil['reference_correct'],pil['selected_correct'])
+from pil_experiment import self_check as check_ridge
+check_ridge()
+''')
+    md('''The wide member improves from 5,642 to 5,651 correct (94.03% to 94.18%), the fine-patch member from 5,631 to 5,634 (93.85% to 93.90%), and the pruned member stays at 5,622 (93.70%). Wide-model Shirt F1 slightly declines. These small validation changes are descriptive single-split results, not evidence of statistical significance.
+
+    Squared-error scores have a different confidence scale from cross-entropy logits. Each refitted member therefore selects a post-view temperature from [0.05, 0.1, 0.2, 0.5, 1, 2] by validation NLL; all choose 0.1. The original gate and original members' temperatures remain fixed. The 16 deployment comparisons include the original cascade, three standalone refits with original view counts, nine additions (weights 0.1/0.2/0.35), and three combinations replacing either or both non-gate members. Additional members execute full extra backbones and are counted accordingly; no unsupported feature-sharing speedup is claimed.
+
+    The original cascade wins with 5,721/6,000 correct; the best alternative reaches 5,710. Both development-half correct counts and Shirt F1 are guarded. The new heads are retained as experimental checkpoints, while the submitted model, original freeze timestamp and previously measured 94.42% test score stay unchanged. No new candidate test evaluation is used for selection. Repeated validation reuse remains a limitation.''')
     md('## References\n\n'+(ROOT/'SOURCES.md').read_text().split('\n',1)[1])
     notebook=nbf.v4.new_notebook(cells=cells,metadata={'kernelspec':{'name':'python3','display_name':'Python 3','language':'python'},'language_info':{'name':'python','version':platform_version()}})
     target=ROOT/'submission'/'Assign01_Cai_Haochen_58561440.ipynb'

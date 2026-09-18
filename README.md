@@ -54,6 +54,10 @@ The 77 bounded validation comparisons retained the original cascade (5,721 corre
 
 ## Run an experiment
 
+The PIL-inspired follow-up (`feature/29-pil-ridge-heads`, `feature/30-pil-integration`) freezes the three deployed feature extractors and fits same-size ridge classification heads using training-only float64 thin SVD. Across eight penalties per model, single-view validation accuracy changes from 94.0333% to 94.1833% for the wide member, 93.85% to 93.90% for the fine-patch member, and stays at 93.70% for the pruned member. Backbone weights, standalone parameter counts and MACs are unchanged. This is a hybrid readout experiment, not full-network PIL reproduction. The wide member's Shirt F1 slightly falls despite the accuracy gain.
+
+Confidence-calibrated standalone, addition and replacement comparisons (16 candidates) still select the original 5,721-correct cascade; the strongest new alternative gets 5,710. The submitted 94.42% test model remains unchanged. Evidence: [ridge fits and selection](results/pil_experiment.json), [deployment candidates](results/pil_candidates.csv). Run `python3 pil_experiment.py --check` for the rank-deficient solver check or `python3 pil_experiment.py` to refit and compare; the latter replaces only this experiment's saved results/checkpoints. Original gradient-based backbone training remains required. All 94 saved project checkpoints and the frozen cascade have been verified.
+
 Use Python 3.12 and the dependencies in `requirements.txt`. The recorded environment uses PyTorch 2.10.0+cu128 and torchvision 0.25.0+cu128 on an RTX 5090. CPU is supported, but the longer Mixer experiments are substantially slower and BF16 autocast is disabled there.
 
 ```bash
