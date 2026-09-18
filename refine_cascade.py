@@ -183,6 +183,36 @@ def reuse_views():
         'Four actual runtime comparisons: identity-view reuse on/off and view batch 4/8. Preserve all class thresholds, weights and view counts from class_routes frozen validation selection. The wide gate identity probability is reused before view averaging/temperature calibration, skipping one real pass for each full-fallback image. Preserve correct/Shirt-F1/half guards, >=1% lower average MACs, unchanged stored parameters and >=5% lower latency on both validation slices. No test access in either phase.')
 
 
+@torch.inference_mode()
+def adaptive():
+    base=json.loads((OUT/'class_routes_balanced_recipe.json').read_text())
+    x,y,vx,vy,_,_=load_data(); del x,y
+    models={n:load_model(n) for n in model_names(base)}
+    front,agree,pre,front_cost=progressive_front(base,vx,models)
+    front_mask=pre | exit_mask(front,agree,base)
+    back=base['back']; gate=back['cascade']; members=back['components']
+    cheap=probabilities(models[gate['name']],vx,1)
+    gate_mask=early_mask(cheap,gate)
+    fine=next(c for c in members if c['views']==30)
+    fine_cost=json.loads((OUT/f"{fine['name']}.json").read_text())['macs']
+    raw=[probabilities(models[c['name']],vx,10,4) for c in members]
+    weights=torch.tensor([c['weight'] for c in members]); weights/=weights.sum()
+    initial=sum(w*calibrate(p,c['temperature']) for w,p,c in zip(weights,raw,members))
+    full=predict(back,vx,models)[0]
+    rows=[]
+    for threshold,classes in product((.7,.8,.9,.95,.975,.99),(list(range(10)),[1,5,7,8,9])):
+        view_gate=dict(name=fine['name'],initial_views=10,remaining_macs=20*fine_cost,threshold=threshold,classes=classes)
+        view_mask=early_mask(initial,view_gate)
+        p=full.clone(); p[view_mask]=initial[view_mask]; p[gate_mask]=cheap[gate_mask]; p[front_mask]=front[front_mask]
+        full_cost=back['full_macs']-view_mask.double()*view_gate['remaining_macs']
+        cost=front_cost+(~front_mask).double()*(gate['macs']+(~gate_mask).double()*full_cost)
+        recipe={k:base[k] for k in ('front','back','threshold','classes','parameters','pre_exit','class_thresholds')}
+        recipe.update(back=dict(back,view_exit=view_gate),goal='balanced',label=f'adaptive_views:{threshold}:{len(classes)}')
+        rows.append(dict(recipe,**details(p,vy),macs=float(cost.mean()),candidate_id=len(rows)))
+    select_candidates(rows,dict(balanced=base),models,vx,vy,'adaptive',.99,
+        'Twelve fixed adaptive-view policies: weighted calibrated 10/10/10 fallback initially, retain confident results at .7/.8/.9/.95/.975/.99 for all predicted classes or 1/5/7/8/9. Otherwise append the fine-patch remaining twenty views, reusing its first-ten mean and all other model outputs. Existing front/gate/weights/calibration/view batch 4 fixed. Preserve correct/Shirt-F1/half guards, >=1% lower average MACs, unchanged parameters and >=5% lower latency on both validation slices. No fitting or test access; BF16 subset/averaging rounding is rechecked on actual finalist routing.')
+
+
 def evaluate(prefix='refine'):
     """Only the validation-qualified, already frozen endpoints receive test evaluation."""
     from hybrid_experiment import evaluate_frozen
@@ -194,7 +224,7 @@ def evaluate(prefix='refine'):
 
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser(); parser.add_argument('--test',action='store_true'); parser.add_argument('--progressive',action='store_true'); parser.add_argument('--batched',action='store_true'); parser.add_argument('--class-routes',action='store_true'); parser.add_argument('--reuse',action='store_true')
+    parser=argparse.ArgumentParser(); parser.add_argument('--test',action='store_true'); parser.add_argument('--progressive',action='store_true'); parser.add_argument('--batched',action='store_true'); parser.add_argument('--class-routes',action='store_true'); parser.add_argument('--reuse',action='store_true'); parser.add_argument('--adaptive',action='store_true')
     args=parser.parse_args()
-    prefix='reuse' if args.reuse else 'class_routes' if args.class_routes else 'batched' if args.batched else 'progressive' if args.progressive else 'refine'
-    evaluate(prefix) if args.test else {'reuse':reuse_views,'class_routes':class_routes,'batched':batched,'progressive':progressive,'refine':run}[prefix]()
+    prefix='adaptive' if args.adaptive else 'reuse' if args.reuse else 'class_routes' if args.class_routes else 'batched' if args.batched else 'progressive' if args.progressive else 'refine'
+    evaluate(prefix) if args.test else {'adaptive':adaptive,'reuse':reuse_views,'class_routes':class_routes,'batched':batched,'progressive':progressive,'refine':run}[prefix]()

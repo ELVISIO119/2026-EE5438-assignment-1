@@ -1,5 +1,13 @@
 # Experiment journal
 
+## 2026-09-19 — Adaptive fallback view budget (feature/46-adaptive-views)
+
+Keep the frozen class-routing front, fallback gate, all weights, mixture coefficients, temperatures and four-view groups fixed. For images reaching the full ensemble, first evaluate 10/10/10 views rather than 10/30/10. Accept the weighted/calibrated result at confidence .7/.8/.9/.95/.975/.99, either for all predicted classes or only 1/5/7/8/9 (12 policies). Otherwise append only the fine-patch member's remaining twenty views, reusing its first-ten mean and every other model output. Dense MACs charge actual views; worst-case arithmetic is unchanged. The repeated cached mean is mathematically equivalent to its view sum but can change floating-point rounding; actual subset recomputation is mandatory.
+
+Preserve reference validation correct count (5,718), Shirt F1 and both development halves, add no parameters, and require >=1% fewer average MACs plus >=5% lower median latency on both first/last 1,024 validation slices. Use the existing top-five cached prefilter followed by actual routing. Freeze and commit any qualifying recipe before test access; otherwise retain the class-routing reference without new test evaluation. This remains exploratory development on reused validation and a previously observed public benchmark, not a blinded study.
+
+Run `python3 evaluation.py`, `python3 hybrid_experiment.py --check`, then `timeout 1800 python3 refine_cascade.py --adaptive`. Self-checks verify prefix reuse, real skipped rows, normalized probabilities and average/worst-case costs. No new checkpoint training is required; the original source folder remains read-only.
+
 ## 2026-09-19 — Class-routing test outcome and integration (feature/45-class-routing-integration)
 
 The only newly tested endpoint is the class-routing recipe frozen at commit `1dd4705`, retained by `c8853d2` before its test evaluation. It obtains 9,449/10,000 test correct (94.49%), unchanged from the previous progressive/batched recipe, with average test MACs falling from 475,709,806 to 410,159,652 (13.8%). Parameters remain 3,164,836 and worst-case MACs remain 3,319,207,680. Eight test predictions change: four errors corrected and four introduced. First-pass exits remain 3,977; total exits before the fallback increase from 8,552 to 8,753. Fallback inputs fall from 1,448 to 1,247; full three-model processing falls from 1,313 to 1,112 images.
