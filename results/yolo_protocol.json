@@ -1,0 +1,15 @@
+{
+  "origin_skill": "academic-research-suite/experiment-agent",
+  "origin_mode": "run",
+  "origin_date": "2026-09-18",
+  "verification_status": "PLANNED",
+  "version_label": "yolo_inspired_v1",
+  "question": "Can hierarchical multi-scale MLP features, training-only auxiliary supervision or partial channel processing improve Fashion-MNIST classification?",
+  "scope": "Dense MLPs only. Detector-inspired principles, not YOLO architecture or PGI reproduction. No outside dataset, convolution, attention, detection boxes or NMS.",
+  "data": "Existing 54000/6000 stratified train/validation split; seed 58561440; normalization fitted on training only.",
+  "initial_trials": ["yolo_pyramid_control", "yolo_pyramid_fusion", "yolo_pyramid_aux", "yolo_pyramid_csp"],
+  "training_budget": "120 epochs per initial trial, same AdamW, warmup/cosine, augmentation and regularization. Ordinary/EMA/SWA checkpoints share one training trajectory. Clean refinement, if pursued, uses 30 epochs for all paired variants. Combined auxiliary+CSP is conditional on individual gains.",
+  "selection": "Validation only. Compare new checkpoint single-model predictions and bounded additions/replacements in the frozen reference cascade. Maximize correct count, then reduce average MACs, parameters and NLL. Preserve correct count on both fixed validation halves and Shirt F1. Freeze before any final test evaluation.",
+  "limits": "One seed and reused validation split; halves are development subsets, not independent holdouts. Public test has already been observed; no claim of blinded generalization or statistical significance.",
+  "monitoring": "Per-epoch result JSON and process exit status. Each training command has a 30-minute hard timeout. Shared GPU processes are left untouched."
+}

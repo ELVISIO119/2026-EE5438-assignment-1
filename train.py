@@ -48,8 +48,9 @@ class Model(nn.Module):
             self.net = nn.Sequential(nn.Flatten(), nn.Linear(784,128), nn.Sigmoid(),
                                      nn.Linear(128,64), nn.Sigmoid(), nn.Linear(64,10))
         else:
-            from models import ResidualMLP,MLPMixer
-            self.net = MLPMixer(cfg) if cfg['model']=='mixer' else ResidualMLP(cfg)
+            from models import ResidualMLP,MLPMixer,PyramidMLP
+            architectures={'mixer':MLPMixer,'pyramid':PyramidMLP}
+            self.net = architectures.get(cfg['model'],ResidualMLP)(cfg)
 
     def forward(self, x):
         with torch.autocast(device_type=x.device.type,dtype=torch.bfloat16,enabled=self.bf16 and x.is_cuda):
@@ -62,7 +63,7 @@ def model_cost(model):
     hooks = [m.register_forward_hook(count) for m in model.modules() if isinstance(m, nn.Linear)]
     model.eval()
     with torch.no_grad():
-        model(torch.zeros(1,1,28,28,device=DEVICE))
+        model(torch.zeros(1,1,28,28,device=next(model.parameters()).device))
     for hook in hooks:
         hook.remove()
     return sum(p.numel() for p in model.parameters()), cost[0]
