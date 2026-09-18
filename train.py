@@ -52,8 +52,11 @@ class Model(nn.Module):
             architectures={'mixer':MLPMixer,'pyramid':PyramidMLP}
             self.net = architectures.get(cfg['model'],ResidualMLP)(cfg)
 
-    def forward(self, x):
+    def forward(self, x, return_features=False):
         with torch.autocast(device_type=x.device.type,dtype=torch.bfloat16,enabled=self.bf16 and x.is_cuda):
+            if return_features:
+                logits,features=self.net((x-self.mean)/self.std,return_features=True)
+                return logits.float(),features.float()
             return self.net((x-self.mean)/self.std).float()
 
 def model_cost(model):
@@ -124,6 +127,12 @@ def run(cfg):
         load_initial_state(model,initial)
         del initial
     params,macs = model_cost(model)
+    auxiliary=None
+    if cfg.get('auxiliary_weight',0):
+        assert cfg['model']=='pyramid' and cfg['auxiliary_weight']>0 and not cfg.get('sam')
+        # Training-only head: no extra deployed weights, logits or inference MACs.
+        with torch.random.fork_rng(devices=[torch.cuda.current_device()] if DEVICE.type=='cuda' else []):
+            auxiliary=nn.Linear(cfg['width'],10).to(DEVICE)
     teacher=None
     teacher_params=teacher_macs=0
     if cfg.get('teacher'):
@@ -138,7 +147,8 @@ def run(cfg):
         assert not cfg.get('sam'), 'Distillation and SAM are separate controlled trials.'
     hidden=[p for name,p in model.named_parameters() if '.blocks.' in name and p.ndim==2] if cfg.get('optimizer')=='muon' else []
     hidden_ids={id(p) for p in hidden}
-    other=[p for p in model.parameters() if id(p) not in hidden_ids]
+    training_parameters=list(model.parameters())+(list(auxiliary.parameters()) if auxiliary is not None else [])
+    other=[p for p in training_parameters if id(p) not in hidden_ids]
     optimizers=[torch.optim.AdamW([
         {'params':[p for p in other if p.ndim>1],'weight_decay':cfg['decay']},
         {'params':[p for p in other if p.ndim<=1],'weight_decay':0.0}],lr=cfg['lr'])]
@@ -146,7 +156,7 @@ def run(cfg):
         optimizers.append(torch.optim.Muon(hidden,lr=cfg['lr'],weight_decay=cfg['decay'],
                                           adjust_lr_fn='match_rms_adamw',momentum=.95,ns_steps=5))
     grouped=[p for opt in optimizers for g in opt.param_groups for p in g['params']]
-    assert len(grouped)==len({id(p) for p in grouped})==len(list(model.parameters()))
+    assert len(grouped)==len({id(p) for p in grouped})==len(training_parameters)
     best = (-1.,-float('inf'))
     history = []
     averages={}
@@ -182,7 +192,12 @@ def run(cfg):
                 images=lam*images+(1-lam)*images[perm]
                 targets=lam*targets+(1-lam)*targets[perm]
             model.zero_grad(set_to_none=True)
-            logits=model(images); loss=training_loss(logits,targets,cfg)
+            if auxiliary is not None:
+                auxiliary.zero_grad(set_to_none=True)
+                logits,features=model(images,return_features=True)
+                loss=training_loss(logits,targets,cfg)+cfg['auxiliary_weight']*training_loss(auxiliary(features),targets,cfg)
+            else:
+                logits=model(images); loss=training_loss(logits,targets,cfg)
             if teacher is not None:
                 temperature=cfg['temperature']
                 with torch.no_grad():
@@ -200,7 +215,7 @@ def run(cfg):
                 finally:
                     restore(saved)
             if cfg.get('grad_clip'):
-                nn.utils.clip_grad_norm_(model.parameters(),cfg['grad_clip'],error_if_nonfinite=True)
+                nn.utils.clip_grad_norm_(training_parameters,cfg['grad_clip'],error_if_nonfinite=True)
             for optimizer in optimizers:
                 optimizer.step()
             if averages:
@@ -230,6 +245,10 @@ def run(cfg):
                     val_accuracy=best[0],val_loss=-best[1],history=history,
                     seconds=time.perf_counter()-started,complete=epoch==cfg['epochs'])
         result['gradient_evaluations']=epoch*math.ceil(len(x)/128)*(2 if cfg.get('sam') else 1)
+        if auxiliary is not None:
+            result.update(training_only_parameters=sum(p.numel() for p in auxiliary.parameters()),
+                          auxiliary_head_macs_per_training_image=cfg['width']*10,
+                          auxiliary_note='Fine-stage auxiliary classifier is optimized during training only and excluded from saved deployment checkpoints and inference cost.')
         if teacher is not None:
             result.update(teacher_parameters=teacher_params,teacher_macs=teacher_macs,
                           teacher_training_cost_included=False,teacher_forward_passes=epoch*len(x))
