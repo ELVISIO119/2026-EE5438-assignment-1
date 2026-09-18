@@ -179,3 +179,17 @@ Measured validation accuracy: 90.68%; checkpoint epoch 17; 994,314 parameters; 9
 ## 2026-09-18T08:28:40.312871+00:00 - Freeze final recipe
 
 Selected `mixer_average:4 + mixer_average_swa:4 + mixer_muon:4` from 31 validation-only candidates: 5680/6000 correct (94.67%). Total stored parameters 1,435,920; dense MACs/image 348,036,096, including all members and views. Checkpoint hashes and the selection rule are in `results/final_recipe.json`. No test labels were loaded by selection.
+
+## 2026-09-18T10:04:18.879379+00:00 — accuracy_p2
+
+Hypothesis: Accuracy-first extension: finer two-pixel patches retain spatial detail and diversify the four-pixel Mixer. Train from scratch with a longer budget and compare ordinary/EMA/SWA validation checkpoints. Cost is measured but not a selection penalty.
+
+Measured validation accuracy: 93.50%; checkpoint epoch 145; 529,858 parameters; 72,329,664 dense MACs/image; 400.1s training/validation wall time. Configuration and every epoch: `results/accuracy_p2.json`. Test set not evaluated.
+
+### 2026-09-18T10:04:18.879379+00:00 - accuracy_p2 EMA
+
+Validation accuracy 93.40% at epoch 174. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/accuracy_p2_ema.json`.
+
+### 2026-09-18T10:04:18.879379+00:00 - accuracy_p2 SWA
+
+Validation accuracy 93.50% at epoch 145. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/accuracy_p2_swa.json`.
