@@ -6,6 +6,10 @@ The final objective is now validation accuracy without a parameter or MAC budget
 
 The public benchmark has already been evaluated in this project. This is an exploratory continuation, not a newly blinded test. Existing test scores are historical context only; new candidate fitting, selection and stopping decisions use training/validation evidence. Freeze the new recipe before its test evaluation, and do not use that result to revise it. The previous delivery remains recoverable in Git and in a local archive.
 
+### Inference-view check while new models train
+
+Using the fixed `mixer_muon` checkpoint, 4 views yield 5,645/6,000 validation correct (94.08%), 10 views yield 5,663 (94.38%), and 18 views yield 5,661 (94.35%). Thus, the expanded view search has a measured benefit, but more views are not monotonically better. The final search will compare all predefined view settings rather than automatically using the most expensive one. A synthetic impulse check confirms that the 10 and 18 views are distinct zero-padded translations/flips, and a complementary-error check validates convex ensemble weighting.
+
 ## Project setup
 
 Objective: improve Fashion-MNIST classification using only MLPs while keeping a clear record of architecture, optimizer, regularization and inference costs.
