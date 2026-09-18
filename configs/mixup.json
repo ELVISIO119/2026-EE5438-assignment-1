@@ -1,0 +1,1 @@
+{"name":"residual_mixup","model":"residual","width":256,"depth":3,"activation":"gelu","norm":"layer","dropout":0.1,"epochs":40,"lr":0.001,"decay":0.01,"schedule":true,"augmentation":true,"mixup":0.2,"hypothesis":"Add Mixup alpha 0.2 only relative to residual_geometry. Training accuracy against original hard labels is descriptive only, not equivalent to clean accuracy."}

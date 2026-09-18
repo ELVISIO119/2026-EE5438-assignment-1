@@ -65,6 +65,17 @@ def model_cost(model):
         hook.remove()
     return sum(p.numel() for p in model.parameters()), cost[0]
 
+def augment(x):
+    n=len(x)
+    angle=(torch.rand(n,device=x.device)*2-1)*math.pi*8/180
+    scale=1+(torch.rand(n,device=x.device)*2-1)*.08
+    flip=torch.where(torch.rand(n,device=x.device)<.5,-1.,1.)
+    theta=torch.zeros(n,2,3,device=x.device)
+    theta[:,0,0]=angle.cos()*scale*flip; theta[:,0,1]=-angle.sin()*scale
+    theta[:,1,0]=angle.sin()*scale*flip; theta[:,1,1]=angle.cos()*scale
+    theta[:,:,2]=(torch.rand(n,2,device=x.device)*2-1)*(4/28)
+    return F.grid_sample(x,F.affine_grid(theta,x.shape,align_corners=False),align_corners=False)
+
 @torch.no_grad()
 def evaluate(model, x, y):
     model.eval()
@@ -93,8 +104,17 @@ def run(cfg):
         total_loss = torch.zeros((),device=DEVICE)
         correct = torch.zeros((),device=DEVICE)
         for ids in torch.randperm(len(x),device=DEVICE).split(128):
+            images,labels=x[ids],y[ids]
+            if cfg.get('augmentation'):
+                images=augment(images)
+            targets=F.one_hot(labels,10).float()
+            if cfg.get('mixup',0)>0:
+                lam=float(np.random.beta(cfg['mixup'],cfg['mixup']))
+                perm=torch.randperm(len(ids),device=DEVICE)
+                images=lam*images+(1-lam)*images[perm]
+                targets=lam*targets+(1-lam)*targets[perm]
             optimizer.zero_grad(set_to_none=True)
-            logits=model(x[ids]); loss=F.cross_entropy(logits,y[ids])
+            logits=model(images); loss=F.cross_entropy(logits,targets)
             loss.backward(); optimizer.step()
             total_loss += loss.detach()*len(ids)
             correct += (logits.argmax(1)==y[ids]).sum()

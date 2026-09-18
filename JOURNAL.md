@@ -37,3 +37,15 @@ Measured validation accuracy: 90.80%; checkpoint epoch 30; 994,314 parameters; 9
 Hypothesis: Replace block LayerNorm with BatchNorm only relative to residual_gelu; keep final LayerNorm.
 
 Measured validation accuracy: 90.85%; checkpoint epoch 36; 994,314 parameters; 989,696 dense MACs/image; 14.9s training/validation wall time. Configuration and every epoch: `results/residual_bn.json`. Test set not evaluated.
+
+## 2026-09-18T08:02:30.891210+00:00 — residual_geometry
+
+Hypothesis: Add only mild horizontal flips, rotations, translations and scaling to residual_gelu.
+
+Measured validation accuracy: 90.98%; checkpoint epoch 39; 994,314 parameters; 989,696 dense MACs/image; 18.4s training/validation wall time. Configuration and every epoch: `results/residual_geometry.json`. Test set not evaluated.
+
+## 2026-09-18T08:02:52.604011+00:00 — residual_mixup
+
+Hypothesis: Add Mixup alpha 0.2 only relative to residual_geometry. Training accuracy against original hard labels is descriptive only, not equivalent to clean accuracy.
+
+Measured validation accuracy: 90.50%; checkpoint epoch 37; 994,314 parameters; 989,696 dense MACs/image; 19.4s training/validation wall time. Configuration and every epoch: `results/residual_mixup.json`. Test set not evaluated.
