@@ -36,3 +36,14 @@ for name,weight in control.state_dict().items():
     if not name.startswith('head.'):
         assert torch.equal(weight,fusion.state_dict()[name]),name
 print('Paired backbones and post-initialization RNG are exactly matched.')
+
+model=Model(dict(model='pyramid',width=16,depth=1,dropout=0.),.28,.35)
+auxiliary=torch.nn.Linear(16,10)
+model.eval()
+logits,features=model(x,return_features=True)
+assert torch.equal(logits,model(x))
+auxiliary(features).square().mean().backward()
+assert model.net.embed.weight.grad.abs().sum()>0
+assert model.net.merge[1].weight.grad is None, 'Fine auxiliary loss must not traverse the coarse stage.'
+assert not any('auxiliary' in n for n in model.state_dict())
+print('Auxiliary gradient reaches fine features; training head is absent from deployment state.')
