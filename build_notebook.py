@@ -44,7 +44,7 @@ def build():
 
     **Cai Haochen | Student ID 58561440 | EE5438 | Semester A 2026-2027**
 
-    The latest **progressive, batched-view classifier in Section 14** obtains **{evidence['batched_test_metrics']['selected']['balanced']['accuracy']:.2%} test accuracy**, using 475.71 million average test MACs and 3,164,836 stored parameters. It accepts very confident predictions after one small MLP and batches fallback views to reduce GPU overhead. Default Run All evaluates it and the preceding frozen options. The two preceding options in **Section 13** also obtain **{evidence['hybrid_test_metrics']['selected']['balanced']['accuracy']:.2%} test accuracy**; their results remain explicit references, including the smaller-storage accuracy-priority option.
+    The latest **class-conditional classifier in Section 15** obtains **{evidence['class_routes_test_metrics']['selected']['balanced']['accuracy']:.2%} test accuracy**, using 410.16 million average test MACs and 3,164,836 stored parameters. It uses predicted-class thresholds after small-model agreement, accepting more images before the expensive fallback. Default Run All evaluates it and the preceding frozen options. The progressive/batched reference in **Section 14** uses 475.71 million average test MACs at the same 94.49% observed accuracy. Section 13 preserves earlier hybrids, including the smaller-storage accuracy-priority option.
 
     The frozen reference classifier, retained in Sections 1–12, obtains **{metrics['accuracy']:.2%} test accuracy**, macro precision **{metrics['macro_precision']:.4f}**, macro recall **{metrics['macro_recall']:.4f}**, and macro F1 **{metrics['macro_f1']:.4f}** on 10,000 Fashion-MNIST test images. All components are MLPs. No convolution, attention, Transformer, outside training images or externally pretrained weights are used. The new front-stage weights come from this student's earlier training on the same assignment split; their provenance is retained.
 
@@ -56,7 +56,7 @@ def build():
 
     **Run All performs real evaluation of the frozen weights.** The portable bundle below contains readable Python sources, configuration files, recorded training histories, and the selected checkpoints. It is unpacked into a new temporary working directory, leaving existing files untouched. The bundle is not a remote dependency.
 
-    Set `RETRAIN_ALL=True` to rerun the repository's training sequence from scratch before validation selection and test evaluation. This excludes the two imported legacy checkpoints: their original configurations, histories and hashes are retained, but the optional training sequence does not recreate their original training. Sections 13–14 evaluate frozen hybrid endpoints only in default mode; after retraining, their stored hash bindings no longer apply and a new validation-only freeze is required. Training is opt-in because it includes all negative-result experiments. Recorded histories are not represented as newly executed training. PyTorch 2.10, torchvision 0.25, NumPy, pandas, scikit-learn and matplotlib are required. CUDA is recommended; CPU evaluation is supported but slower.
+    Set `RETRAIN_ALL=True` to rerun the repository's training sequence from scratch before validation selection and test evaluation. This excludes the two imported legacy checkpoints: their original configurations, histories and hashes are retained, but the optional training sequence does not recreate their original training. Sections 13–15 evaluate frozen hybrid endpoints only in default mode; after retraining, their stored hash bindings no longer apply and a new validation-only freeze is required. Training is opt-in because it includes all negative-result experiments. Recorded histories are not represented as newly executed training. PyTorch 2.10, torchvision 0.25, NumPy, pandas, scikit-learn and matplotlib are required. CUDA is recommended; CPU evaluation is supported but slower.
 
     The official 60,000-image training set is stratified into 54,000 training and 6,000 validation examples, 600 per validation class, using seed **58561440**. Mean and standard deviation come only from the 54,000 training images. Validation chooses checkpoints, averaging, pruning, inference views and ensemble weights. The test recipe is frozen and checkpoint hashes are checked before its evaluation. The public test benchmark has been evaluated during development; this continuation is not an independently blinded test. New candidate fitting and selection use training/validation data only. Re-evaluating the frozen recipe checks implementation consistency, not an independent replication of generalization.
     ''')
@@ -618,6 +618,47 @@ plt.show()
     **Optimizer scope.** The user's “pre head Muon” likely refers to **Per-Head Muon**. Kimi K3's official report, Section 2.5, partitions attention Q/K/V momentum matrices along head boundaries and orthogonalizes each block separately. It targets training dynamics and optimizer overhead, not extra inference heads or lower deployed MACs. Our pure MLPs have no attention heads; that variant is not implemented or claimed. Existing Muon training already updates hidden-block matrices with Muon and embedding/classifier/bias/normalization parameters with AdamW.
 
     **Reward versus supervised feedback.** RL rewards can encode error severity and compute costs, but they must be designed; RL does not inherently diagnose mistakes or know corrective actions. Cross-entropy already provides graded confidence feedback. A learned routing policy could choose between exit and additional computation, with a reward reflecting classification loss and cost. This round uses explicit validation-selected thresholds, not RL, a contextual-bandit training run or a newly trained gate. No benefit from those untested alternatives is claimed.''')
+    md('''## 15. Predicted-class thresholds and repeated-view reuse
+
+    A single exit threshold need not allocate computation equally well across predicted classes. With all weights, the .99 first-pass pre-exit, four-view grouping and fallback fixed, compare 36 tuples: upper garments (T-shirt, Pullover, Coat, Shirt) use .85/.90/.95/.975; Dress uses .80/.90/.95; remaining classes use .70/.80/.90. These groups are selected by the model's predicted class, never the true label. The two small models must still agree before the second exit. This is a finite threshold policy, not a learned router or RL experiment.
+
+    Preserve validation correct count, Shirt F1 and both fixed development halves; require at least 1% fewer average MACs, no extra stored parameters, and at least 5% lower median latency on both first/last 1,024 validation images. Cached screening is followed by actual routed recomputation of the top five eligible candidates. The selected thresholds are **.85 for predicted upper garments and .90 for all other classes**. Validation moves from 5,717 to 5,718 correct, Shirt F1 from 0.859348 to 0.859829, and half counts from [2,855,2,862] to [2,856,2,862]. Average validation MACs decrease from 460,521,803 to 399,102,505. One extra validation-correct image does not establish a general accuracy improvement.
+
+    Before any new test access, a second phase tested four runtime variants: reuse the wide fallback gate's existing identity-view probability or recompute it, with view groups of four or eight. Reuse occurs before view averaging and temperature calibration; row-count checks confirm one actual pass is skipped per full-fallback image. It lowers average validation MACs further to 390,775,315 and preserves 5,718 correct, but neither grouping meets the additional 5% latency reduction requirement against the class-routing reference. Eight-view grouping is not consistently faster. These implementations and negative results are retained, disabled in the selected deployment. No reuse variant receives test evaluation.
+
+    The class-routing recipe was frozen and committed before test evaluation, and was retained after the runtime phase failed its advancement rule. It is this round's only new test endpoint. Test accuracy remains 9,449/10,000 (94.49%), average MACs fall from 475,709,806 to 410,159,652 (13.8%), and parameters remain 3,164,836. Worst-case MACs remain 3,319,207,680. Exactly 3,977 images still exit after the first model; 8,753 now exit before fallback, versus 8,552 previously. The total expensive-fallback count decreases from 1,448 to 1,247. No weights or thresholds change from these test outcomes.
+    ''')
+    code('''class_recipe=json.loads(Path('results/class_routes_balanced_recipe.json').read_text())
+class_record=json.loads(Path('results/class_routes_test_metrics.json').read_text())
+if not RETRAIN_ALL:
+    class_test=evaluate_refinement('class_routes')
+    print('Recorded / executed test correct:',class_record['selected']['balanced']['correct'],class_test['selected']['balanced']['correct'])
+else:
+    class_test=class_record
+    print('Recorded class routing only; retrained weights require validation selection and freeze.')
+class_row=class_test['selected']['balanced']
+display(pd.DataFrame(class_row['classification_report']).T.round(4))
+print('Actual test routing:',class_row['execution'])
+display(pd.DataFrame([{'slice':label,'previous_ms':a['median_ms'],'class_routing_ms':b['median_ms'],
+                      'time_reduction_%':100*(1-b['median_ms']/a['median_ms'])}
+                     for label,a,b in zip(['First 1024','Last 1024'],class_recipe['reference_latency'],class_recipe['timings'])]))
+reuse=json.loads(Path('results/reuse_experiment.json').read_text())
+assert not reuse['selected']
+display(pd.DataFrame([{'candidate':r['label'],'correct':r['correct'],'average_validation_MACs':r['macs'],
+                      'first_ms':r['timings'][0]['median_ms'],'last_ms':r['timings'][1]['median_ms'],'passes':r['passes']}
+                     for r in reuse['actual_finalists']]))
+fig,axes=plt.subplots(1,2,figsize=(11,4),layout='constrained')
+axes[0].bar(['Previous progressive','Class-conditional'],
+            [class_recipe['reference_latency'][0]['median_ms'],class_recipe['timings'][0]['median_ms']])
+axes[0].set(ylabel='Median ms / 1,024 validation images',title='Same-session timing; shared RTX 5090')
+axes[1].bar(['Previous progressive','Class-conditional'],
+            [refined_test['selected']['balanced']['execution']['macs_per_image']/1e6,class_row['execution']['macs_per_image']/1e6])
+axes[1].set(ylabel='Average test MACs (millions)',title='Both recipes: 94.49% observed test accuracy')
+plt.show()
+''')
+    md('''Same-session median latency changes from 58.13 to 46.73 ms on the first slice (19.6% lower) and from 56.67 to 41.40 ms on the last slice (27.0% lower). Each contains 1,024 validation images; timing uses three warmups and seven synchronized repetitions, includes views/routing/probabilities/CPU output, and excludes loading/input transfer. Both slices remain development and timing-selection data. These are shared-device throughput results, not independent confirmation or single-image latency guarantees. Validation and the public test benchmark have been repeatedly observed across the project; no class-ranking or significance claim is made.
+
+    Reproduce frozen evaluation with `python3 refine_cascade.py --class-routes --test`. Deploy using `hybrid_experiment.predict` and `results/class_routes_balanced_recipe.json`. The same five checkpoints and all runtime code are embedded. Original reference recipes and test records remain available; the earlier stages in this notebook describe their own historical results.''')
     md('## References\n\n'+(ROOT/'SOURCES.md').read_text().split('\n',1)[1])
     notebook=nbf.v4.new_notebook(cells=cells,metadata={'kernelspec':{'name':'python3','display_name':'Python 3','language':'python'},'language_info':{'name':'python','version':platform_version()}})
     target=ROOT/'submission'/'Assign01_Cai_Haochen_58561440.ipynb'

@@ -1,5 +1,13 @@
 # Experiment journal
 
+## 2026-09-19 — Class-routing test outcome and integration (feature/45-class-routing-integration)
+
+The only newly tested endpoint is the class-routing recipe frozen at commit `1dd4705`, retained by `c8853d2` before its test evaluation. It obtains 9,449/10,000 test correct (94.49%), unchanged from the previous progressive/batched recipe, with average test MACs falling from 475,709,806 to 410,159,652 (13.8%). Parameters remain 3,164,836 and worst-case MACs remain 3,319,207,680. Eight test predictions change: four errors corrected and four introduced. First-pass exits remain 3,977; total exits before the fallback increase from 8,552 to 8,753. Fallback inputs fall from 1,448 to 1,247; full three-model processing falls from 1,313 to 1,112 images.
+
+Same-session latency is 46.732/41.395 ms versus the preceding 58.131/56.671 ms on first/last 1,024 validation images (19.6%/27.0% reductions). These remain shared-device, validation-selected descriptive timings. No accuracy improvement on test or significance claim is made. The notebook adds Section 15 with live frozen evaluation, class metrics, cost/timing comparisons and unsuccessful reuse evidence; existing weights and reference recipes remain available. The original source folder stays read-only and no Canvas upload is performed.
+
+All 117 saved checkpoints, the original cascade and four hybrid deployment recipes passed validation re-evaluation with recorded counts/costs reproduced. The portable notebook executed successfully with 16 figures; ZIP, saved probability metrics, freeze/hash bindings and credential-history checks passed. The previous ZIP is retained as `archives/Assign01_Cai_Haochen_58561440_before_class_routes.zip`. The packaged Section A PDF remains a typed guide and must be replaced with the student's genuine handwritten scan before submission.
+
 ## 2026-09-19 — Final selection before test
 
 All four reuse/batching runtime candidates preserve 5,718 validation correct. Reuse lowers average validation MACs from 399,102,505 to 390,775,315, but neither grouped setting meets the >=5% latency improvement requirement against the class-routing reference. Four-view reuse takes 46.24/41.15 ms and eight-view reuse takes 48.48/40.99 ms on the first/last slices. No reuse candidate qualifies or is tested. Retain the already-frozen class-routing recipe from commit `1dd4705` as this round's only new test endpoint; this decision precedes test access. The unused runtime optimization and its negative timing result remain reproducible, disabled in deployment. Run `timeout 1800 python3 refine_cascade.py --class-routes --test` without changing its stored thresholds or hashes.
