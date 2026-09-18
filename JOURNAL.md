@@ -1,5 +1,13 @@
 # Experiment journal
 
+## 2026-09-19 — Accuracy/compute frontier design (feature/37-budget-cascade)
+
+No new weights are fitted. Compare the historical dual 10-view baseline, current cascade, and a previously recorded reduced current ensemble with view counts 2/1/4. Legacy single/dual first stages use 1/2/10 views; dual predictions must agree before exiting. Fixed confidence thresholds are 0.8/0.9/0.95/0.975/0.99/0.995, with either all predicted classes or only classes 1/5/7/8/9 eligible. Each first stage routes uncertain examples to one of the three references. Also compare legacy 1/2-view predictions blended with the reduced current ensemble at weights 0.25/0.5/0.75. All views actually recomputed are charged; there is no unimplemented caching discount.
+
+Select two endpoints on validation: highest accuracy within the old 580,060,160-MAC budget while preserving old Shirt F1 and both development halves; highest accuracy within the current average-MAC budget while preserving current Shirt F1 and both halves. For each, recompute the top five cached eligible candidates plus its original reference with actual subset routing before freezing. This bounded prefilter does not prove a global optimum. Count every stored model once, report average and worst-case costs, and time old/current/reduced/selected pipelines on the same 1,024 validation inputs with three warmups and seven synchronized repetitions. Timing includes all views, routing, probability averaging and CPU output. It excludes loading and input transfer. Only the two frozen selected endpoints may subsequently receive new test evaluations; test outcomes will not alter their selection.
+
+Commands: `python3 hybrid_experiment.py --check`, then `timeout 1800 python3 hybrid_experiment.py`. Raw experiment evidence remains JSON/CSV. Models and results outside this repository are read-only.
+
 ## 2026-09-19 — Recover the earlier efficient baseline (feature/36-legacy-baseline)
 
 Imported the earlier same-student `mixer_p4_clean_finetune` and `mixer_p4_muon` checkpoints as `legacy_clean` and `legacy_muon`. The source folder was read-only. Only state-dictionary names changed; all 6,000 validation logits matched the original model class exactly. Training split, seed and normalization match the current project. Each model has 478,640 parameters and 29,003,008 dense MACs per view. Their equal-weight 10-view ensemble reproduces 5,695/6,000 validation correct (94.9167%), 957,280 parameters and 580,060,160 MACs/image. Its 94.16% test score is a historical record, not a new test evaluation or an unobserved benchmark.
