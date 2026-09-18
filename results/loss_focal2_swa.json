@@ -1,0 +1,67 @@
+{
+  "config": {
+    "model": "mixer",
+    "patch": 4,
+    "width": 192,
+    "depth": 8,
+    "dropout": 0.1,
+    "epochs": 30,
+    "lr": 5e-05,
+    "decay": 0.01,
+    "schedule": true,
+    "augmentation": false,
+    "label_smoothing": 0,
+    "bf16": true,
+    "averages": true,
+    "grad_clip": 1,
+    "init": "accuracy_wide_clean_swa",
+    "image_features": "gray",
+    "name": "loss_focal2",
+    "focal_gamma": 2,
+    "hypothesis": "Paired against features_gray CE: only change loss to focal gamma=2. Same wide SWA parent and 30-epoch clean schedule; no class weighting or augmentation."
+  },
+  "seed": 58561440,
+  "parameters": 1297746,
+  "macs": 77222784,
+  "best_epoch": 28,
+  "val_accuracy": 0.9384999871253967,
+  "val_loss": 0.2975457012653351,
+  "history": [
+    {
+      "epoch": 25,
+      "val_loss": 0.29776614904403687,
+      "val_accuracy": 0.937833309173584
+    },
+    {
+      "epoch": 26,
+      "val_loss": 0.29779985547065735,
+      "val_accuracy": 0.9383333325386047
+    },
+    {
+      "epoch": 27,
+      "val_loss": 0.2977341413497925,
+      "val_accuracy": 0.9384999871253967
+    },
+    {
+      "epoch": 28,
+      "val_loss": 0.2975457012653351,
+      "val_accuracy": 0.9384999871253967
+    },
+    {
+      "epoch": 29,
+      "val_loss": 0.2977219223976135,
+      "val_accuracy": 0.9383333325386047
+    },
+    {
+      "epoch": 30,
+      "val_loss": 0.29786333441734314,
+      "val_accuracy": 0.9381666779518127
+    }
+  ],
+  "seconds": 72.9207908604294,
+  "complete": true,
+  "gradient_evaluations": 12660,
+  "completed_at": "2026-09-18T15:58:57.989886+00:00",
+  "averaging": "swa",
+  "shared_training_run": "loss_focal2"
+}

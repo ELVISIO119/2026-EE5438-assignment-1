@@ -1,0 +1,77 @@
+{
+  "complete": true,
+  "families": [
+    {
+      "family": "features_gray",
+      "selected_checkpoint": "features_gray",
+      "available_checkpoints": [
+        "features_gray",
+        "features_gray_ema",
+        "features_gray_swa"
+      ],
+      "accuracy": 0.9403333333333334,
+      "correct": 5642,
+      "shirt_recall": 0.8083333333333333,
+      "shirt_f1": 0.8248299319727891,
+      "parameters": 1297746,
+      "macs": 77222784
+    },
+    {
+      "family": "loss_focal2",
+      "selected_checkpoint": "loss_focal2_ema",
+      "available_checkpoints": [
+        "loss_focal2",
+        "loss_focal2_ema",
+        "loss_focal2_swa"
+      ],
+      "accuracy": 0.9406666666666667,
+      "correct": 5644,
+      "shirt_recall": 0.8083333333333333,
+      "shirt_f1": 0.8276450511945392,
+      "parameters": 1297746,
+      "macs": 77222784
+    },
+    {
+      "family": "loss_weighted",
+      "selected_checkpoint": "loss_weighted_ema",
+      "available_checkpoints": [
+        "loss_weighted",
+        "loss_weighted_ema",
+        "loss_weighted_swa"
+      ],
+      "accuracy": 0.9401666666666667,
+      "correct": 5641,
+      "shirt_recall": 0.805,
+      "shirt_f1": 0.8242320819112628,
+      "parameters": 1297746,
+      "macs": 77222784
+    }
+  ],
+  "reference_correct": 5721,
+  "selected_correct": 5721,
+  "candidate_count": 58,
+  "selected_components": [
+    {
+      "name": "accuracy_wide_clean_swa",
+      "views": 10,
+      "temperature": 1.5,
+      "weight": 0.325,
+      "sha256": "0aa9d82bef91689cc3b4b76c97b385153e325887adf376d641f082358aabea0f"
+    },
+    {
+      "name": "accuracy_p2_clean_swa",
+      "views": 30,
+      "temperature": 1.25,
+      "weight": 0.325,
+      "sha256": "31e66eb705618c067df9d65c5a5cb991addbb4f567a7c5dbab408f87859d6227"
+    },
+    {
+      "name": "mixer_pruned_75",
+      "views": 10,
+      "temperature": 1.0,
+      "weight": 0.35,
+      "sha256": "c0b7eafe5070b3985442bfdf729ab2955c7340a172dc5b817150cc02771d5f53"
+    }
+  ],
+  "frozen_at": "2026-09-18T16:00:27.161105+00:00"
+}

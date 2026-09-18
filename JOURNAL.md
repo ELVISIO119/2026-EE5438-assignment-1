@@ -677,3 +677,31 @@ Validation accuracy 94.02% at epoch 1. Same training trajectory as the ordinary 
 ### 2026-09-18T15:56:57.475704+00:00 - moe_mixer SWA
 
 Validation accuracy 93.73% at epoch 26. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/moe_mixer_swa.json`.
+
+## 2026-09-18T15:58:57.989886+00:00 — loss_focal2
+
+Hypothesis: Paired against features_gray CE: only change loss to focal gamma=2. Same wide SWA parent and 30-epoch clean schedule; no class weighting or augmentation.
+
+Measured validation accuracy: 94.00%; checkpoint epoch 1; 1,297,746 parameters; 77,222,784 dense MACs/image; 72.9s training/validation wall time. Configuration and every epoch: `results/loss_focal2.json`. Test set not evaluated in this run.
+
+### 2026-09-18T15:58:57.989886+00:00 - loss_focal2 EMA
+
+Validation accuracy 94.07% at epoch 1. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/loss_focal2_ema.json`.
+
+### 2026-09-18T15:58:57.989886+00:00 - loss_focal2 SWA
+
+Validation accuracy 93.85% at epoch 28. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/loss_focal2_swa.json`.
+
+## 2026-09-18T16:00:13.911245+00:00 — loss_weighted
+
+Hypothesis: Paired against features_gray CE: only weight T-shirt, Pullover, Coat and Shirt by 1.5, all others 1. Normalize by sum of sample weights, matching native weighted CE. Same parent, seed and 30 clean epochs. This is difficulty weighting; Fashion-MNIST classes are balanced.
+
+Measured validation accuracy: 94.02%; checkpoint epoch 2; 1,297,746 parameters; 77,222,784 dense MACs/image; 73.4s training/validation wall time. Configuration and every epoch: `results/loss_weighted.json`. Test set not evaluated in this run.
+
+### 2026-09-18T16:00:13.911245+00:00 - loss_weighted EMA
+
+Validation accuracy 94.02% at epoch 2. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/loss_weighted_ema.json`.
+
+### 2026-09-18T16:00:13.911245+00:00 - loss_weighted SWA
+
+Validation accuracy 93.97% at epoch 26. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/loss_weighted_swa.json`.
