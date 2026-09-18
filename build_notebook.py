@@ -29,9 +29,9 @@ def build():
                                   'image_processing_experiment.py','benchmark_awq.py',
                                   'run_yolo.py','select_yolo.py','check_pyramid.py',
                                   'pil_experiment.py','feature_experiment.py','moe_experiment.py','loss_followup.py',
-                                  'SOURCES.md','requirements.txt')]
+                                  'hybrid_experiment.py','import_legacy.py','SOURCES.md','requirements.txt')]
     files+=list((ROOT/'configs').glob('*.json'))+list(OUT.glob('*.json'))+list(OUT.glob('*.csv'))
-    files += [OUT/f'{name}.pt' for name in sorted({'baseline_sgd_sigmoid'}|{c['name'] for c in recipe['components']})]
+    files += [OUT/f'{name}.pt' for name in sorted({'baseline_sgd_sigmoid','legacy_clean','legacy_muon'}|{c['name'] for c in recipe['components']})]
     buffer=io.BytesIO()
     with zipfile.ZipFile(buffer,'w',zipfile.ZIP_DEFLATED) as archive:
         for path in files:
@@ -44,7 +44,9 @@ def build():
 
     **Cai Haochen | Student ID 58561440 | EE5438 | Semester A 2026-2027**
 
-    The frozen final classifier obtains **{metrics['accuracy']:.2%} test accuracy**, macro precision **{metrics['macro_precision']:.4f}**, macro recall **{metrics['macro_recall']:.4f}**, and macro F1 **{metrics['macro_f1']:.4f}** on 10,000 Fashion-MNIST test images. All components are MLPs. No convolution, attention, Transformer, outside training images or pretrained weights are used.
+    The two optimized deployment options in **Section 13** each obtain **{evidence['hybrid_test_metrics']['selected']['balanced']['accuracy']:.2%} test accuracy**. They use inexpensive first-stage MLPs and send uncertain images to the original cascade. The balanced option reduces average test MACs to 492.48 million; the accuracy-priority option uses 841.89 million and stores fewer parameters. Both are evaluated by default Run All.
+
+    The frozen reference classifier, retained in Sections 1–12, obtains **{metrics['accuracy']:.2%} test accuracy**, macro precision **{metrics['macro_precision']:.4f}**, macro recall **{metrics['macro_recall']:.4f}**, and macro F1 **{metrics['macro_f1']:.4f}** on 10,000 Fashion-MNIST test images. All components are MLPs. No convolution, attention, Transformer, outside training images or externally pretrained weights are used. The new front-stage weights come from this student's earlier training on the same assignment split; their provenance is retained.
 
     A confidence gate first evaluates one unflipped view with the wide Mixer. Predictions of Trouser, Sandal, Sneaker, Bag or Ankle boot with probability at least 0.90 exit immediately. All other images use the selected ensemble detailed below. The same wide-model weights are shared between stages; no extra model is stored. The gate uses predictions only, never the true class.
 
@@ -54,7 +56,7 @@ def build():
 
     **Run All performs real evaluation of the frozen weights.** The portable bundle below contains readable Python sources, configuration files, recorded training histories, and the selected checkpoints. It is unpacked into a new temporary working directory, leaving existing files untouched. The bundle is not a remote dependency.
 
-    Set `RETRAIN_ALL=True` to rerun the full training sequence from scratch before validation selection and test evaluation. This is deliberately opt-in because it includes all negative-result experiments. Recorded training histories are labelled as recorded evidence; they are not represented as newly executed training in the default evaluation run. PyTorch 2.10, torchvision 0.25, NumPy, pandas, scikit-learn and matplotlib are required. CUDA is recommended; CPU evaluation is supported but slower.
+    Set `RETRAIN_ALL=True` to rerun the repository's training sequence from scratch before validation selection and test evaluation. This excludes the two imported legacy checkpoints: their original configurations, histories and hashes are retained, but the optional training sequence does not recreate their original training. Section 13 evaluates frozen hybrid endpoints only in default mode; after retraining, their stored hash bindings no longer apply and a new validation-only freeze is required. Training is opt-in because it includes all negative-result experiments. Recorded histories are not represented as newly executed training. PyTorch 2.10, torchvision 0.25, NumPy, pandas, scikit-learn and matplotlib are required. CUDA is recommended; CPU evaluation is supported but slower.
 
     The official 60,000-image training set is stratified into 54,000 training and 6,000 validation examples, 600 per validation class, using seed **58561440**. Mean and standard deviation come only from the 54,000 training images. Validation chooses checkpoints, averaging, pruning, inference views and ensemble weights. The test recipe is frozen and checkpoint hashes are checked before its evaluation. The public test benchmark has been evaluated during development; this continuation is not an independently blinded test. New candidate fitting and selection use training/validation data only. Re-evaluating the frozen recipe checks implementation consistency, not an independent replication of generalization.
     ''')
@@ -139,7 +141,7 @@ plt.tight_layout(); plt.show()
     for name in ['accuracy_p2','accuracy_wide','accuracy_muon_refine','accuracy_residual','accuracy_p2_clean','accuracy_wide_clean']:
         run(json.loads(Path(f'configs/{name}.json').read_text()))
     from select_final import select
-    select(accuracy_first=True,exclude_prefixes=('garment_','focal_','spatial_','yolo_','pil_','features_','moe_','loss_'))
+    select(accuracy_first=True,exclude_prefixes=('garment_','focal_','spatial_','yolo_','pil_','features_','moe_','loss_','legacy_'))
     from garment_experiment import run as select_refinements
     for name in ['garment_wide','garment_p2','focal_wide','focal_p2']:
         run(json.loads(Path(f'configs/{name}.json').read_text()))
@@ -520,6 +522,61 @@ ax.set(xticks=range(4),xticklabels=['T-shirt','Pullover','Coat','Shirt'],ylabel=
 ax.legend(fontsize=8); ax.grid(alpha=.25); plt.show()
 ''')
     md('''Matched CE gives 5,642 correct, focal gamma 2 gives 5,644, and weighted CE gives 5,641. Focal leaves Shirt recall unchanged at 485/600, while precision improves and F1 changes from 0.824830 to 0.827645. Its development-half correct counts move from [2,808, 2,834] to [2,806, 2,838], failing the predeclared no-regression guard. Weighted CE reduces Shirt correct count to 483. Neither loss qualifies for stacking local augmentation; no such combined run is claimed. All 58 deployment comparisons retain the original 5,721-correct cascade, preserving the original weights, freeze timestamp and 94.42% historical test result. These small validation differences do not establish statistical significance.''')
+    md('''## 13. Faster inference using the earlier efficient MLPs
+
+    The earlier two width-128, depth-six, patch-four Mixers used ten views each: 94.16% historical test accuracy, 957,280 stored parameters and 580,060,160 MACs per image. Import changes tensor names only; all 6,000 validation logits were bitwise equal to the original implementation. These are this student's same-data training runs, not external pretraining. `legacy_import.json` retains the original source hashes and configurations; `import_legacy.py` documents the conversion and requires the original local source folder only if re-importing.
+
+    No additional training is needed. A bounded screen compares nine single/dual legacy first stages, three fallback recipes, six thresholds, two allowed-class sets and fixed blends, yielding 354 candidates. Twelve finalists are recomputed with actual subset routing. The initial MAC-only choices were slightly slower than their references, so they were rejected as simultaneous speed improvements. Before any new test access, selection was explicitly amended to require at least 5% lower measured median latency, lower average MACs, and no reduction in validation correct count, Shirt F1 or either reused development-half count. This amendment and the initial failed choices remain in the evidence. It is reused validation, not an independent confirmation or an untouched preregistration.
+
+    **Balanced:** run both legacy models once; exit only when their predictions agree and mean confidence is at least 0.90. Otherwise use the original cascade. **Accuracy priority:** run the legacy Muon model on the original and flipped image; exit when averaged confidence is at least 0.95, otherwise use the original cascade. All predicted classes may exit; no true labels enter routing. Both endpoints were hash-frozen and committed before their test evaluations. Their names reflect validation objectives, not a ranking chosen from test outcomes.
+
+    Every fallback computation actually runs only on routed images. Repeated views are recomputed and charged. Total parameters count every stored model once, including inactive fallback members. MACs count dense Linear arithmetic; they exclude normalization, activations, routing and memory overhead. Worst-case cost is 3,319,207,680 MACs for either option. Both add stored parameters, so neither dominates all references on every complexity measure.
+    ''')
+    code('''from hybrid_experiment import evaluate_frozen, self_check as check_hybrid
+check_hybrid()
+hybrid=json.loads(Path('results/hybrid_experiment.json').read_text())
+recorded_hybrid=json.loads(Path('results/hybrid_test_metrics.json').read_text())
+if not RETRAIN_ALL:
+    hybrid_test=evaluate_frozen()
+    for goal,row in hybrid_test['selected'].items():
+        print(goal, 'recorded / executed test correct:', recorded_hybrid['selected'][goal]['correct'], row['correct'])
+else:
+    hybrid_test=recorded_hybrid
+    print('Hybrid table is recorded evidence only: retrained fallback weights require a new validation freeze.')
+legacy=json.loads(Path('results/legacy_import.json').read_text())
+comparison=[]
+for label,key,test_accuracy,test_macs in [
+    ('Earlier dual 10-view','legacy',legacy['historical_test_metrics']['accuracy'],580060160),
+    ('Original cascade','current',test['accuracy'],test['macs'])]:
+    ref=hybrid['references'][key]
+    comparison.append(dict(model=label,validation_accuracy=ref['accuracy'],test_accuracy=test_accuracy,
+                           average_test_MACs=test_macs,parameters=ref['parameters'],
+                           latency_ms_1024=hybrid['latency_finalists'][ref['label']]['median_ms']))
+for goal,row in hybrid_test['selected'].items():
+    frozen=hybrid['selected'][goal]
+    comparison.append(dict(model='Hybrid '+goal,validation_accuracy=frozen['accuracy'],test_accuracy=row['accuracy'],
+                           average_test_MACs=row['execution']['macs_per_image'],parameters=row['parameters'],
+                           latency_ms_1024=frozen['measured_latency']['median_ms']))
+comparison=pd.DataFrame(comparison)
+display(comparison)
+for goal,row in hybrid_test['selected'].items():
+    print(goal, 'actual test routing:',row['execution'])
+    display(pd.DataFrame(row['classification_report']).T.round(4))
+fig,axes=plt.subplots(1,2,figsize=(12,4),layout='constrained')
+for ax,cost,scale,xlabel in zip(axes,['average_test_MACs','latency_ms_1024'],[1e6,1],
+                               ['Average test MACs (millions)','Recorded median ms / 1,024 validation images']):
+    for i,row in comparison.iterrows():
+        ax.scatter(row[cost]/scale,100*row['test_accuracy'],label=row['model'],s=65)
+    ax.set(xlabel=xlabel,ylabel='Observed test accuracy (%)')
+    ax.grid(alpha=.25); ax.legend(fontsize=8)
+fig.suptitle('Two frozen alternatives: average compute and latency trade-offs')
+plt.show()
+''')
+    md('''Both endpoints obtain 9,449/10,000 test correct (94.49%), versus 9,416 for the earlier dual model and 9,442 for the original cascade. Balanced average test MACs are 492,477,669, down 15.1% versus the earlier dual model; accuracy-priority average test MACs are 841,892,537, down 50.4% versus the original cascade. Balanced stores 3,164,836 parameters and accuracy priority stores 2,686,196, compared with 957,280 and 2,207,556 for their respective references. Balanced is faster and cheaper on average; accuracy priority uses less storage and preserves the higher validation score. Neither option was retuned after seeing these test results.
+
+    The same-device latency comparison uses the first 1,024 validation images, internal batch size 128, three warmups and seven synchronized repetitions. It includes views, routing, softmax, averaging and CPU output, excluding model loading and input transfer. Recorded medians are 104.39 ms for the earlier dual model, 236.45 ms for the original cascade, 95.49 ms for balanced and 144.84 ms for accuracy priority. These are shared RTX 5090 measurements selected on validation timing, not independent speed confirmation or single-image latency. Average test MACs and validation timing use different image sets and are explicitly labelled.
+
+    The 0.07-percentage-point test gain over the original cascade is seven images, not evidence of statistical significance. The public test set and development split were repeatedly observed during the wider project; neither a class ranking nor a general improvement is guaranteed. All source code, both frozen recipes and their five unique model checkpoints are embedded for default execution. The original `final_recipe.json` remains an explicit reproducible reference; optimized deployment uses `hybrid_experiment.predict` with either `hybrid_*_recipe.json`.''')
     md('## References\n\n'+(ROOT/'SOURCES.md').read_text().split('\n',1)[1])
     notebook=nbf.v4.new_notebook(cells=cells,metadata={'kernelspec':{'name':'python3','display_name':'Python 3','language':'python'},'language_info':{'name':'python','version':platform_version()}})
     target=ROOT/'submission'/'Assign01_Cai_Haochen_58561440.ipynb'

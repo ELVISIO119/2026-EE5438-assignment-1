@@ -6,7 +6,20 @@ Classify Fashion-MNIST clothing images with fully connected neural networks. Beg
 
 ## Current result and files
 
-The frozen classifier achieves **94.42% test accuracy (9,442/10,000)** and **0.9440 macro F1**. Its validation-only selection score is **95.35% (5,721/6,000)**. A confidence gate first runs the wide Mixer on one view. Predictions of Trouser, Sandal, Sneaker, Bag or Ankle boot with probability at least 0.90 exit early; the remaining images use the three-model ensemble with 10/30/10 views, calibrated probabilities and weights 0.325/0.325/0.350. The gate uses predictions, never true labels, and shares existing weights.
+Two optimized deployment options now achieve **94.49% test accuracy (9,449/10,000)**. Both combine earlier efficient MLPs with the existing accurate cascade. All routing uses predictions only. The options were selected and hash-frozen on validation before test evaluation; neither was retuned from the test scores.
+
+| Frozen option | Validation accuracy | Test accuracy | Average test MACs/image | Stored parameters | Median ms/1,024 validation images |
+|---|---:|---:|---:|---:|---:|
+| Earlier dual 10-view | 94.9167% | 94.16% (historical) | 580,060,160 | 957,280 | 104.39 |
+| Original cascade | 95.3500% | 94.42% | 1,696,912,840 | 2,207,556 | 236.45 |
+| Hybrid balanced | 95.2833% | **94.49%** | **492,477,669** | 3,164,836 | **95.49** |
+| Hybrid accuracy priority | **95.3500%** | **94.49%** | 841,892,537 | 2,686,196 | 144.84 |
+
+Balanced runs both legacy models on one view, exits when they agree and their mean confidence is at least 0.90, and sends remaining images to the original cascade. Accuracy priority uses the legacy Muon model on two views and exits at confidence 0.95. The labels describe their validation objectives. Balanced reduces average test MACs by 15.1% and measured latency by 8.5% versus the earlier dual model; accuracy priority reduces them by 50.4% and 38.7% versus the original cascade. Both store extra parameters and have a higher worst-case cost of 3,319,207,680 MACs/image. Neither dominates every reference on all complexity measures. Seven extra test-correct images over the original cascade do not establish statistical significance or guarantee the class bonus.
+
+Timing uses the same 1,024 validation images, internal batch size 128, three warmups and seven synchronized repetitions on the shared RTX 5090. It includes routing, views, probabilities and CPU output, excluding model load/input transfer. It is a descriptive validation-selected measurement, not independent speed confirmation or single-image latency. Average test MACs use the full test split. Section 13 of the notebook evaluates both frozen hybrids by default, with their five unique model checkpoints embedded.
+
+The original frozen reference remains at `results/final_recipe.json`, **94.42% test accuracy (9,442/10,000)** and **0.9440 macro F1**. Its validation-only selection score is **95.35% (5,721/6,000)**. A confidence gate first runs the wide Mixer on one view. Predictions of Trouser, Sandal, Sneaker, Bag or Ankle boot with probability at least 0.90 exit early; the remaining images use the three-model ensemble with 10/30/10 views, calibrated probabilities and weights 0.325/0.325/0.350. The gate shares existing weights.
 
 There are **2,207,556 stored parameters**, unchanged from the ungated reference. On the test set, 4,913/10,000 images exit early and average dense MACs fall from 3,183,978,880 to **1,696,912,840 per image (46.7% lower)**. Worst-case MACs rise slightly to **3,261,201,664** because a hard image incurs both stages. Measured on the same 1,024 validation inputs, inference takes 235.9 ms versus 388.7 ms: **1.65x throughput** on the shared RTX 5090. These are conditional average costs and descriptive timings, not a guarantee of lower worst-case FLOPs or a class tie-break award. Selection prioritizes accuracy, then lower cost for ties; no global optimum or top-ten ranking is claimed.
 
@@ -15,8 +28,13 @@ There are **2,207,556 stored parameters**, unchanged from the ungated reference.
 - [Section A handwriting instructions](section_a/README.md)
 - [Frozen recipe](results/final_recipe.json), [test metrics](results/final_test_metrics.json), [cascade candidates](results/cascade_candidates.csv), [cascade timing](results/cascade_benchmark.json)
 - [NVFP4 measurements](results/nvfp4_benchmark.json), [garment trials](results/garment_candidates.csv), [spatial-readout trials](results/spatial_candidates.csv)
+- [Balanced recipe](results/hybrid_balanced_recipe.json), [accuracy-priority recipe](results/hybrid_accuracy_recipe.json), [hybrid test metrics](results/hybrid_test_metrics.json), [selection and latency evidence](results/hybrid_experiment.json)
 
-The ZIP requires your genuine handwritten Section A PDF before Canvas submission. The included PDF is clearly labelled as a typed study guide. The notebook's default Run All unpacks its embedded code/checkpoints into a temporary directory and actually evaluates the frozen classifier. Set `RETRAIN_ALL=True` to run all training experiments from scratch. Git intentionally excludes standalone checkpoint files; the notebook contains the checkpoints needed for default evaluation.
+The ZIP requires your genuine handwritten Section A PDF before Canvas submission. The included PDF is clearly labelled as a typed study guide. The notebook's default Run All unpacks its embedded code/checkpoints into a temporary directory and actually evaluates the original reference and both optimized options. `RETRAIN_ALL=True` reruns the repository training sequence, excluding the two imported legacy models; retrained fallback weights require a new validation-only hybrid freeze. Git intentionally excludes standalone checkpoint files; the notebook contains the checkpoints needed for default evaluation.
+
+For optimized inference, pass raw [0,1] tensors shaped `(N,1,28,28)` on `train.DEVICE` to `hybrid_experiment.predict(recipe, images)` with either hybrid recipe loaded from JSON. Reuse a dictionary of loaded models via its optional `models` argument for repeated inference. Run `python3 hybrid_experiment.py --test` to verify both frozen endpoints, or `--check` for routing/cost checks. The no-argument search and `--latency` replace experiment selections; use a separate directory for new research, never retune the recorded recipes from their test outcomes.
+
+Branches `feature/36-legacy-baseline`, `feature/37-budget-cascade` and `feature/38-hybrid-integration` preserve checkpoint recovery, the bounded inference search and portable integration. Source weights came from earlier same-student training on the identical Fashion-MNIST split, not external pretraining. Import changed tensor names only and matched all 6,000 validation logits exactly. The 354-candidate screen recomputed 12 actual finalists. Initial MAC-only choices were slower; the archived failed choices remain available. The explicit latency amendment, made before new test access, required at least 5% lower median latency plus lower average MACs and preserved validation correct count, Shirt F1 and both development halves. Reusing validation for this amendment limits generalization claims. Historical descriptions below refer to their respective stages; they do not override these new deployment options.
 
 ## Rules
 

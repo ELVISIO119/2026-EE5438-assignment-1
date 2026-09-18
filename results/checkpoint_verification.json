@@ -1,5 +1,5 @@
 {
-  "verified_at": "2026-09-18T16:01:10.261611+00:00",
+  "verified_at": "2026-09-18T16:19:05.190912+00:00",
   "checks": [
     {
       "name": "accuracy_muon_refine",
@@ -287,6 +287,20 @@
       "parameters": 1297746,
       "macs": 77222784,
       "sha256": "98d82e86aecd00e865dbafd176ed62ce48326330215685c38ece7be6cb50aa73"
+    },
+    {
+      "name": "legacy_clean",
+      "accuracy": 0.9406666666666667,
+      "parameters": 478640,
+      "macs": 29003008,
+      "sha256": "22c279271de81701c3fad15cae8a160101635f5ee9c45afcfc8155141ccdb879"
+    },
+    {
+      "name": "legacy_muon",
+      "accuracy": 0.9405,
+      "parameters": 478640,
+      "macs": 29003008,
+      "sha256": "8a663a348ccefb3b60b9fb9abcd2281d8956ce2719a6bbfba7615a83fe357bd0"
     },
     {
       "name": "loss_focal2",
@@ -807,7 +821,7 @@
       "sha256": "b45732b56a9429d98f8f123d0bd4955ead0078d0196c488c2a5d0c3c75d09d88"
     }
   ],
-  "check_count": 115,
+  "check_count": 117,
   "frozen_recipe": {
     "correct": 5721,
     "examples": 6000,
@@ -815,5 +829,49 @@
     "loss": 0.15823839604854584,
     "parameters": 2207556,
     "macs": 1698398697.0666666
+  },
+  "hybrid_recipes": {
+    "balanced": {
+      "correct": 5717,
+      "examples": 6000,
+      "accuracy": 0.9528333333333333,
+      "loss": 0.17609289288520813,
+      "parameters": 3164836,
+      "execution": {
+        "examples": 6000,
+        "early_exit": 5163,
+        "full_ensemble": 837,
+        "macs_per_image": 475266564.7146667,
+        "worst_case_macs": 3319207680,
+        "fallback_execution": {
+          "examples": 837,
+          "early_exit": 71,
+          "full_ensemble": 766,
+          "macs_per_image": 2991115044.549582,
+          "worst_case_macs": 3261201664
+        }
+      }
+    },
+    "accuracy": {
+      "correct": 5721,
+      "examples": 6000,
+      "accuracy": 0.9535,
+      "loss": 0.18928593397140503,
+      "parameters": 2686196,
+      "execution": {
+        "examples": 6000,
+        "early_exit": 4312,
+        "full_ensemble": 1688,
+        "macs_per_image": 833273027.4986665,
+        "worst_case_macs": 3319207680,
+        "fallback_execution": {
+          "examples": 1688,
+          "early_exit": 268,
+          "full_ensemble": 1420,
+          "macs_per_image": 2755688429.49763,
+          "worst_case_macs": 3261201664
+        }
+      }
+    }
   }
 }
