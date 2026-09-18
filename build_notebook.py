@@ -125,7 +125,7 @@ plt.tight_layout(); plt.show()
     trials()
     for name in ['regularization_none','regularization_dropout','regularization_decay']:
         run(json.loads(Path(f'configs/{name}.json').read_text()))
-    for name in ['accuracy_p2','accuracy_wide','accuracy_muon_refine','accuracy_residual']:
+    for name in ['accuracy_p2','accuracy_wide','accuracy_muon_refine','accuracy_residual','accuracy_p2_clean','accuracy_wide_clean']:
         run(json.loads(Path(f'configs/{name}.json').read_text()))
     from select_final import select
     select(accuracy_first=True)
@@ -223,6 +223,8 @@ plt.suptitle('First 12 errors in test-index order (not cherry-picked)'); plt.tig
     ### Accuracy-first extension
 
     The objective is maximum validation accuracy without a computation budget. The finer-patch trial obtains ordinary/EMA/SWA validation accuracies {acc('accuracy_p2')}/{acc('accuracy_p2_ema')}/{acc('accuracy_p2_swa')}; the wider/deeper trial obtains {acc('accuracy_wide')}/{acc('accuracy_wide_ema')}/{acc('accuracy_wide_swa')}. Augmented refinement of the Muon-trained model obtains {acc('accuracy_muon_refine')}/{acc('accuracy_muon_refine_ema')}/{acc('accuracy_muon_refine_swa')}, and the large flat-input residual model obtains {acc('accuracy_residual')}/{acc('accuracy_residual_ema')}/{acc('accuracy_residual_swa')}. A large model or a finer patch is not assumed to improve accuracy; measured validation results decide.
+
+    The finer-patch clean fine-tuning trial obtains ordinary/EMA/SWA accuracies {acc('accuracy_p2_clean')}/{acc('accuracy_p2_clean_ema')}/{acc('accuracy_p2_clean_swa')}; the corresponding wider-model trial obtains {acc('accuracy_wide_clean')}/{acc('accuracy_wide_clean_ema')}/{acc('accuracy_wide_clean_swa')}. Parent checkpoints remain eligible. These follow-up trials test whether the clean fine-tuning benefit observed in the initial four-pixel Mixer transfers to the new models.
 
     Enlarging the inference and ensemble search lets models combine complementary errors. The selected component table records each model, number of views, exact weight when nonuniform, and checkpoint hash. The final selection rule uses validation correct count and NLL only; training and inference costs remain visible for assessment, even though they are no longer optimization constraints.
 
