@@ -1,0 +1,186 @@
+{
+  "config": {
+    "name": "yolo_pyramid_csp_clean",
+    "model": "pyramid",
+    "width": 96,
+    "depth": 3,
+    "multiscale_fusion": true,
+    "partial_channel": true,
+    "dropout": 0.1,
+    "epochs": 30,
+    "lr": 5e-05,
+    "decay": 0.01,
+    "schedule": true,
+    "augmentation": false,
+    "label_smoothing": 0.0,
+    "bf16": true,
+    "averages": true,
+    "grad_clip": 1.0,
+    "hypothesis": "Matched 30-epoch clean refinement of yolo_pyramid_csp; initialize its best raw-validation ordinary/EMA/SWA checkpoint. Same clean schedule and learning rate for all four architectures; auxiliary supervision remains training-only when configured.",
+    "init": "yolo_pyramid_csp_ema"
+  },
+  "seed": 58561440,
+  "parameters": 550393,
+  "macs": 47042880,
+  "best_epoch": 4,
+  "val_accuracy": 0.9333333373069763,
+  "val_loss": 0.21460753679275513,
+  "history": [
+    {
+      "epoch": 1,
+      "val_loss": 0.22172772884368896,
+      "val_accuracy": 0.9311666488647461
+    },
+    {
+      "epoch": 2,
+      "val_loss": 0.21437080204486847,
+      "val_accuracy": 0.9311666488647461
+    },
+    {
+      "epoch": 3,
+      "val_loss": 0.21251678466796875,
+      "val_accuracy": 0.9319999814033508
+    },
+    {
+      "epoch": 4,
+      "val_loss": 0.21460753679275513,
+      "val_accuracy": 0.9333333373069763
+    },
+    {
+      "epoch": 5,
+      "val_loss": 0.21786387264728546,
+      "val_accuracy": 0.9328333139419556
+    },
+    {
+      "epoch": 6,
+      "val_loss": 0.22284424304962158,
+      "val_accuracy": 0.9321666359901428
+    },
+    {
+      "epoch": 7,
+      "val_loss": 0.22821536660194397,
+      "val_accuracy": 0.9321666359901428
+    },
+    {
+      "epoch": 8,
+      "val_loss": 0.23427772521972656,
+      "val_accuracy": 0.9315000176429749
+    },
+    {
+      "epoch": 9,
+      "val_loss": 0.2413996011018753,
+      "val_accuracy": 0.9315000176429749
+    },
+    {
+      "epoch": 10,
+      "val_loss": 0.24700327217578888,
+      "val_accuracy": 0.9293333292007446
+    },
+    {
+      "epoch": 11,
+      "val_loss": 0.2517341077327728,
+      "val_accuracy": 0.9306666851043701
+    },
+    {
+      "epoch": 12,
+      "val_loss": 0.25807392597198486,
+      "val_accuracy": 0.9286666512489319
+    },
+    {
+      "epoch": 13,
+      "val_loss": 0.2634405493736267,
+      "val_accuracy": 0.9278333187103271
+    },
+    {
+      "epoch": 14,
+      "val_loss": 0.2693505883216858,
+      "val_accuracy": 0.9286666512489319
+    },
+    {
+      "epoch": 15,
+      "val_loss": 0.276009202003479,
+      "val_accuracy": 0.9276666641235352
+    },
+    {
+      "epoch": 16,
+      "val_loss": 0.28240394592285156,
+      "val_accuracy": 0.9279999732971191
+    },
+    {
+      "epoch": 17,
+      "val_loss": 0.28703421354293823,
+      "val_accuracy": 0.9271666407585144
+    },
+    {
+      "epoch": 18,
+      "val_loss": 0.2931232452392578,
+      "val_accuracy": 0.9266666769981384
+    },
+    {
+      "epoch": 19,
+      "val_loss": 0.2968345284461975,
+      "val_accuracy": 0.9264999628067017
+    },
+    {
+      "epoch": 20,
+      "val_loss": 0.29873332381248474,
+      "val_accuracy": 0.9269999861717224
+    },
+    {
+      "epoch": 21,
+      "val_loss": 0.3042955994606018,
+      "val_accuracy": 0.9264999628067017
+    },
+    {
+      "epoch": 22,
+      "val_loss": 0.307814359664917,
+      "val_accuracy": 0.9259999990463257
+    },
+    {
+      "epoch": 23,
+      "val_loss": 0.3093418478965759,
+      "val_accuracy": 0.9259999990463257
+    },
+    {
+      "epoch": 24,
+      "val_loss": 0.3110451102256775,
+      "val_accuracy": 0.9269999861717224
+    },
+    {
+      "epoch": 25,
+      "val_loss": 0.3118138909339905,
+      "val_accuracy": 0.9266666769981384
+    },
+    {
+      "epoch": 26,
+      "val_loss": 0.3129781484603882,
+      "val_accuracy": 0.9264999628067017
+    },
+    {
+      "epoch": 27,
+      "val_loss": 0.3137398362159729,
+      "val_accuracy": 0.9263333082199097
+    },
+    {
+      "epoch": 28,
+      "val_loss": 0.31413960456848145,
+      "val_accuracy": 0.9264999628067017
+    },
+    {
+      "epoch": 29,
+      "val_loss": 0.31455621123313904,
+      "val_accuracy": 0.9263333082199097
+    },
+    {
+      "epoch": 30,
+      "val_loss": 0.31453728675842285,
+      "val_accuracy": 0.9259999990463257
+    }
+  ],
+  "seconds": 73.85147204250097,
+  "complete": true,
+  "gradient_evaluations": 12660,
+  "completed_at": "2026-09-18T11:57:25.149024+00:00",
+  "averaging": "ema",
+  "shared_training_run": "yolo_pyramid_csp_clean"
+}

@@ -1,0 +1,70 @@
+{
+  "components": [
+    {
+      "name": "accuracy_wide_clean_swa",
+      "views": 10,
+      "temperature": 1.5,
+      "weight": 0.325,
+      "sha256": "0aa9d82bef91689cc3b4b76c97b385153e325887adf376d641f082358aabea0f"
+    },
+    {
+      "name": "accuracy_p2_clean_swa",
+      "views": 30,
+      "temperature": 1.25,
+      "weight": 0.325,
+      "sha256": "31e66eb705618c067df9d65c5a5cb991addbb4f567a7c5dbab408f87859d6227"
+    },
+    {
+      "name": "mixer_pruned_75",
+      "views": 10,
+      "temperature": 1.0,
+      "weight": 0.35,
+      "sha256": "c0b7eafe5070b3985442bfdf729ab2955c7340a172dc5b817150cc02771d5f53"
+    }
+  ],
+  "parameters": 2207556,
+  "macs": 1698398697.0666666,
+  "full_macs": 3183978880,
+  "worst_case_macs": 3261201664,
+  "correct": 5721,
+  "examples": 6000,
+  "accuracy": 0.9535,
+  "loss": 0.15823839604854584,
+  "shirt_precision": 0.8869257950530035,
+  "shirt_recall": 0.8366666666666667,
+  "shirt_f1": 0.8610634648370498,
+  "macro_f1": 0.9532853801363863,
+  "validation_half_correct": [
+    2857,
+    2864
+  ],
+  "cascade": {
+    "name": "accuracy_wide_clean_swa",
+    "views": 1,
+    "threshold": 0.9,
+    "classes": [
+      1,
+      5,
+      7,
+      8,
+      9
+    ],
+    "macs": 77222784,
+    "sha256": "0aa9d82bef91689cc3b4b76c97b385153e325887adf376d641f082358aabea0f"
+  },
+  "name": "0.3250*accuracy_wide_clean_swa:10:T1.5 + 0.3250*accuracy_p2_clean_swa:30:T1.25 + 0.3500*mixer_pruned_75:10:T1.0; frozen confidence gate",
+  "frozen_at": "2026-09-18T11:57:52.425576+00:00",
+  "seed": 58561440,
+  "candidates": 77,
+  "selection_split": "validation_only",
+  "objective": "accuracy_then_expected_cost",
+  "rule": "Guard both validation half counts and Shirt F1; rank correct count, average MACs, parameters, NLL. Fixed gate; one best raw checkpoint per family, views 1/10/30, additions 0.1/0.2/0.35 or replacement of either non-gate member.",
+  "benchmark_status": "Exploratory continuation on a previously observed public test benchmark.",
+  "validation_execution": {
+    "examples": 6000,
+    "early_exit": 2945,
+    "full_ensemble": 3055,
+    "macs_per_image": 1698398697.0666666,
+    "worst_case_macs": 3261201664
+  }
+}

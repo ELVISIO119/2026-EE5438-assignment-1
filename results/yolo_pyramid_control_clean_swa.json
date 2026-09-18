@@ -1,0 +1,65 @@
+{
+  "config": {
+    "name": "yolo_pyramid_control_clean",
+    "model": "pyramid",
+    "width": 96,
+    "depth": 3,
+    "multiscale_fusion": false,
+    "dropout": 0.1,
+    "epochs": 30,
+    "lr": 5e-05,
+    "decay": 0.01,
+    "schedule": true,
+    "augmentation": false,
+    "label_smoothing": 0.0,
+    "bf16": true,
+    "averages": true,
+    "grad_clip": 1.0,
+    "hypothesis": "Matched 30-epoch clean refinement of yolo_pyramid_control; initialize its best raw-validation ordinary/EMA/SWA checkpoint. Same clean schedule and learning rate for all four architectures; auxiliary supervision remains training-only when configured.",
+    "init": "yolo_pyramid_control_swa"
+  },
+  "seed": 58561440,
+  "parameters": 826153,
+  "macs": 68717952,
+  "best_epoch": 25,
+  "val_accuracy": 0.9315000176429749,
+  "val_loss": 0.425559401512146,
+  "history": [
+    {
+      "epoch": 25,
+      "val_loss": 0.425559401512146,
+      "val_accuracy": 0.9315000176429749
+    },
+    {
+      "epoch": 26,
+      "val_loss": 0.4266042411327362,
+      "val_accuracy": 0.9309999942779541
+    },
+    {
+      "epoch": 27,
+      "val_loss": 0.4272560179233551,
+      "val_accuracy": 0.9306666851043701
+    },
+    {
+      "epoch": 28,
+      "val_loss": 0.4273630678653717,
+      "val_accuracy": 0.9304999709129333
+    },
+    {
+      "epoch": 29,
+      "val_loss": 0.42764127254486084,
+      "val_accuracy": 0.9306666851043701
+    },
+    {
+      "epoch": 30,
+      "val_loss": 0.42787471413612366,
+      "val_accuracy": 0.9308333396911621
+    }
+  ],
+  "seconds": 66.32811942137778,
+  "complete": true,
+  "gradient_evaluations": 12660,
+  "completed_at": "2026-09-18T11:53:45.854378+00:00",
+  "averaging": "swa",
+  "shared_training_run": "yolo_pyramid_control_clean"
+}

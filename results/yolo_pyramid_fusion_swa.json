@@ -1,0 +1,154 @@
+{
+  "config": {
+    "name": "yolo_pyramid_fusion",
+    "model": "pyramid",
+    "width": 96,
+    "depth": 3,
+    "multiscale_fusion": true,
+    "dropout": 0.1,
+    "epochs": 120,
+    "lr": 0.0008,
+    "decay": 0.025,
+    "schedule": true,
+    "augmentation": true,
+    "label_smoothing": 0.025,
+    "bf16": true,
+    "averages": true,
+    "grad_clip": 1.0,
+    "hypothesis": "Matched to the pyramid coarse-only control except concatenate pooled fine and coarse features before classification. This tests multiscale feature fusion inspired by detector feature pyramids without convolution, attention or detection losses. Backbone initialization and training RNG are matched."
+  },
+  "seed": 58561440,
+  "parameters": 827305,
+  "macs": 68718912,
+  "best_epoch": 100,
+  "val_accuracy": 0.9269999861717224,
+  "val_loss": 0.28876104950904846,
+  "history": [
+    {
+      "epoch": 97,
+      "val_loss": 0.2978399693965912,
+      "val_accuracy": 0.9239999651908875
+    },
+    {
+      "epoch": 98,
+      "val_loss": 0.29274144768714905,
+      "val_accuracy": 0.9241666793823242
+    },
+    {
+      "epoch": 99,
+      "val_loss": 0.2914462387561798,
+      "val_accuracy": 0.9253333210945129
+    },
+    {
+      "epoch": 100,
+      "val_loss": 0.28876104950904846,
+      "val_accuracy": 0.9269999861717224
+    },
+    {
+      "epoch": 101,
+      "val_loss": 0.2901478409767151,
+      "val_accuracy": 0.9263333082199097
+    },
+    {
+      "epoch": 102,
+      "val_loss": 0.2904157042503357,
+      "val_accuracy": 0.9259999990463257
+    },
+    {
+      "epoch": 103,
+      "val_loss": 0.29051321744918823,
+      "val_accuracy": 0.925166666507721
+    },
+    {
+      "epoch": 104,
+      "val_loss": 0.2906601130962372,
+      "val_accuracy": 0.9259999990463257
+    },
+    {
+      "epoch": 105,
+      "val_loss": 0.2910526394844055,
+      "val_accuracy": 0.9256666302680969
+    },
+    {
+      "epoch": 106,
+      "val_loss": 0.2907300591468811,
+      "val_accuracy": 0.9256666302680969
+    },
+    {
+      "epoch": 107,
+      "val_loss": 0.2910607159137726,
+      "val_accuracy": 0.925166666507721
+    },
+    {
+      "epoch": 108,
+      "val_loss": 0.29163768887519836,
+      "val_accuracy": 0.925166666507721
+    },
+    {
+      "epoch": 109,
+      "val_loss": 0.29163792729377747,
+      "val_accuracy": 0.9256666302680969
+    },
+    {
+      "epoch": 110,
+      "val_loss": 0.2920570373535156,
+      "val_accuracy": 0.9254999756813049
+    },
+    {
+      "epoch": 111,
+      "val_loss": 0.29213500022888184,
+      "val_accuracy": 0.925000011920929
+    },
+    {
+      "epoch": 112,
+      "val_loss": 0.2924433946609497,
+      "val_accuracy": 0.9253333210945129
+    },
+    {
+      "epoch": 113,
+      "val_loss": 0.29246100783348083,
+      "val_accuracy": 0.9253333210945129
+    },
+    {
+      "epoch": 114,
+      "val_loss": 0.29262128472328186,
+      "val_accuracy": 0.9253333210945129
+    },
+    {
+      "epoch": 115,
+      "val_loss": 0.29273363947868347,
+      "val_accuracy": 0.925000011920929
+    },
+    {
+      "epoch": 116,
+      "val_loss": 0.293112188577652,
+      "val_accuracy": 0.925166666507721
+    },
+    {
+      "epoch": 117,
+      "val_loss": 0.29329508543014526,
+      "val_accuracy": 0.9243333339691162
+    },
+    {
+      "epoch": 118,
+      "val_loss": 0.29336637258529663,
+      "val_accuracy": 0.9246666431427002
+    },
+    {
+      "epoch": 119,
+      "val_loss": 0.29328665137290955,
+      "val_accuracy": 0.9241666793823242
+    },
+    {
+      "epoch": 120,
+      "val_loss": 0.29337313771247864,
+      "val_accuracy": 0.9243333339691162
+    }
+  ],
+  "seconds": 284.5042561106384,
+  "complete": true,
+  "gradient_evaluations": 50640,
+  "completed_at": "2026-09-18T11:42:35.384828+00:00",
+  "averaging": "swa",
+  "shared_training_run": "yolo_pyramid_fusion"
+}
