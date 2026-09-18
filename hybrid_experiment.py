@@ -34,12 +34,43 @@ def front_probabilities(front,x,models):
 
 
 @torch.inference_mode()
+def progressive_front(recipe,x,models):
+    """Reuse the first prediction; compute the second only for unresolved inputs."""
+    front=recipe['front']; gate=recipe['pre_exit']; members=front['components']
+    assert gate['name'] in {c['name'] for c in members}
+    paired=len(members)==2 and all(c['views']==1 for c in members)
+    flipped=len(members)==1 and members[0]['views']==2
+    assert paired or flipped
+    assert all(c.get('temperature',1.)==1. for c in members)
+    assert len({c.get('weight',1.) for c in members})==1
+    first=probabilities(models[gate['name']],x,1)
+    accepted=early_mask(first,gate)
+    remaining=~accepted
+    p=first.clone(); agree=torch.ones(len(x),dtype=torch.bool)
+    if remaining.any():
+        routed=x[remaining.to(x.device)]
+        other=next(c['name'] for c in members if c['name']!=gate['name']) if paired else gate['name']
+        second=probabilities(models[other],routed if paired else routed.flip(-1),1)
+        p[remaining]=(first[remaining]+second)*.5
+        if paired: agree[remaining]=first[remaining].argmax(1)==second.argmax(1)
+    cost=gate['macs']+int(remaining.sum())/len(x)*(front['macs']-gate['macs'])
+    return p,agree,accepted,cost
+
+
+@torch.inference_mode()
 def predict(recipe,x,models=None):
     models={name:load_model(name) for name in model_names(recipe)} if models is None else models
     if 'front' not in recipe:
         return recipe_probabilities(recipe,x,models)
-    p,agree=front_probabilities(recipe['front'],x,models)
-    mask=exit_mask(p,agree,recipe)
+    extra={}
+    if recipe.get('pre_exit'):
+        p,agree,accepted,front_cost=progressive_front(recipe,x,models)
+        mask=accepted | exit_mask(p,agree,recipe)
+        extra=dict(pre_exit=int(accepted.sum()),front_macs_per_image=front_cost)
+    else:
+        p,agree=front_probabilities(recipe['front'],x,models)
+        mask=exit_mask(p,agree,recipe)
+        front_cost=recipe['front']['macs']
     count=int((~mask).sum())
     back_cost=0.; nested=None
     if count:
@@ -47,9 +78,9 @@ def predict(recipe,x,models=None):
         p[~mask]=difficult
         back_cost=nested['macs_per_image']
     return p,dict(examples=len(x),early_exit=int(mask.sum()),full_ensemble=count,
-                  macs_per_image=recipe['front']['macs']+count/len(x)*back_cost,
+                  macs_per_image=front_cost+count/len(x)*back_cost,
                   worst_case_macs=recipe['front']['macs']+recipe['back'].get('worst_case_macs',recipe['back']['macs']),
-                  fallback_execution=nested)
+                  fallback_execution=nested,**extra)
 
 
 @torch.inference_mode()
@@ -75,6 +106,21 @@ def self_check():
         assert p[0].argmax()==0 and (not expected or (p[1:].argmax(1)==1).all())
     p=torch.tensor([[.95,.05],[.05,.95]])
     assert exit_mask(p,torch.tensor([True,False]),dict(threshold=.9,classes=[0,1])).tolist()==[True,False]
+    for two_models in (False,True):
+        front=dict(components=[dict(name='gate',views=2)],macs=20)
+        if two_models: front['components']=[dict(name=n,views=1) for n in ('gate','second')]
+        for threshold,expected in ((0.,0),(.9,2)):
+            models=dict(gate=Fake(True),second=Fake(True),back=Fake(False))
+            recipe=dict(front=front,back=back,threshold=.9,classes=list(range(10)),
+                        pre_exit=dict(name='gate',macs=10,threshold=threshold,classes=list(range(10))))
+            p,execution=predict(recipe,x,models)
+            assert models['gate'].rows==3+(0 if two_models else expected)
+            assert models['second'].rows==(expected if two_models else 0)
+            assert models['back'].rows==expected
+            assert execution['pre_exit']==3-expected
+            assert abs(execution['macs_per_image']-(10+expected/3*30))<1e-5
+            assert torch.allclose(p.sum(1),torch.ones(3))
+    print('Progressive front: cached first pass, all/partial exits and charged rows: PASS',flush=True)
     print('Actual skipped rows, all-exit/partial routing, disagreement rejection and MAC accounting: PASS',flush=True)
 
 
