@@ -235,3 +235,31 @@ Validation accuracy 91.87% at epoch 84. Same training trajectory as the ordinary
 ### 2026-09-18T10:14:58.859333+00:00 - accuracy_residual SWA
 
 Validation accuracy 91.80% at epoch 120. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/accuracy_residual_swa.json`.
+
+## 2026-09-18T10:16:18.307306+00:00 — accuracy_p2_clean
+
+Hypothesis: Following the measured gain from clean fine-tuning in the four-pixel Mixer, test clean unsmoothed fine-tuning of the new finer-patch model with a smaller learning rate. Compare ordinary/EMA/SWA and retain the original checkpoint as a candidate; improvement is not assumed.
+
+Measured validation accuracy: 93.95%; checkpoint epoch 10; 529,858 parameters; 72,329,664 dense MACs/image; 63.9s training/validation wall time. Configuration and every epoch: `results/accuracy_p2_clean.json`. Test set not evaluated in this run.
+
+### 2026-09-18T10:16:18.307306+00:00 - accuracy_p2_clean EMA
+
+Validation accuracy 93.98% at epoch 13. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/accuracy_p2_clean_ema.json`.
+
+### 2026-09-18T10:16:18.307306+00:00 - accuracy_p2_clean SWA
+
+Validation accuracy 93.85% at epoch 28. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/accuracy_p2_clean_swa.json`.
+
+## 2026-09-18T10:17:32.750223+00:00 — accuracy_wide_clean
+
+Hypothesis: Test low-learning-rate clean fine-tuning of the wider Mixer after its augmented training. Compare ordinary/EMA/SWA on validation and preserve the parent checkpoint; this combined data/loss change is not an isolated causal ablation.
+
+Measured validation accuracy: 94.10%; checkpoint epoch 20; 1,297,746 parameters; 77,222,784 dense MACs/image; 72.0s training/validation wall time. Configuration and every epoch: `results/accuracy_wide_clean.json`. Test set not evaluated in this run.
+
+### 2026-09-18T10:17:32.750223+00:00 - accuracy_wide_clean EMA
+
+Validation accuracy 94.08% at epoch 17. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/accuracy_wide_clean_ema.json`.
+
+### 2026-09-18T10:17:32.750223+00:00 - accuracy_wide_clean SWA
+
+Validation accuracy 94.03% at epoch 26. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/accuracy_wide_clean_swa.json`.

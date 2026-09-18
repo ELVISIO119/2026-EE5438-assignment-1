@@ -1,0 +1,65 @@
+{
+  "config": {
+    "name": "accuracy_wide_clean",
+    "model": "mixer",
+    "patch": 4,
+    "width": 192,
+    "depth": 8,
+    "dropout": 0.1,
+    "epochs": 30,
+    "lr": 5e-05,
+    "decay": 0.01,
+    "schedule": true,
+    "augmentation": false,
+    "label_smoothing": 0.0,
+    "bf16": true,
+    "averages": true,
+    "grad_clip": 1.0,
+    "init": "accuracy_wide",
+    "hypothesis": "Test low-learning-rate clean fine-tuning of the wider Mixer after its augmented training. Compare ordinary/EMA/SWA on validation and preserve the parent checkpoint; this combined data/loss change is not an isolated causal ablation."
+  },
+  "seed": 58561440,
+  "parameters": 1297746,
+  "macs": 77222784,
+  "best_epoch": 26,
+  "val_accuracy": 0.9403333067893982,
+  "val_loss": 0.32038414478302,
+  "history": [
+    {
+      "epoch": 25,
+      "val_loss": 0.320622056722641,
+      "val_accuracy": 0.9403333067893982
+    },
+    {
+      "epoch": 26,
+      "val_loss": 0.32038414478302,
+      "val_accuracy": 0.9403333067893982
+    },
+    {
+      "epoch": 27,
+      "val_loss": 0.32096362113952637,
+      "val_accuracy": 0.9399999976158142
+    },
+    {
+      "epoch": 28,
+      "val_loss": 0.320743203163147,
+      "val_accuracy": 0.9403333067893982
+    },
+    {
+      "epoch": 29,
+      "val_loss": 0.3211734890937805,
+      "val_accuracy": 0.9398333430290222
+    },
+    {
+      "epoch": 30,
+      "val_loss": 0.32146069407463074,
+      "val_accuracy": 0.9399999976158142
+    }
+  ],
+  "seconds": 72.02642646618187,
+  "complete": true,
+  "gradient_evaluations": 12660,
+  "completed_at": "2026-09-18T10:17:32.750223+00:00",
+  "averaging": "swa",
+  "shared_training_run": "accuracy_wide_clean"
+}
