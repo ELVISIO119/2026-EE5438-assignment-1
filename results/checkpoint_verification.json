@@ -1,0 +1,181 @@
+{
+  "verified_at": "2026-09-18T08:28:36.268356+00:00",
+  "checks": [
+    {
+      "name": "adamw_sigmoid",
+      "accuracy": 0.8978333333333334,
+      "parameters": 109386,
+      "macs": 109184,
+      "sha256": "d366dfd7b751972056030f3035f03f1c58aafec8738460ea1d8b5f326859c9cd"
+    },
+    {
+      "name": "baseline_sgd_sigmoid",
+      "accuracy": 0.5521666666666667,
+      "parameters": 109386,
+      "macs": 109184,
+      "sha256": "cb9fc6e06da50b705c29a4538d83332f3c42a83800ef1717a8ae3be51748d5e1"
+    },
+    {
+      "name": "mixer_adamw",
+      "accuracy": 0.9368333333333333,
+      "parameters": 478640,
+      "macs": 29003008,
+      "sha256": "659d50052b573c32a87506a4aa066ba7dfcd5406551ec2f2af34c40a5225d543"
+    },
+    {
+      "name": "mixer_average",
+      "accuracy": 0.9388333333333333,
+      "parameters": 478640,
+      "macs": 29003008,
+      "sha256": "fae83cad3cc65dc5f589bc10e5fc08c4fd537471ce9b2022b07c093d117ba4d3"
+    },
+    {
+      "name": "mixer_average_ema",
+      "accuracy": 0.9401666666666667,
+      "parameters": 478640,
+      "macs": 29003008,
+      "sha256": "fc4ce8c50d6ba503fd0c4eb8d02ea8994e0278ed9547ad0b6066fa6e8efbf31f"
+    },
+    {
+      "name": "mixer_average_swa",
+      "accuracy": 0.9366666666666666,
+      "parameters": 478640,
+      "macs": 29003008,
+      "sha256": "37d428908c9540e3d4f92fd19f4cd76937fea7bd55369abe517b7cf9f4399863"
+    },
+    {
+      "name": "mixer_muon",
+      "accuracy": 0.9388333333333333,
+      "parameters": 478640,
+      "macs": 29003008,
+      "sha256": "bdbf5994d63c23cdf4d6b059c625e4710f3a533e7992ad8d2c69229190548d7e"
+    },
+    {
+      "name": "mixer_pruned_50",
+      "accuracy": 0.9346666666666666,
+      "parameters": 281264,
+      "macs": 19369216,
+      "sha256": "3ee27ab2cb71a62017a1ecf8cd84f1b1aa6590ea091317a7d9789dcadab27957"
+    },
+    {
+      "name": "mixer_pruned_50_initial",
+      "accuracy": 0.8123333333333334,
+      "parameters": 281264,
+      "macs": 19369216,
+      "sha256": "b83e16b12d2ab7207876e358303f5fdd594f2de31618f5cf5da6fe676c70dd7c"
+    },
+    {
+      "name": "mixer_pruned_75",
+      "accuracy": 0.937,
+      "parameters": 379952,
+      "macs": 24186112,
+      "sha256": "c0b7eafe5070b3985442bfdf729ab2955c7340a172dc5b817150cc02771d5f53"
+    },
+    {
+      "name": "mixer_pruned_75_initial",
+      "accuracy": 0.9146666666666666,
+      "parameters": 379952,
+      "macs": 24186112,
+      "sha256": "21ded59f36f9b88d6dcebae1b459874efa870aad450982446a7e5e73eb984ca2"
+    },
+    {
+      "name": "regularization_decay",
+      "accuracy": 0.9068333333333334,
+      "parameters": 994314,
+      "macs": 989696,
+      "sha256": "69b169372cd39fc6e3d12a99322e643f375b5aef7813a30d4d540bab8b1dcfe1"
+    },
+    {
+      "name": "regularization_dropout",
+      "accuracy": 0.9098333333333334,
+      "parameters": 994314,
+      "macs": 989696,
+      "sha256": "b9914786264e8dca3180e8273b859ba4f4bff0f181b775deddb15788107b41f2"
+    },
+    {
+      "name": "regularization_none",
+      "accuracy": 0.9071666666666667,
+      "parameters": 994314,
+      "macs": 989696,
+      "sha256": "484dffc97cb3d35b4390e49e145be23a1689d3affb0395a8f63d4b8c28d674f9"
+    },
+    {
+      "name": "residual_asam",
+      "accuracy": 0.905,
+      "parameters": 994056,
+      "macs": 988928,
+      "sha256": "ebe112e475790a71a2097e8ec9e3fb33a02f12ec69386a63955c64e9af5c7191"
+    },
+    {
+      "name": "residual_bn",
+      "accuracy": 0.9085,
+      "parameters": 994314,
+      "macs": 989696,
+      "sha256": "ccbe773d1476d9967d3b24e3ea8feaf1e75ab556eb9dd3421c8db9b67afb8983"
+    },
+    {
+      "name": "residual_gelu",
+      "accuracy": 0.9096666666666666,
+      "parameters": 994314,
+      "macs": 989696,
+      "sha256": "1cf67be86ee146d7bb6288196491572142f2548ba33848e3c2981187ede0f0b5"
+    },
+    {
+      "name": "residual_geometry",
+      "accuracy": 0.9098333333333334,
+      "parameters": 994314,
+      "macs": 989696,
+      "sha256": "dac384f01eff06eceb80155e933e0352e83dfea02d89a0d1e77494d24fd70d37"
+    },
+    {
+      "name": "residual_mixup",
+      "accuracy": 0.905,
+      "parameters": 994314,
+      "macs": 989696,
+      "sha256": "d509e21c6ca09008313eed633d06c9a7c17f6fa47511ef39d0b5a58b2253acbe"
+    },
+    {
+      "name": "residual_muon",
+      "accuracy": 0.9143333333333333,
+      "parameters": 994056,
+      "macs": 988928,
+      "sha256": "8ee59ab94cf55614e6ccc686887bef37dcec580c7866e9bc21bc11ba8491c5b6"
+    },
+    {
+      "name": "residual_sam",
+      "accuracy": 0.9061666666666667,
+      "parameters": 994056,
+      "macs": 988928,
+      "sha256": "a0fcf1a5baccaf0b039ee87a65d8287d117ba491cf86324de116ef0965ff4914"
+    },
+    {
+      "name": "residual_silu",
+      "accuracy": 0.908,
+      "parameters": 994314,
+      "macs": 989696,
+      "sha256": "604d17fc571ae053155947643e48752b3e72f7b67105b9c4a9c65f81c6306f2c"
+    },
+    {
+      "name": "residual_swiglu",
+      "accuracy": 0.911,
+      "parameters": 994056,
+      "macs": 988928,
+      "sha256": "a95549d278fd8e55184bd8c64cc5b8e9fba20dc3cf9bce5202d5b23b7b224f1e"
+    },
+    {
+      "name": "student_control",
+      "accuracy": 0.9231666666666667,
+      "parameters": 90525,
+      "macs": 4867712,
+      "sha256": "2e1f72ce46320876ebf868079c09fc08921a8b014b1c94dae245e734566f0196"
+    },
+    {
+      "name": "student_distill",
+      "accuracy": 0.9231666666666667,
+      "parameters": 90525,
+      "macs": 4867712,
+      "sha256": "1350e2e4e8bf3fbb571fea6fd4e611908cf4c7e725967c51b702d04f75361443"
+    }
+  ],
+  "check_count": 25
+}

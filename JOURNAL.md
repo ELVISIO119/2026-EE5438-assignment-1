@@ -159,3 +159,7 @@ Measured validation accuracy: 90.98%; checkpoint epoch 24; 994,314 parameters; 9
 Hypothesis: Enable only decoupled weight decay 0.01 versus regularization_none. Compare with dropout-only and residual_gelu (both enabled) to describe regularization without conflating it with architecture changes.
 
 Measured validation accuracy: 90.68%; checkpoint epoch 17; 994,314 parameters; 989,696 dense MACs/image; 14.2s training/validation wall time. Configuration and every epoch: `results/regularization_decay.json`. Test set not evaluated.
+
+## 2026-09-18T08:28:40.312871+00:00 - Freeze final recipe
+
+Selected `mixer_average:4 + mixer_average_swa:4 + mixer_muon:4` from 31 validation-only candidates: 5680/6000 correct (94.67%). Total stored parameters 1,435,920; dense MACs/image 348,036,096, including all members and views. Checkpoint hashes and the selection rule are in `results/final_recipe.json`. No test labels were loaded by selection.

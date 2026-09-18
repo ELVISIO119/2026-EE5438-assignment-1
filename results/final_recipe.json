@@ -1,0 +1,34 @@
+{
+  "name": "mixer_average:4 + mixer_average_swa:4 + mixer_muon:4",
+  "components": [
+    {
+      "name": "mixer_average",
+      "views": 4,
+      "sha256": "fae83cad3cc65dc5f589bc10e5fc08c4fd537471ce9b2022b07c093d117ba4d3"
+    },
+    {
+      "name": "mixer_average_swa",
+      "views": 4,
+      "sha256": "37d428908c9540e3d4f92fd19f4cd76937fea7bd55369abe517b7cf9f4399863"
+    },
+    {
+      "name": "mixer_muon",
+      "views": 4,
+      "sha256": "bdbf5994d63c23cdf4d6b059c625e4710f3a533e7992ad8d2c69229190548d7e"
+    }
+  ],
+  "parameters": 1435920,
+  "macs": 348036096,
+  "correct": 5680,
+  "examples": 6000,
+  "accuracy": 0.9466666666666667,
+  "loss": 0.1661766618490219,
+  "frozen_at": "2026-09-18T08:28:40.312871+00:00",
+  "seed": 58561440,
+  "candidates": 31,
+  "selection_split": "validation_only",
+  "rule": "Maximize validation correct count; tie-break by fewer total dense MACs, then parameters, then NLL.",
+  "search": "Models within 1.5 percentage points of best raw validation; 1/2/4 views; equally weighted pairs/triples from top four distinct models.",
+  "view_definition": "1: identity; 2: identity + horizontal flip; 4: those plus left/right one-pixel zero-padded shifts.",
+  "cost_note": "Sum stored parameters across members; MACs include every model/view. Dense FLOPs approximately twice MACs."
+}
