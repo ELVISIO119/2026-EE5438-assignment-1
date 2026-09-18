@@ -413,3 +413,11 @@ Validation: 5717 -> 5717/6000 correct; Shirt F1 0.859589 -> 0.859589. Dense MACs
 ## 2026-09-18T10:48:16.184783+00:00 - Confidence-gated inference
 
 Tested 43 validation recipes. Selected 5721/6000 correct, Shirt F1 0.861063, 2945 early exits, 1,698,398,697 validation-average MACs and 3,261,201,664 worst-case MACs/image. Recomputed the actual routed pipeline before freezing; no test labels were loaded. The gate uses only model confidence and predicted non-garment class, and shares existing weights.
+
+## 2026-09-18T10:49:36.089909+00:00 - Frozen cascade test outcome
+
+After all 67 checkpoints and the actual routed validation pipeline passed verification, the frozen cascade correctly classified 9,442/10,000 test images (94.42%), with macro F1 0.944031. Relative to the preserved ungated reference, 16 predictions changed: eight errors were corrected and five correct predictions became errors, for a net gain of three. This is a small observed gain, not evidence of statistical significance. No model or threshold changes followed test evaluation.
+
+The test set had 4,913 early exits. Average dense MACs/image were 1,696,912,840, 46.7% below the ungated reference; logical stored parameters remained 2,207,556. Worst-case MACs are 3,261,201,664 and must not be confused with the average. The separately timed 1,024-image validation batch took 235.9 ms for the cascade versus 388.7 ms for the full ensemble (1.65x throughput) on the shared RTX 5090. Evidence: `results/final_test_metrics.json`, `results/cascade_benchmark.json`, and preserved `results/pre_cascade_test_metrics.json` / predictions.
+
+Shirt test recall remains 81.4% and F1 remains 0.828499. The eight targeted post-training/readout trials did not solve that class bottleneck; their negative results are retained. The deployed improvement is efficient conditional inference with slightly higher observed overall accuracy. All fitting stayed within Fashion-MNIST; no MNIST or external pretraining was introduced. The notebook includes the complete follow-up, actual inference and honest limitations; the typed Section A guide still requires replacement by a genuine handwritten scan.
