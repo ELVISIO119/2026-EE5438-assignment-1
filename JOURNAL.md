@@ -221,3 +221,17 @@ Validation accuracy 93.80% at epoch 10. Same training trajectory as the ordinary
 ### 2026-09-18T10:13:01.790854+00:00 - accuracy_muon_refine SWA
 
 Validation accuracy 93.70% at epoch 34. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/accuracy_muon_refine_swa.json`.
+
+## 2026-09-18T10:14:58.859333+00:00 — accuracy_residual
+
+Hypothesis: Train a larger flat-input residual SwiGLU MLP as a structurally different ensemble candidate. Accuracy-first selection may benefit from complementary errors, even when standalone accuracy is lower; no convolution or attention.
+
+Measured validation accuracy: 91.93%; checkpoint epoch 115; 10,066,698 parameters; 10,046,976 dense MACs/image; 114.6s training/validation wall time. Configuration and every epoch: `results/accuracy_residual.json`. Test set not evaluated in this run.
+
+### 2026-09-18T10:14:58.859333+00:00 - accuracy_residual EMA
+
+Validation accuracy 91.87% at epoch 84. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/accuracy_residual_ema.json`.
+
+### 2026-09-18T10:14:58.859333+00:00 - accuracy_residual SWA
+
+Validation accuracy 91.80% at epoch 120. Same training trajectory as the ordinary checkpoint; training cost is shared, not an independent run. EMA decay 0.995 after each batch; SWA snapshots at each epoch in the final 20%. LayerNorm needs no BatchNorm recalibration. Evidence: `results/accuracy_residual_swa.json`.
