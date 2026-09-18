@@ -29,8 +29,9 @@ def build():
                                   'image_processing_experiment.py','benchmark_awq.py',
                                   'run_yolo.py','select_yolo.py','check_pyramid.py',
                                   'pil_experiment.py','feature_experiment.py','moe_experiment.py','loss_followup.py',
-                                  'hybrid_experiment.py','refine_cascade.py','latent_search.py','import_legacy.py','SOURCES.md','requirements.txt')]
+                                  'hybrid_experiment.py','refine_cascade.py','latent_search.py','cross_validate.py','import_legacy.py','SOURCES.md','requirements.txt')]
     files+=list((ROOT/'configs').glob('*.json'))+list(OUT.glob('*.json'))+list(OUT.glob('*.csv'))
+    files += [OUT/'cv_oof_predictions.npz']
     files += [OUT/f'{name}.pt' for name in sorted({'baseline_sgd_sigmoid','legacy_clean','legacy_muon'}|{c['name'] for c in recipe['components']})]
     buffer=io.BytesIO()
     with zipfile.ZipFile(buffer,'w',zipfile.ZIP_DEFLATED) as archive:
@@ -45,6 +46,8 @@ def build():
     **Cai Haochen | Student ID 58561440 | EE5438 | Semester A 2026-2027**
 
     **Section 17's automated configuration search reaches {evidence['latent_test_metrics']['selected']['balanced']['accuracy']:.2%} test accuracy and 301.33 million average test MACs**, with unchanged model storage. Its 4,096 cached candidates took 10.37 seconds to screen, followed by real inference and timing of five finalists. The selected recipe was committed before test evaluation. This searches a compact eleven-dimensional configuration space, not learned image features.
+
+    **Section 18 checks two compact MLP optimizer recipes across three data folds**, using student-number seed 58561440 for every split and training run. It reports recorded out-of-fold development predictions separately from the official test result. No multi-seed selection is performed.
 
     The preceding **adaptive-view classifier in Section 16** obtains **{evidence['adaptive_test_metrics']['selected']['balanced']['accuracy']:.2%} test accuracy**, using 339.42 million average test MACs and 3,164,836 stored parameters. It adds fine-patch views only when the initial fallback ensemble remains uncertain, reusing completed work. Default Run All evaluates it and preceding frozen options. The class-conditional reference in **Section 15** uses 410.16 million average test MACs at the same observed accuracy; Section 14 uses 475.71 million. Section 13 preserves earlier hybrids, including the smaller-storage accuracy-priority option.
 
@@ -739,6 +742,49 @@ axes[1].set(ylabel='Average test MACs (millions)',title='Frozen test accuracy: 9
 plt.show()
 ''')
     md('''Use `hybrid_experiment.predict` with `results/latent_balanced_recipe.json` for deployment. `python3 latent_search.py --check` verifies cached probabilities, routed outputs, class metrics and charged MACs. `python3 latent_search.py --resume` runs or resumes the recorded fixed search budget; rerun research in a separate experiment copy because search replaces `results/latent_*`. Default notebook execution only evaluates the frozen endpoint and never repeats candidate selection. All required sources and the unchanged five checkpoints are embedded.''')
+    md('''## 18. Three-fold evaluation with the required student-number seed
+
+    The official starter notebook requires: **"Please use your student number as the random seed for all experiments so that your experimental results can be replicated."** Use **58561440** for the stratified split, Python, NumPy and PyTorch CPU/CUDA initialization in every fold. Do not offset the seed by fold number. The cross-validation question is whether an optimizer comparison persists across data partitions at this fixed seed, not across random initializations.
+
+    Before training, commit the comparison in `c212bda`: the existing compact 4x4-patch Mixer with width 128, depth six and dropout 0.05, using either AdamW or Muon on hidden matrices plus AdamW on the remaining parameters. Both use learning rate 0.001, decay 0.02, five warmup epochs followed by cosine decay, mild geometric augmentation, label smoothing 0.05, batch size 128 and BF16 on CUDA. Keep their fixed budget of **120 epochs**. Architecture and initialization are matched; Muon applies the existing RMS-matched update scaling. Each fold trains from scratch, with no teacher, pretrained initialization or inherited checkpoint.
+
+    Stratified 3-fold splitting covers all 60,000 official training images: each fold fits 40,000 images and predicts the remaining 20,000, with 2,000 held-out examples per class. Each image receives exactly one out-of-fold prediction per optimizer/view policy. Compute normalization only from that fold's 40,000 fitting images. Check that all six runs have identical initial parameter hashes. Evaluate held-out curves for reporting, but select neither epochs nor hyperparameters from them: the saved and scored checkpoint is always **epoch 120**. The ordinary best-validation selection behavior remains available to historical experiments.
+
+    Predeclare both **one-view** and **ten-view** evaluation for every fold. The latter uses the existing shift/flip definition and groups four views per forward; it executes ten times the dense MACs of one view. The table reports pooled out-of-fold accuracy and per-fold mean/sample standard deviation. These scores do not describe an ensemble that runs all three fold models on one image. Per-image complexity is for one fold's model at the specified view count; all six training runs incur real cost.
+    ''')
+    code('''from cross_validate import check_results as check_cv_results
+check_cv_results()
+cv=json.loads(Path('results/cv_summary.json').read_text())
+cv_rows=pd.DataFrame(cv['folds'])
+cv_summary=pd.DataFrame(cv['summaries'])
+display(cv_rows[['family','fold','views','seed','epoch','accuracy','macro_f1','shirt_f1','parameters','macs']])
+display(cv_summary[['family','views','accuracy','fold_mean','fold_sample_std','macro_f1','shirt_f1']])
+print('All six initial parameter hashes identical:',cv['initial_weights_identical'])
+print('Total recorded training/evaluation-loop seconds:',cv['training_seconds'])
+paired=cv_rows[cv_rows['views']==1].pivot(index='fold',columns='family',values='accuracy')
+print('Muon minus AdamW accuracy, percentage points per fold:',((paired['muon']-paired['adamw'])*100).to_list())
+fig,axes=plt.subplots(1,2,figsize=(11,4),layout='constrained')
+for ax,views in zip(axes,[1,10]):
+    for family,label in [('adamw','AdamW'),('muon','Muon + AdamW')]:
+        rows=cv_rows[(cv_rows['family']==family)&(cv_rows['views']==views)].sort_values('fold')
+        ax.plot(rows['fold'],rows['accuracy']*100,marker='o',label=label)
+    ax.set(xticks=[1,2,3],xlabel='Data fold; same student-number seed',ylabel='Held-out accuracy (%)',title=f'{views} view(s); fixed final epoch')
+    ax.legend(); ax.grid(alpha=.2)
+plt.show()
+''')
+    cv=evidence['cv_summary']
+    one={r['family']:r for r in cv['summaries'] if r['views']==1}
+    ten={r['family']:r for r in cv['summaries'] if r['views']==10}
+    cv_seconds={family:sum(r['seconds'] for r in cv['folds'] if r['family']==family and r['views']==1) for family in one}
+    wins=sum(a>b for a,b in zip(one['muon']['fold_accuracies'],one['adamw']['fold_accuracies']))
+    md(f'''At one view, AdamW averages **{one['adamw']['fold_mean']:.3%} ± {one['adamw']['fold_sample_std']*100:.3f} percentage points** across folds, versus **{one['muon']['fold_mean']:.3%} ± {one['muon']['fold_sample_std']*100:.3f}** for Muon+AdamW (mean ± sample standard deviation). Muon exceeds AdamW in {wins}/3 folds, with a pooled accuracy difference of {(one['muon']['accuracy']-one['adamw']['accuracy'])*100:+.3f} percentage points. At ten views the pooled accuracies are {ten['adamw']['accuracy']:.3%} and {ten['muon']['accuracy']:.3%}, respectively. These are recorded fold results under the fixed protocol, not official test scores.
+
+    Recorded training/epoch-evaluation wall times sum to {cv_seconds['adamw']:.1f} seconds for AdamW and {cv_seconds['muon']:.1f} seconds for Muon+AdamW, a ratio of {cv_seconds['muon']/cv_seconds['adamw']:.2f}. The comparison matches epochs and architecture, not wall-clock compute budgets. It cannot establish Muon's large-language-model efficiency claims for this small MLP. Both optimizers deploy the same {one['adamw']['parameters']:,}-parameter architecture and {one['adamw']['macs']:,} dense MACs per view; the optimizer itself is not used during inference.''')
+    md('''This is **development cross-validation**, not an independently blinded generalization estimate. The architecture and optimizer recipes were chosen during earlier development using part of the same 60,000-image pool, so the procedure is not nested cross-validation of the entire search. Training sets overlap between folds; three fold scores are not independent replications. Their standard deviation describes partition variability at the required seed and does not measure variability across initialization seeds. No significance or confidence-interval claim is made from three folds.
+
+    Each fold uses fewer fitting images than the preceding 54,000-image runs, and its single-model out-of-fold result is not directly comparable to the five-model cascade's official test result. No new candidate accesses the official test set, no deployment recipe is selected from these scores, and the frozen 94.55% classifier remains the submitted endpoint. The evidence informs further fixed-seed work without implying that K-fold itself improves deployment accuracy.
+
+    Default Run All verifies the embedded recorded out-of-fold predictions and recomputes their metrics; it does not claim to repeat six training runs. `python3 cross_validate.py` runs the fixed experiment using the provided sources/configurations and resumes completed folds when local checkpoints are present; an interrupted fold restarts from the same student seed. The standalone fold checkpoints are not embedded, so training in a fresh notebook workspace starts from scratch. `python3 cross_validate.py --verify` checks recorded coverage and metrics, and `--check` exercises split and checkpoint-selection logic on temporary synthetic data. Full epoch histories and fold protocol hashes are retained in the repository's `results/cross_validation/` directory.''')
     md('## References\n\n'+(ROOT/'SOURCES.md').read_text().split('\n',1)[1])
     notebook=nbf.v4.new_notebook(cells=cells,metadata={'kernelspec':{'name':'python3','display_name':'Python 3','language':'python'},'language_info':{'name':'python','version':platform_version()}})
     target=ROOT/'submission'/'Assign01_Cai_Haochen_58561440.ipynb'

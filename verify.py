@@ -129,6 +129,8 @@ def submission():
             _,_,mf,_=precision_recall_fscore_support(labels,probs.argmax(1),average='macro',zero_division=0)
             assert np.isclose(mf,row['macro_f1'])
             print('Verified hybrid test predictions:',prefix,goal,row['accuracy'])
+    from cross_validate import check_results
+    check_results()
     archive_path=directory/'Assign01_Cai_Haochen_58561440.zip'
     with ZipFile(archive_path) as archive:
         assert archive.testzip() is None

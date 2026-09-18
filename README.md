@@ -16,6 +16,19 @@ Deploy using `hybrid_experiment.predict` with [the frozen recipe](results/latent
 
 Run `python3 latent_search.py --check` for the cache-versus-runtime check. `python3 latent_search.py --resume` runs or resumes the fixed 4,096-candidate search; `--rounds` and `--population` set a new budget before starting. Resume requires identical code, data, recipe and budget. Search writes `results/latent_*`, so use a separate experiment copy for a new search; do not overwrite a tested recipe or tune it from test outcomes. Frozen evaluation only: `python3 -c 'from hybrid_experiment import evaluate_frozen; evaluate_frozen(prefix="latent", goals=("balanced",))'`.
 
+### Fixed student seed
+
+The completed three-fold comparison uses the same student seed for all six fresh training runs. At one view, Muon+AdamW exceeds AdamW in all three folds; at ten views it wins two folds and loses one. Both have 478,640 parameters and 29,003,008 MACs per view. These are pooled **out-of-fold development** accuracies, not official test scores or three-model ensemble accuracies.
+
+| Optimizer | One-view OOF accuracy | Fold sample SD (percentage points) | Ten-view OOF accuracy | Total training/epoch-evaluation seconds |
+|---|---:|---:|---:|---:|
+| AdamW | 92.820% | 0.100 | 93.585% | 454.4 |
+| Muon + AdamW | 93.083% | 0.111 | 93.760% | 798.3 |
+
+The one-view gain is 0.263 percentage points, while recorded training time is 1.76 times higher. This does not demonstrate lower training compute or reduced fold variability; shared-device wall times are descriptive. The 94.55% official-test deployment stays unchanged.
+
+Student-seed compliance is checked against the official starter notebook: **58561440 for all experiments**, including splitting, training, and automated configuration search. Section 18 adds development cross-validation of the compact AdamW and Muon+AdamW Mixers: three stratified data folds, fresh weights per fold, identical initialized parameters, fold-local normalization, and fixed final epoch 120. No seed offsets, multi-seed selection, held-out epoch selection, new test-based selection or replacement of the 94.55% endpoint is involved. Run `python3 cross_validate.py` to execute/resume completed folds, `--check` for the small implementation check, or `--verify` to validate recorded OOF metrics. The notebook embeds OOF predictions and verifies their metrics by default; six training runs are not presented as having been repeated by Run All. See [fold results](results/cv_folds.csv) and [protocol and aggregate metrics](results/cv_summary.json). These are development results from previously chosen architectures, not nested validation or independent confirmation of the official test score.
+
 ### Adaptive reference
 
 The preceding **adaptive fallback-view option** preserves **94.49% test accuracy**, with **339,421,241 average test MACs/image**, **3,164,836 stored parameters**, and **39.64 ms/1,024 validation images**. Compared with class-conditional routing below, average test MACs fall **17.2%** and same-session first-slice latency falls from 46.66 to 39.64 ms (**15.1%**). Second-slice latency falls from 41.44 to 35.58 ms (**14.1%**). All 10,000 test argmax predictions match that reference; probability vectors may differ. Parameters and worst-case MACs (3,319,207,680) are unchanged.
