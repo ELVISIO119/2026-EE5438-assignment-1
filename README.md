@@ -1,149 +1,102 @@
-# EE5438 Assignment 1 — Pure MLP Experiments
+# EE5438 Assignment 1 — pure MLP Fashion-MNIST
 
-Cai Haochen · 58561440 · Semester A 2026–2027
+Student: Cai Haochen (`58561440`)
 
-Classify Fashion-MNIST clothing images with fully connected neural networks. Begin with the assignment's sigmoid/SGD baseline, investigate one improvement at a time, and integrate changes supported by validation results.
+Branch: `feature/49-latent-search-integration`
 
-## Current result and files
+Repository: <https://github.com/ELVISIO119/2026-EE5438-assignment-1>
 
-The latest **automated configuration search** obtains **94.55% test accuracy** (9,455/10,000), with **301,330,871 average test MACs/image** and **3,164,836 stored parameters**. Against the adaptive reference below, this is six additional correct images and **11.2% fewer average test MACs**. Same-session validation latency falls from **39.52 to 35.35 ms** on the first 1,024 images and **35.56 to 32.02 ms** on the last 1,024 (10.5% and 10.0% lower). Worst-case MACs remain 3,319,207,680.
+## How the 94.55% model was trained
 
-`latent_search.py` replaces manual trial cycles with 16 seeded populations of 256 candidates. Its eleven coordinates represent six routing thresholds, two relative ensemble-weight logits and three temperature multipliers. This is a compact configuration space, not a learned image or weight latent space. Seven hash-bound validation prediction arrays cost 2.31 seconds to create; **4,096 cached candidates took 10.37 seconds to score**, excluding startup, actual finalist inference, timing, and packaging. No new model training or dependency is needed. Checkpoints, input split, runtime code and environment identify the reusable cache; saved RNG state and completed populations support interrupted-run recovery.
+The model was built in one measured path. All experiments use the official Fashion-MNIST training set, seed `58561440`, and a fixed stratified split of 54,000 fitting images and 6,000 validation images.
 
-Of 4,096 proposals, 209 passed cached accuracy, Shirt F1, both development-half, parameter and compute guards. Five diverse finalists were recomputed with actual routing and timed; all passed the latency requirement. Accuracy-first selection chose candidate 4072: validation **5,720/6,000**, halves **[2,857, 2,863]**, Shirt F1 **0.859829**, average validation MACs **287,488,267**. It was committed in `4d9b07e` before test evaluation. On test, 14 predictions change: ten errors are fixed and four new errors appear. Six net gains do not establish significance or a top-ten ranking. Validation and public test have already been reused during development; more search increases overfitting risk. Timing is shared-GPU throughput on reused validation slices, excluding loading/input transfer.
+1. **Baseline.** A `784 -> 128 -> 64 -> 10` sigmoid MLP was trained with SGD for 50 epochs.
+2. **Better optimisation.** AdamW was tested on the same small MLP, then residual GELU/SwiGLU MLPs were tested with LayerNorm, dropout, weight decay, warmup/cosine decay and mild geometry augmentation.
+3. **MLP-Mixer direction.** Patch embedding plus token/channel `Linear` mixing gave a stronger pure-MLP model. AdamW and Muon+AdamW were compared; Muon was used only for hidden matrices.
+4. **Accuracy checkpoints.** A wider Mixer, a finer-patch Mixer and a structured-pruned Mixer were clean-fine-tuned and evaluated with EMA/SWA. The best complementary checkpoints were retained.
+5. **Final inference recipe.** Five fixed checkpoints were combined: `legacy_clean`, `legacy_muon`, `accuracy_wide_clean_swa`, `accuracy_p2_clean_swa` and `mixer_pruned_75`. A seeded 4,096-candidate search tuned only confidence thresholds, ensemble weights and temperatures on validation data. It did not change network weights.
 
-Deploy using `hybrid_experiment.predict` with [the frozen recipe](results/latent_balanced_recipe.json). [Search evidence](results/latent_search.json), [all candidates](results/latent_search_candidates.csv), [actual finalist timings](results/latent_experiment.json) and [test metrics](results/latent_test_metrics.json) are retained. Notebook Section 17 executes the frozen endpoint. Branches `feature/48-latent-config-search` and `feature/49-latent-search-integration` preserve the implementation, freeze, test and integration sequence.
+No CNN, Transformer, attention, external training images or pretrained weights are used. The final network components are feed-forward `Linear` layers.
 
-Run `python3 latent_search.py --check` for the cache-versus-runtime check. `python3 latent_search.py --resume` runs or resumes the fixed 4,096-candidate search; `--rounds` and `--population` set a new budget before starting. Resume requires identical code, data, recipe and budget. Search writes `results/latent_*`, so use a separate experiment copy for a new search; do not overwrite a tested recipe or tune it from test outcomes. Frozen evaluation only: `python3 -c 'from hybrid_experiment import evaluate_frozen; evaluate_frozen(prefix="latent", goals=("balanced",))'`.
+## Main training results
 
-### Adaptive reference
+| Stage | Validation accuracy | Parameters | Dense MACs/image |
+|---|---:|---:|---:|
+| Sigmoid + SGD baseline | 55.22% | 109,386 | 109,184 |
+| Same MLP + AdamW | 89.78% | 109,386 | 109,184 |
+| Residual GELU | 90.97% | 994,314 | 989,696 |
+| Residual SwiGLU | 91.10% | 994,056 | 988,928 |
+| Residual Muon + AdamW | 91.43% | 994,056 | 988,928 |
+| Mixer + AdamW | 93.68% | 478,640 | 29,003,008 |
+| Mixer + Muon + AdamW | 93.88% | 478,640 | 29,003,008 |
+| Wide Mixer, clean fine-tuning + SWA | 94.03% | 1,297,746 | 77,222,784 |
+| Fine-patch Mixer, clean fine-tuning + SWA | 93.85% | 529,858 | 72,329,664 |
+| Structured-pruned Mixer + fine-tuning | 93.70% | 379,952 | 24,186,112 |
 
-The preceding **adaptive fallback-view option** preserves **94.49% test accuracy**, with **339,421,241 average test MACs/image**, **3,164,836 stored parameters**, and **39.64 ms/1,024 validation images**. Compared with class-conditional routing below, average test MACs fall **17.2%** and same-session first-slice latency falls from 46.66 to 39.64 ms (**15.1%**). Second-slice latency falls from 41.44 to 35.58 ms (**14.1%**). All 10,000 test argmax predictions match that reference; probability vectors may differ. Parameters and worst-case MACs (3,319,207,680) are unchanged.
+The table records validation checkpoints. The final 94.55% number comes from the frozen five-checkpoint ensemble and its validation-selected inference route, not from claiming that one individual checkpoint reaches 94.55%.
 
-The full fallback initially uses 10/10/10 views. At weighted/calibrated confidence >=0.70 it exits; otherwise it appends only the fine-patch model's remaining twenty views, reusing its first-ten mean and all other member outputs. Of 1,112 test images reaching three-model inference, 489 finish at the initial stage and 623 need extra views. Twelve validation-only policies were screened, actual finalists checked, and the recipe committed before test evaluation. No new weights, view-count change after test, or RL training is involved. The lower cost is conditional average inference, not a lower worst-case guarantee; throughput remains shared-GPU, validation-selected, excluding load/input transfer.
+## Final benchmark
 
-Use `hybrid_experiment.predict` with [adaptive recipe](results/adaptive_balanced_recipe.json), or `python3 refine_cascade.py --adaptive --test`. [Test metrics](results/adaptive_test_metrics.json) and [validation/timing evidence](results/adaptive_experiment.json) retain the full result. Notebook Section 16 evaluates it by default. Branches `feature/46-adaptive-views` and `feature/47-adaptive-view-integration` preserve implementation, frozen selection, test and integration commits.
+| Split | Correct | Accuracy | Macro precision | Macro recall | Macro F1 | Shirt F1 |
+|---|---:|---:|---:|---:|---:|---:|
+| Validation (6,000) | 5,720 | 95.33% | — | — | 0.9528 | 0.8598 |
+| Test (10,000) | 9,455 | **94.55%** | 0.9453 | 0.9455 | 0.9453 | 0.8316 |
 
-The preceding **class-conditional routing option** preserves **94.49% test accuracy**, with **410,159,652 average test MACs/image**, **3,164,836 stored parameters**, and **46.73 ms/1,024 validation images**. Compared with the preceding progressive/batched option, average test MACs fall **13.8%** and same-session first-slice latency falls from 58.13 to 46.73 ms (**19.6%**). Second-slice latency falls from 56.67 to 41.40 ms (**27.0%**). Parameters and worst-case MACs (3,319,207,680) are unchanged. Validation correct count increases from 5,717 to 5,718; test correct count remains 9,449.
+Stored parameters are 3,164,836. Average test cost is 301,330,871 MACs/image; worst-case routed cost is 3,319,207,680 MACs/image.
 
-After the unchanged .99 single-model pre-exit, the two small models must agree. Their averaged confidence threshold is .85 for predicted T-shirt/Pullover/Coat/Shirt and .90 otherwise. Routing uses predictions, never true labels. The 36-tuple search and four subsequent view-reuse/grouping trials used validation only; no reuse variant met the additional latency guard. Only the frozen class-routing endpoint was newly tested, with no test-driven adjustments. Test fallback count falls from 1,448 to 1,247; eight predictions change, fixing four errors and introducing four. No accuracy significance or class-ranking claim is made. Timing remains shared-GPU throughput, excluding loading/input transfer, on two reused development slices.
+## Reproduce the submitted result
 
-Deploy with `hybrid_experiment.predict` and [class-routing recipe](results/class_routes_balanced_recipe.json), or evaluate with `python3 refine_cascade.py --class-routes --test`. [Test metrics](results/class_routes_test_metrics.json), [selection/timing evidence](results/class_routes_experiment.json), and [unsuccessful reuse trials](results/reuse_experiment.json) are retained. Notebook Section 15 executes the new recipe by default. Branches `feature/43-class-conditional-routing`, `feature/44-reuse-gate-view`, and `feature/45-class-routing-integration` preserve the real experiment sequence.
+The notebook is the main pipeline. It contains the executable code and the five required checkpoints in an embedded bundle, so a fresh clone does not need untracked `.pt` files.
 
-The preceding **progressive + batched-view option** preserves **94.49% test accuracy** with **475,709,806 average test MACs/image**, **3,164,836 stored parameters**, and **58.09 ms/1,024 validation images**. Compared with the preceding balanced option in the same timing session (95.36 ms), latency falls 39.1%; average test MACs fall 3.4% with no parameter increase. On the second validation slice, latency falls from 96.36 to 56.61 ms (41.2%). Worst-case MACs remain 3,319,207,680. This is improved throughput at the same observed accuracy, not another accuracy gain.
+```bash
+git clone https://github.com/ELVISIO119/2026-EE5438-assignment-1.git
+cd 2026-EE5438-assignment-1
+git checkout feature/49-latent-search-integration
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install torch torchvision numpy pandas scikit-learn matplotlib jupyter
+jupyter nbconvert --execute --to notebook --output executed.ipynb \
+  submission/Assign01_Cai_Haochen_58561440.ipynb
+```
 
-It runs the clean legacy model first and accepts confidence >=0.99; otherwise it runs Muon and reuses the first prediction for the original agreement/0.90-confidence check. Only unresolved images reach the original fallback, whose views are grouped four at a time. Exactly 39.77% of test images need just the first small model. Grouping preserves mathematical MACs but uses more temporary activation memory. Timing remains shared-GPU, validation-selected, and excludes model loading/input transfer; it is not a CPU or single-image speed guarantee. Recipe: [batched balanced](results/batched_balanced_recipe.json); evidence: [test metrics](results/batched_test_metrics.json) and [validation/timing](results/batched_experiment.json). Use `hybrid_experiment.predict` with this recipe, or `python3 refine_cascade.py --batched --test`. Notebook Section 14 executes it by default. The hash-bound selection was committed before test evaluation.
+Run All downloads Fashion-MNIST, recreates the fixed split, checks the MLP implementations, evaluates the frozen route and prints the test report. It does not retrain by default. The first setup cell contains `RETRAIN_ALL = False`; changing it to `True` reruns the long training experiments and requires a new validation freeze before using new weights.
 
-Branches 39–42 retain the complete follow-up: 360 lower-view candidates failed accuracy/class/half-count guards; 24 progressive-front candidates produced three accuracy/compute-qualified finalists but missed the 5% latency target; six grouped-view variants of those finalists produced the adopted recipe. No extra checkpoint training or parameter storage was needed. References below remain available; their older timing session is distinct from the new paired comparison.
+## Fixed data protocol
 
-The two earlier hybrid deployment options achieve **94.49% test accuracy (9,449/10,000)**. Both combine earlier efficient MLPs with the existing accurate cascade. All routing uses predictions only. The options were selected and hash-frozen on validation before test evaluation; neither was retuned from the test scores.
+| Item | Value |
+|---|---|
+| Dataset | Official Fashion-MNIST |
+| Input | `1 x 28 x 28`, scaled to `[0, 1]` |
+| Seed | `58561440` |
+| Fit/validation split | 54,000 / 6,000, stratified |
+| Validation balance | 600 images per class |
+| Normalisation | Mean and standard deviation fitted on fitting images only |
+| Test use | Read after the route was frozen |
 
-| Frozen option | Validation accuracy | Test accuracy | Average test MACs/image | Stored parameters | Median ms/1,024 validation images |
-|---|---:|---:|---:|---:|---:|
-| Earlier dual 10-view | 94.9167% | 94.16% (historical) | 580,060,160 | 957,280 | 104.39 |
-| Original cascade | 95.3500% | 94.42% | 1,696,912,840 | 2,207,556 | 236.45 |
-| Hybrid balanced | 95.2833% | **94.49%** | **492,477,669** | 3,164,836 | **95.49** |
-| Hybrid accuracy priority | **95.3500%** | **94.49%** | 841,892,537 | 2,686,196 | 144.84 |
+## Optional source checks
 
-Balanced runs both legacy models on one view, exits when they agree and their mean confidence is at least 0.90, and sends remaining images to the original cascade. Accuracy priority uses the legacy Muon model on two views and exits at confidence 0.95. The labels describe their validation objectives. Balanced reduces average test MACs by 15.1% and measured latency by 8.5% versus the earlier dual model; accuracy priority reduces them by 50.4% and 38.7% versus the original cascade. Both store extra parameters and have a higher worst-case cost of 3,319,207,680 MACs/image. Neither dominates every reference on all complexity measures. Seven extra test-correct images over the original cascade do not establish statistical significance or guarantee the class bonus.
-
-Timing uses the same 1,024 validation images, internal batch size 128, three warmups and seven synchronized repetitions on the shared RTX 5090. It includes routing, views, probabilities and CPU output, excluding model load/input transfer. It is a descriptive validation-selected measurement, not independent speed confirmation or single-image latency. Average test MACs use the full test split. Section 13 of the notebook evaluates both frozen hybrids by default, with their five unique model checkpoints embedded.
-
-The original frozen reference remains at `results/final_recipe.json`, **94.42% test accuracy (9,442/10,000)** and **0.9440 macro F1**. Its validation-only selection score is **95.35% (5,721/6,000)**. A confidence gate first runs the wide Mixer on one view. Predictions of Trouser, Sandal, Sneaker, Bag or Ankle boot with probability at least 0.90 exit early; the remaining images use the three-model ensemble with 10/30/10 views, calibrated probabilities and weights 0.325/0.325/0.350. The gate shares existing weights.
-
-There are **2,207,556 stored parameters**, unchanged from the ungated reference. On the test set, 4,913/10,000 images exit early and average dense MACs fall from 3,183,978,880 to **1,696,912,840 per image (46.7% lower)**. Worst-case MACs rise slightly to **3,261,201,664** because a hard image incurs both stages. Measured on the same 1,024 validation inputs, inference takes 235.9 ms versus 388.7 ms: **1.65x throughput** on the shared RTX 5090. These are conditional average costs and descriptive timings, not a guarantee of lower worst-case FLOPs or a class tie-break award. Selection prioritizes accuracy, then lower cost for ties; no global optimum or top-ten ranking is claimed.
-
-- [Executed, self-contained notebook](submission/Assign01_Cai_Haochen_58561440.ipynb)
-- [ZIP with notebook and typed Section A guide](submission/Assign01_Cai_Haochen_58561440.zip)
-- [Section A handwriting instructions](section_a/README.md)
-- [Frozen recipe](results/final_recipe.json), [test metrics](results/final_test_metrics.json), [cascade candidates](results/cascade_candidates.csv), [cascade timing](results/cascade_benchmark.json)
-- [NVFP4 measurements](results/nvfp4_benchmark.json), [garment trials](results/garment_candidates.csv), [spatial-readout trials](results/spatial_candidates.csv)
-- [Balanced recipe](results/hybrid_balanced_recipe.json), [accuracy-priority recipe](results/hybrid_accuracy_recipe.json), [hybrid test metrics](results/hybrid_test_metrics.json), [selection and latency evidence](results/hybrid_experiment.json)
-
-The ZIP requires your genuine handwritten Section A PDF before Canvas submission. The included PDF is clearly labelled as a typed study guide. The notebook's default Run All unpacks its embedded code/checkpoints into a temporary directory and actually evaluates the original reference and each frozen hybrid option, including the latest adaptive-view policy. `RETRAIN_ALL=True` reruns the repository training sequence, excluding the two imported legacy models; retrained fallback weights require a new validation-only hybrid freeze. Git intentionally excludes standalone checkpoint files; the notebook contains the checkpoints needed for default evaluation.
-
-For optimized inference, pass raw [0,1] tensors shaped `(N,1,28,28)` on `train.DEVICE` to `hybrid_experiment.predict(recipe, images)` with either hybrid recipe loaded from JSON. Reuse a dictionary of loaded models via its optional `models` argument for repeated inference. Run `python3 hybrid_experiment.py --test` to verify both frozen endpoints, or `--check` for routing/cost checks. The no-argument search and `--latency` replace experiment selections; use a separate directory for new research, never retune the recorded recipes from their test outcomes.
-
-Branches `feature/36-legacy-baseline`, `feature/37-budget-cascade` and `feature/38-hybrid-integration` preserve checkpoint recovery, the bounded inference search and portable integration. Source weights came from earlier same-student training on the identical Fashion-MNIST split, not external pretraining. Import changed tensor names only and matched all 6,000 validation logits exactly. The 354-candidate screen recomputed 12 actual finalists. Initial MAC-only choices were slower; the archived failed choices remain available. The explicit latency amendment, made before new test access, required at least 5% lower median latency plus lower average MACs and preserved validation correct count, Shirt F1 and both development halves. Reusing validation for this amendment limits generalization claims. Historical descriptions below refer to their respective stages; they do not override these new deployment options.
-
-## Rules
-
-- Only MLP architectures, official Fashion-MNIST data, and random seed `58561440`.
-- No CNN, Transformer, attention, external training images, externally pretrained weights or out-of-scope teacher.
-- Split the official training set into 54,000 training and 6,000 validation examples. Fit normalization on training images only.
-- Select checkpoints, training methods, inference views and pruning settings using validation data. Freeze the final recipe before test evaluation. Treat the official test split as a benchmark; do not claim an independently blinded holdout.
-- Track major ideas on branches; use commits for incremental changes; integrate measured improvements into `main`.
-- Report negative results and inference costs. A named method is not automatically an improvement.
-- Section A still requires the student's own handwriting. Experiments cannot satisfy that manual requirement.
-
-## Working method
-
-Each significant idea gets a `feature/*` branch. Implementation, checks, measurements and interpretation are separate small commits. Merge completed experiments into `main`, including negative results, so later work builds on an auditable record.
-
-The completed sequence is baseline → AdamW → residual blocks and normalization → Mixup → SwiGLU → mixed Muon optimization → SAM/ASAM → MLP-Mixer → EMA/SWA → MLP distillation → structured pruning/Pareto analysis → regularization controls → initial integration → accuracy-first extension → expanded inference/ensemble integration → targeted garment/focal losses → real NVFP4 benchmark → spatial readouts → confidence-gated inference. Actual results determine the final model, not the length of this list.
-
-The accuracy-first extension trained six recipes and retained 18 ordinary/EMA/SWA checkpoints. The garment/spatial follow-up added eight training recipes and 24 checkpoints, bringing that stage to 67 checkpoints. The detector-inspired follow-up below adds another 24; all **91 checkpoints** and the final routed validation pipeline have now been verified. The initial expanded search records 506 retained candidates plus 1,776 attempted greedy weight settings. The two refinement rounds each retain 583 validation candidates, and the gate search retains 43. Both fixed validation halves are development data. The public test benchmark was evaluated during development; the garment hypothesis follows earlier public test errors, so this is exploratory continuation, not a new blinded test. New fitting and selection use training/validation only, and the hash-bound gate recipe precedes its final benchmark evaluation.
-
-Targeted losses and spatial readouts did not displace the reference ensemble. **Shirt test recall remains 81.4% and F1 remains 0.8285**: this bottleneck is not solved by the current follow-up. The new gate changes 16 test predictions, fixes eight errors and introduces five, for a net gain of three images. This small change is not presented as statistically significant. The main demonstrated gain is average inference efficiency with slightly higher observed benchmark accuracy.
-
-NVFP4 used real packed W4A4 channel matrices and a profiled SM120 FP4 kernel. On the ungated reference, eager NVFP4 reduced validation accuracy from 95.2833% to 94.9000% and increased batch-128 latency from 49.95 ms to 97.63 ms. With both paths compiled, original precision took 27.85 ms and NVFP4 took 51.87 ms. The original compiled path loses one validation-correct example, so compilation is not assumed numerically identical. NVFP4 is retained as a measured negative result, not used for submission. It changes storage bytes and arithmetic precision, not logical parameters or dense mathematical FLOPs.
-
-Branches `feature/01-baseline` through `feature/15-accuracy-integration` preserve the initial sequence and accuracy-first extension. Follow-up branches are `feature/16-garment-discrimination`, `feature/17-nvfp4-benchmark`, `feature/18-spatial-readout`, `feature/19-confidence-cascade`, and `feature/20-followup-integration`. Each branch remains available after merging into `main`.
-
-The validation-only follow-up on `feature/21-image-processing` tested mild gamma, intensity-gain and half-pixel centering changes. None beat the original cascade's 95.35% validation accuracy. `feature/22-awq` tested real native torchao AWQ W4A16: validation accuracy was 95.1833%, versus 95.2333% for plain INT4 and 95.35% for original/channel-BF16 controls. On the same 1,024 validation inputs, eager median latency was 880.64 ms for AWQ, 853.94 ms for plain INT4, 249.92 ms for original and 231.89 ms for channel-BF16. This backend's padding to input multiples of 1,024 is costly for small Mixer matrices. AWQ stored tensors occupy 7,331,088 bytes versus 8,830,224 original and 5,422,224 channel-BF16 bytes, including layout/scaling overhead. No candidate was adopted; test accuracy remains the previously measured **94.42%**. These are shared-device, backend-specific results. Integration and the executed notebook are retained on `feature/23-processing-awq-integration`.
-
-Reproduce these optional experiments with `python3 image_processing_experiment.py` and `.venv/bin/python benchmark_awq.py`; the latter uses the same pinned torchao environment described below. Evidence: `results/image_processing.json` and `results/awq_benchmark.json`. AWQ calibration uses training images only, and both experiments hold the selected inference recipe fixed.
-
-See [JOURNAL.md](JOURNAL.md) for dated experiment notes. Results are recorded only after a run finishes. Submission marks and bonus ranking depend on instructor assessment.
-
-The detector-inspired follow-up uses pure MLPs: a 196-to-49-token hierarchy, fine/coarse feature fusion, a training-only auxiliary classifier, and CSP-inspired partial-channel transforms. Each of four architectures receives 120 initial plus 30 clean-refinement epochs, giving eight runs and 24 checkpoints. Best single-view validation accuracy is 93.50% for the coarse-only control, 93.30% with feature fusion, 93.20% with auxiliary supervision and 93.3333% with partial channels. Partial-channel fusion uses 550,393 parameters and 47,042,880 MACs, versus 827,305 parameters and 68,718,912 MACs for full-channel fusion. It is smaller, but does not outperform the existing deployment. These are detector-inspired design ideas, not YOLO or PGI reproductions.
-
-The 77 bounded validation comparisons retained the original cascade (5,721 correct); the best new combination had 5,714 correct. No combined auxiliary+CSP trial was added because auxiliary supervision did not improve its matched control. The final 94.42% test recipe is unchanged. Evidence: [architecture comparison](results/yolo_summary.json), [all candidates](results/yolo_candidates.csv), [protocol](results/yolo_protocol.json). Run `python3 check_pyramid.py`, then `python3 run_yolo.py` and `python3 select_yolo.py`; `run_yolo.py --retrain` explicitly replaces recorded training outputs. Major stages remain on `feature/24-multiscale-mlp`, `feature/25-auxiliary-supervision`, `feature/26-partial-channel-mlp`, `feature/27-yolo-evaluation`, and `feature/28-yolo-integration`.
-
-## Run an experiment
-
-The PIL-inspired follow-up (`feature/29-pil-ridge-heads`, `feature/30-pil-integration`) freezes the three deployed feature extractors and fits same-size ridge classification heads using training-only float64 thin SVD. Across eight penalties per model, single-view validation accuracy changes from 94.0333% to 94.1833% for the wide member, 93.85% to 93.90% for the fine-patch member, and stays at 93.70% for the pruned member. Backbone weights, standalone parameter counts and MACs are unchanged. This is a hybrid readout experiment, not full-network PIL reproduction. The wide member's Shirt F1 slightly falls despite the accuracy gain.
-
-Confidence-calibrated standalone, addition and replacement comparisons (16 candidates) still select the original 5,721-correct cascade; the strongest new alternative gets 5,710. The submitted 94.42% test model remains unchanged. Evidence: [ridge fits and selection](results/pil_experiment.json), [deployment candidates](results/pil_candidates.csv). Run `python3 pil_experiment.py --check` for the rank-deficient solver check or `python3 pil_experiment.py` to refit and compare; the latter replaces only this experiment's saved results/checkpoints. Original gradient-based backbone training remains required. All 94 checkpoints present at the PIL stage and the frozen cascade passed verification.
-
-### Fixed image features
-
-`feature/31-image-features` compares grayscale, grayscale plus signed horizontal/vertical gradients, and those features plus local contrast. All retain grayscale, use replicate boundaries, and initialize from the same wide SWA checkpoint with zero extra input columns and matched random streams. Three 30-epoch clean fine-tuning runs produce nine ordinary/EMA/SWA checkpoints. Selected single-view validation accuracy is 94.0333%, 94.0333% and 94.00%; Shirt recall is 80.8333%, 80.6667% and 80.50%. The slight gradient Shirt-F1 gain comes from fewer false positives, not improved recall.
-
-The 58 deployment comparisons retain the original cascade (5,721 correct); the best alternative reaches 5,718. The final 94.42% test recipe remains unchanged. Fixed filters add no fitted parameters, but their wider Linear input adds 6,144 or 9,216 parameters and 301,056 or 451,584 dense MACs per view. Preprocessing adds roughly 3,136 or 10,976 scalar operations, separately from dense MACs; no latency improvement is claimed. Evidence: [paired results](results/features_summary.json), [class confusions](results/features_details.json), [deployment candidates](results/features_candidates.csv). Run `python3 feature_experiment.py --check` or `python3 feature_experiment.py`; completed matching training runs are reused, while `--retrain` explicitly replaces them. `feature/32-image-feature-integration` adds the executed notebook's confusion and feature-map figures. These negative results concern this seed, parent and fine-tuning budget, not every image-processing approach.
-
-### Sparse experts
-
-`feature/33-moe-routing` tests three residual MLP experts after a shared Mixer trunk, with learned soft routing during training and actual top-1 dispatch during inference. The approximately parameter-matched control has one wider expert. Both receive 30 clean fine-tuning epochs from the same wide SWA parent. Selected validation accuracy is 94.0167% for MoE and 94.0333% for the control; route counts [2,308, 2,330, 1,362] show all three experts are used. Soft inference on the selected MoE checkpoint also gives 94.0167%. This shared-trunk experiment is not independently bootstrap-trained bagging or speculative decoding.
-
-MoE stores 1,742,421 parameters and uses 77,370,816 sparse dense-Linear MACs/image versus 77,665,728 with all experts active. Skipping two small expert heads saves only 0.38% of full-model MACs. Measured eager forward medians per 1,024 validation images are 7.81 ms (parent), 9.30 ms (single-expert control), 10.93 ms (top-1 MoE), and 8.65 ms (soft MoE). This Python dispatch is slower despite lower arithmetic cost; the shared trunk dominates. All 39 deployment comparisons retain the original 5,721-correct cascade, with the best alternative at 5,717. Evidence: [experiment and timings](results/moe_experiment.json), [deployment comparison](results/moe_candidates.csv). Run `python3 moe_experiment.py --check` or `python3 moe_experiment.py`; `--retrain` explicitly replaces recorded training outputs. Timings are shared-device, forward-only measurements, excluding load and output transfer.
-
-### Garment-loss follow-up
-
-`feature/34-garment-loss-followup` isolates focal gamma 2 and CE weights of 1.5 for T-shirt/Pullover/Coat/Shirt, compared with the matching completed `features_gray` ordinary CE run. All use the same wide SWA parent, seed and 30-epoch clean schedule. Best-family validation accuracies are 94.0333% (CE), 94.0667% (focal), and 94.0167% (weighted CE); Shirt recalls are 80.8333%, 80.8333%, and 80.50%. Weighted CE follows native sample-weight normalization. Focal improves Shirt F1 from 0.824830 to 0.827645, but its two additional correct predictions split as -2/+4 between the fixed development halves. It fails the predeclared no-regression guard for stacking local augmentation; the weighted objective also fails. No local augmentation or garment-only post-training was added in this round. Shared-weight updates can cause forgetting even for classes omitted from training.
-
-All 58 deployment comparisons retain the original 5,721-correct cascade. No new candidate test evaluation is used. Evidence: [all-class metrics and advancement rule](results/loss_experiment.json), [deployment candidates](results/loss_candidates.csv). Run `python3 check_garment.py`, then `python3 loss_followup.py`; `--retrain` replaces the two new training runs while retaining the completed matched CE control. `feature/35-moe-loss-integration` incorporates both follow-ups into the executed notebook. Single-seed development comparisons and small count changes are exploratory, not general accuracy guarantees.
-
-Use Python 3.12 and the dependencies in `requirements.txt`. The recorded environment uses PyTorch 2.10.0+cu128 and torchvision 0.25.0+cu128 on an RTX 5090. CPU is supported, but the longer Mixer experiments are substantially slower and BF16 autocast is disabled there.
+These commands are not needed for a fresh notebook reproduction. They are useful when the matching checkpoints are already present in `results/`:
 
 ```bash
 python3 check_models.py
-python3 sharpness.py
-python3 baseline.py
-python3 train.py configs/adamw.json
-python3 train.py configs/mixer.json
-python3 train.py configs/mixer_muon.json
-python3 check_garment.py
-python3 check_cascade.py
-python3 benchmark_cascade.py
+python3 latent_search.py --check
+python3 -c "from refine_cascade import evaluate; evaluate('latent')"
 ```
 
-The optional real FP4 comparison uses an isolated environment with the existing PyTorch and `torchao==0.16.0`: `python3 -m venv --system-site-packages .venv`, `.venv/bin/python -m pip install --no-deps torchao==0.16.0`, then `.venv/bin/python benchmark_nvfp4.py --compile --recipe results/spatial_recipe.json`. The recipe argument reproduces the ungated model used by the recorded NVFP4 comparison. CUDA FP4 hardware is required; these packages are not needed for default notebook evaluation.
+The search uses 16 populations of 256 candidates (4,096 total), keeps 209 validation-qualified candidates, and selects candidate 4072. It tunes inference settings only; it does not use test labels.
 
-Run from the repository root. Fashion-MNIST downloads into `data/`. Every run writes its measured epoch history to `results/`, saves the validation-selected checkpoint, and appends its result to the journal. Checkpoints and dataset files are ignored by Git. Rerunning a configuration replaces its local result/checkpoint files; use a separate checkout or directory when preserving the recorded run.
+## Important files
 
-`baseline.py` normalizes and flattens inputs outside its model; `train.Model` performs normalization internally. Do not normalize inputs twice when evaluating saved checkpoints. Cross-entropy takes raw logits; softmax is used for probabilities at inference, avoiding redundant softmax during training.
+| File | Purpose |
+|---|---|
+| `submission/Assign01_Cai_Haochen_58561440.ipynb` | Complete assignment notebook and primary reproduction entry point |
+| `train.py` | Seeded split, model wrapper and training loop |
+| `models.py` | Residual and Mixer-style pure-MLP architectures |
+| `configs/*.json` | Training settings for the retained experiments |
+| `latent_search.py` | Deterministic validation-only route search |
+| `refine_cascade.py` | Route freezing and endpoint evaluation |
+| `results/latent_balanced_recipe.json` | Frozen final route |
+| `results/latent_test_metrics.json` | Final test metrics and confusion matrix |
 
-See [SOURCES.md](SOURCES.md) for source links and complexity-counting conventions.
-
-Per-Head Muon is a training variant described in Kimi K3 Section 2.5: it orthogonalizes Q/K/V momentum blocks separately by attention head. It is not an additional classifier head and does not directly reduce inference MACs. Our pure MLPs have no attention heads, so the variant is not applied; existing Muon training handles hidden-block matrices while AdamW handles embedding, head and one-dimensional parameters. A cost-aware RL or contextual-bandit router is a possible future experiment, not part of these results. RL can receive graded rewards, but cross-entropy already supplies graded classification feedback; neither automatically identifies the right corrective action without a suitable objective and training data.
+The 94.55% score is a measured Fashion-MNIST benchmark; it is not a guarantee of a class ranking or an independently blinded holdout result.
