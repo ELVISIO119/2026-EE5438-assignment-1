@@ -1,5 +1,0 @@
-candidate_id,label,goal,correct,accuracy,shirt_f1,validation_half_correct,macs,parameters
-0,reuse_gate=False:view_batch=4,balanced,5718,0.953,0.8598290598290599,"[2856, 2862]",399102504.9173333,3164836
-1,reuse_gate=False:view_batch=8,balanced,5718,0.953,0.8598290598290599,"[2856, 2862]",399102504.9173333,3164836
-2,reuse_gate=True:view_batch=4,balanced,5718,0.953,0.8598290598290599,"[2856, 2862]",390775314.7093333,3164836
-3,reuse_gate=True:view_batch=8,balanced,5718,0.953,0.8598290598290599,"[2856, 2862]",390775314.7093333,3164836

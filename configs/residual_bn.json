@@ -1,1 +1,0 @@
-{"name":"residual_bn","model":"residual","width":256,"depth":3,"activation":"gelu","norm":"batch","dropout":0.1,"epochs":40,"lr":0.001,"decay":0.01,"schedule":true,"hypothesis":"Replace block LayerNorm with BatchNorm only relative to residual_gelu; keep final LayerNorm."}

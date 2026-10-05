@@ -1,1 +1,0 @@
-{"name":"residual_gelu","model":"residual","width":256,"depth":3,"activation":"gelu","norm":"layer","dropout":0.1,"epochs":40,"lr":0.001,"decay":0.01,"schedule":true,"hypothesis":"Combined modern reference: residual GELU blocks, LayerNorm, dropout, weight decay and warmup/cosine scheduling. This is not a one-factor ablation against the sigmoid model."}

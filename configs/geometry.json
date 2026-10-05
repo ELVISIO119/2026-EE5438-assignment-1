@@ -1,1 +1,0 @@
-{"name":"residual_geometry","model":"residual","width":256,"depth":3,"activation":"gelu","norm":"layer","dropout":0.1,"epochs":40,"lr":0.001,"decay":0.01,"schedule":true,"augmentation":true,"hypothesis":"Add only mild horizontal flips, rotations, translations and scaling to residual_gelu."}
